@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Chapter from '@/components/editor/editorComponents/Chapter';
 import Paragraph from '@/components/editor/editorComponents/Paragraph';
 import Title from '@/components/editor/editorComponents/Title';
 import Contents from '@/components/editor/editorComponents/Contents';
 import AddButton from '@/components/editor/editorComponents/AddButton';
 import {
-  TextDocumentInterface,
+  TextDocumentInterface, 
   ParagraphInterface,
   ChapterInterface
 } from '@/components/editor/interfaces';
@@ -27,14 +27,64 @@ export function EditorClient({
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
   const [newChapter, setNewChapter] = useState(false);
+  const [newParagraph, setNewParagraph] = useState<string | null>(null);
+  const [localChapters, setLocalChapters] = useState<ChapterInterface[]>(chapters);
+  const [localParagraphs, setLocalParagraphs] = useState<ParagraphInterface[]>(paragraphs);
 
-  // Sort and organize data
-  const sortedChapters = [...chapters].sort((a, b) => a.index - b.index);
-  const getParagraphsByChapter = (chapterId: string) => {
-    return paragraphs
-      .filter((p) => p.chapterId === chapterId)
-      .sort((a, b) => a.index - b.index);
-  };
+  // Add new chapter when newChapter is true
+  useEffect(() => {
+    if (newChapter) {
+      const now = new Date();
+      const lastIndex = localChapters.length > 0 
+        ? Math.max(...localChapters.map(ch => ch.index))
+        : 0;
+      
+      const newChapterData: ChapterInterface = {
+        id: `temp-${Date.now()}`,
+        documentId: textDocument.id,
+        index: lastIndex + 1,
+        title: "Insert a Title",
+        subtitle: "Add a subtitle",
+        createdAt: now,
+        updatedAt: now,
+        version: 1,
+        metadata: {
+          wordCount: 0,
+        },
+      };
+      
+      setLocalChapters([...localChapters, newChapterData]);
+      setNewChapter(false);
+    }
+  }, [newChapter, localChapters, textDocument.id]);
+
+  // Add new paragraph when newParagraph is set with chapterId
+  useEffect(() => {
+    if (newParagraph) {
+      const now = new Date();
+      const chapterParagraphs = localParagraphs.filter(p => p.chapterId === newParagraph);
+      const lastIndex = chapterParagraphs.length > 0
+        ? Math.max(...chapterParagraphs.map(p => p.index))
+        : 0;
+      
+      const newParagraphData: ParagraphInterface = {
+        id: `temp-${Date.now()}`,
+        documentId: textDocument.id,
+        chapterId: newParagraph,
+        index: lastIndex + 1,
+        text: "Insert your text here",
+        createdAt: now,
+        updatedAt: now,
+        version: 1,
+        metadata: {
+          characterCount: 0,
+        },
+      };
+      
+      setLocalParagraphs([...localParagraphs, newParagraphData]);
+      setNewParagraph(null);
+    }
+  }, [newParagraph, localParagraphs, textDocument.id]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
@@ -54,7 +104,7 @@ export function EditorClient({
           <div className={`h-full overflow-y-auto ${leftOpen ? 'p-4' : 'p-0'}`}>
             {leftOpen && (
               <Contents
-                chapters={sortedChapters.map((ch) => ({
+                chapters={localChapters.map((ch) => ({
                   id: ch.id,
                   index: ch.index,
                   title: ch.title,
@@ -91,7 +141,7 @@ export function EditorClient({
           />
           
           {/* Chapters with Titles and Paragraphs */}
-          {sortedChapters.map((chapter) => (
+          {localChapters.map((chapter) => (
             <div key={chapter.id} id={`chapter-${chapter.id}`}>
               <Chapter>
                 <Title
@@ -104,19 +154,28 @@ export function EditorClient({
                     updatedAt: chapter.updatedAt,
                   }}
                 />
-                {getParagraphsByChapter(chapter.id).map((paragraph) => (
-                  <Paragraph key={paragraph.id}>
-                    {paragraph.text}
-                  </Paragraph>
-                ))}
+                {localParagraphs
+                  .filter(p => p.chapterId === chapter.id)
+                  .map((paragraph) => (
+                    <Paragraph key={paragraph.id}>
+                      {paragraph.text}
+                    </Paragraph>
+                  ))}
                 {/* Add Paragraph Button */}
-                <AddButton type="paragraph" />
+                {!(() => {
+                  const chapterParagraphs = localParagraphs.filter(p => p.chapterId === chapter.id);
+                  return chapterParagraphs.length > 0 && chapterParagraphs[chapterParagraphs.length - 1].id.startsWith('temp-');
+                })() && (
+                  <AddButton type="paragraph" onClick={() => setNewParagraph(chapter.id)} />
+                )}
               </Chapter>
             </div>
           ))}
           
           {/* Add Chapter Button */}
-          <AddButton type="chapter" onClick={() => setNewChapter(true)} />
+          {!(localChapters.length > 0 && localChapters[localChapters.length - 1].id.startsWith('temp-')) && (
+            <AddButton type="chapter" onClick={() => setNewChapter(true)} />
+          )}
         </main>
 
         {/* Botão Toggle Direita */}

@@ -7,7 +7,7 @@ export default function AddButton({ type, onClick }: AddButtonProps) {
   return (
     <button
       onClick={onClick}
-      className={`w-full ${
+      className={`w-full cursor-pointer ${
         type === 'chapter' ? 'py-4 mb-4' : 'py-3 mb-2'
       } border-2 border-dashed border-slate-400/30 rounded-lg 
       hover:border-slate-400/60 hover:bg-slate-400/10 
