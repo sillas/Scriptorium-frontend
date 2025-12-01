@@ -49,10 +49,10 @@ Commands:
 ## Getting Started
 
 First, run mongoDB container:
-`docker compose up -d`
+`docker compose -f .docker/docker-compose.yml up -d`
 
 To stop:
-`docker compose down`
+`docker compose -f .docker/docker-compose.yml down`
 
 Then, run the development server:
 

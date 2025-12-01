@@ -28,7 +28,7 @@ export default function Contents({ chapters }: ContentsProps) {
           <button
             key={chapter.id}
             onClick={() => scrollToChapter(chapter.id)}
-            className="w-full text-left group hover:bg-slate-500 rounded px-3 py-0 transition-colors"
+            className="w-full text-left group rounded p-0 transition-colors cursor-pointer"
             title={chapter.title}
           >
             <div className="flex items-start gap-2 text-slate-200">
