@@ -153,6 +153,16 @@ export function EditorClient({
                     version: chapter.version,
                     updatedAt: chapter.updatedAt,
                   }}
+                  onTitleChange={(newTitle) => {
+                    setLocalChapters(localChapters.map(ch => 
+                      ch.id === chapter.id ? { ...ch, title: newTitle } : ch
+                    ));
+                  }}
+                  onSubtitleChange={(newSubtitle) => {
+                    setLocalChapters(localChapters.map(ch => 
+                      ch.id === chapter.id ? { ...ch, subtitle: newSubtitle } : ch
+                    ));
+                  }}
                 />
                 {localParagraphs
                   .filter(p => p.chapterId === chapter.id)

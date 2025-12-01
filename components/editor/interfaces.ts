@@ -29,6 +29,7 @@ export interface ChapterInterface {
 
 export interface ParagraphInterface {
   id: string;
+  documentId: string;
   chapterId: string;
   index: number;
   text: string;
