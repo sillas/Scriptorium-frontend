@@ -1,18 +1,20 @@
-
+import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { getDatabase } from '@/app/lib/mongodb';
 import { EditorClient } from '@/components/editor/EditorClient';
 import { 
-  TextDocumentInterface, 
-  ParagraphInterface, 
-  ChapterInterface
-} from '@/components/editor/interfaces';
-import { Metadata } from 'next';
+  convertMongoDocument,
+  convertMongoChapters,
+  convertMongoParagraphs
+} from '@/components/editor/conversions';
+
 
 export async function generateMetadata({
   params
 }: {
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
-  const slug = (await params).slug;
+  const { slug } = await params;
   
   // Formata o slug para um título mais legível
   const title = slug
@@ -31,138 +33,38 @@ export default async function Editor({
 }: {
   params: Promise<{ slug: string }>
 }) {
-  const slug = (await params).slug
 
-  // Data Mocks from database
-  const mockDocument: TextDocumentInterface = {
-    id: 'doc-1',
-    title: 'The Art of Programming',
-    slug: 'the-art-of-programming',
-    subtitle: 'A Journey Through Code and Logic',
-    author: 'John Doe',
-    createdAt: new Date('2025-01-15'),
-    updatedAt: new Date('2025-11-30'),
-    version: 3,
-    metadata: {
-      tags: ['programming', 'education', 'technology'],
-      status: 'draft',
-    },
-  };
+  const { slug } = await params;
+  const db = await getDatabase();
 
-  const mockParagraphs: ParagraphInterface[] = [
-    {
-      id: 'p-1',
-      chapterId: 'ch-1',
-      index: 0,
-      text: 'Programming is the art of telling a computer what to do. It requires logical thinking and problem-solving skills.',
-      createdAt: new Date('2025-01-16'),
-      updatedAt: new Date('2025-11-25'),
-      version: 1,
-      metadata: {
-        characterCount: 125,
-        author: 'John Doe',
-      },
-    },
-    {
-      id: 'p-2',
-      chapterId: 'ch-1',
-      index: 1,
-      text: 'Every programming language has its own syntax and rules, but the underlying concepts remain similar across most languages.',
-      createdAt: new Date('2025-01-16'),
-      updatedAt: new Date('2025-11-26'),
-      version: 2,
-      metadata: {
-        characterCount: 132,
-        author: 'John Doe',
-      },
-    },
-    {
-      id: 'p-3',
-      chapterId: 'ch-1',
-      index: 2,
-      text: 'Understanding data structures and algorithms is fundamental to becoming a proficient programmer.',
-      createdAt: new Date('2025-01-17'),
-      updatedAt: new Date('2025-11-27'),
-      version: 1,
-      metadata: {
-        characterCount: 105,
-        author: 'John Doe',
-      },
-    },
-    {
-      id: 'p-4',
-      chapterId: 'ch-2',
-      index: 0,
-      text: 'Algorithms are step-by-step procedures for solving problems. They are the building blocks of efficient software.',
-      createdAt: new Date('2025-02-01'),
-      updatedAt: new Date('2025-11-28'),
-      version: 1,
-      metadata: {
-        characterCount: 120,
-        author: 'John Doe',
-      },
-    },
-    {
-      id: 'p-5',
-      chapterId: 'ch-2',
-      index: 1,
-      text: 'Time and space complexity are crucial considerations when designing algorithms for real-world applications.',
-      createdAt: new Date('2025-02-02'),
-      updatedAt: new Date('2025-11-29'),
-      version: 1,
-      metadata: {
-        characterCount: 115,
-        author: 'John Doe',
-      },
-    },
-    {
-      id: 'p-6',
-      chapterId: 'ch-2',
-      index: 2,
-      text: 'Mastering common algorithmic patterns like recursion, dynamic programming, and greedy algorithms opens up new problem-solving possibilities.',
-      createdAt: new Date('2025-02-03'),
-      updatedAt: new Date('2025-11-30'),
-      version: 2,
-      metadata: {
-        characterCount: 150,
-        author: 'John Doe',
-      },
-    },
-  ];
+  // Fetch main document
+  const mongoDocument = await db.collection('documents')
+    .findOne({ slug })
 
-  const mockChapters: ChapterInterface[] = [
-    {
-      id: 'ch-1',
-      documentId: 'doc-1',
-      index: 0,
-      title: 'Introduction to Programming',
-      subtitle: 'Understanding the Basics',
-      createdAt: new Date('2025-01-16'),
-      updatedAt: new Date('2025-11-28'),
-      version: 2,
-      metadata: {
-        wordCount: 450,
-      },
-    },
-    {
-      id: 'ch-2',
-      documentId: 'doc-1',
-      index: 1,
-      title: 'Advanced Concepts',
-      subtitle: 'Deep Dive into Algorithms',
-      createdAt: new Date('2025-02-01'),
-      updatedAt: new Date('2025-11-29'),
-      version: 1,
-      metadata: {
-        wordCount: 680,
-      },
-    },
-  ];
+  if (!mongoDocument) {
+    notFound();
+  }
+
+  // Fetch related chapters and paragraphs
+  const [mongoChapters, mongoParagraphs] = await Promise.all([
+      db.collection('chapters')
+        .find({documentId: mongoDocument._id})
+        .sort({ index: 1 }).toArray(),
+      db.collection('paragraphs')
+        .find({documentId: mongoDocument._id})
+        .sort({ index: 1 }).toArray()
+  ]);
+
+  // Convert MongoDB documents to application interfaces
+  const document = convertMongoDocument(mongoDocument)
+  const chapters = convertMongoChapters(mongoChapters)
+  const paragraphs = convertMongoParagraphs(mongoParagraphs)
+  
 
   return <EditorClient 
     slug={slug}
-    textDocument={mockDocument}
-    paragraphs={mockParagraphs}
-    chapters={mockChapters}
+    textDocument={document}
+    chapters={chapters}
+    paragraphs={paragraphs}
   />;
 }

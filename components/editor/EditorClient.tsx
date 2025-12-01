@@ -26,6 +26,7 @@ export function EditorClient({
 
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
+  const [newChapter, setNewChapter] = useState(false);
 
   // Sort and organize data
   const sortedChapters = [...chapters].sort((a, b) => a.index - b.index);
@@ -115,7 +116,7 @@ export function EditorClient({
           ))}
           
           {/* Add Chapter Button */}
-          <AddButton type="chapter" />
+          <AddButton type="chapter" onClick={() => setNewChapter(true)} />
         </main>
 
         {/* Botão Toggle Direita */}

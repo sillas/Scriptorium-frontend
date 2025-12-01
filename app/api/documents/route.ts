@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
     // Verificar se o slug já existe e adicionar número se necessário
     let finalSlug = slug;
     let counter = 1;
+    
     while (await db.collection('documents').findOne({ slug: finalSlug })) {
       finalSlug = `${slug}-${counter}`;
       counter++;
