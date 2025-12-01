@@ -1,65 +1,82 @@
-import Image from "next/image";
+import { getDatabase } from '@/app/lib/mongodb';
+import { revalidatePath } from 'next/cache';
+import UserForm from '@/components/UserForm';
 
-export default function Home() {
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  createdAt: Date;
+}
+
+// Server Action para criar usuário
+async function createUser(formData: FormData) {
+  'use server';
+  
+  const name = formData.get('name') as string;
+  const email = formData.get('email') as string;
+
+  const db = await getDatabase();
+  await db.collection('users').insertOne({
+    name,
+    email,
+    createdAt: new Date(),
+  });
+
+  revalidatePath('/');
+}
+
+// Server Action para deletar todos
+async function deleteAllUsers() {
+  'use server';
+  
+  const db = await getDatabase();
+  await db.collection('users').deleteMany({});
+  revalidatePath('/');
+}
+
+// Server Component que busca dados diretamente
+export default async function Home() {
+  const db = await getDatabase();
+  const users = await db.collection('users').find({}).toArray();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen p-8 bg-gray-50">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">CRUD de Usuários - Teste MongoDB</h1>
+
+        <UserForm createUser={createUser} />
+
+        {/* Lista de usuários */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Usuários Cadastrados</h2>
+            {users.length > 0 && (
+              <form action={deleteAllUsers}>
+                <button className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm">
+                  Deletar Todos
+                </button>
+              </form>
+            )}
+          </div>
+
+          {users.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">Sem usuários cadastrados</p>
+          ) : (
+            <div className="space-y-4">
+              {users.map((user) => (
+                <div key={user._id.toString()} className="border-b pb-4 last:border-b-0">
+                  <p className="font-semibold text-lg">{user.name}</p>
+                  <p className="text-gray-600">{user.email}</p>
+                  <p className="text-gray-400 text-sm">
+                    Criado em: {new Date(user.createdAt).toLocaleString('pt-BR')}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }

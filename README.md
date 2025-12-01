@@ -48,7 +48,13 @@ Commands:
 
 ## Getting Started
 
-First, run the development server:
+First, run mongoDB container:
+`docker compose up -d`
+
+To stop:
+`docker compose down`
+
+Then, run the development server:
 
 ```bash
 npm run dev
