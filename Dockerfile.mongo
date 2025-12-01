@@ -1,0 +1,7 @@
+FROM mongo:latest
+
+# Expõe a porta padrão do MongoDB
+EXPOSE 27017
+
+# Volume para persistência de dados
+VOLUME /data/db
