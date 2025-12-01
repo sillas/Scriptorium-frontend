@@ -9,7 +9,7 @@ export interface TextDocumentInterface {
   version: number;
   metadata: {
     tags?: string[];
-    status?: 'draft' | 'published' | 'archived';
+    status?: 'draft' | 'active' | 'archived';
   };
 }
 
