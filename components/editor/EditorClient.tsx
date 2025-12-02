@@ -133,7 +133,7 @@ export function EditorClient({
           <Title
             title={textDocument.title}
             subtitle={textDocument.subtitle}
-            documentId={textDocument.id}
+            // documentId={textDocument.id}
             metadata={{
               version: textDocument.version,
               updatedAt: textDocument.updatedAt,
@@ -147,7 +147,7 @@ export function EditorClient({
                 <Title
                   title={chapter.title}
                   subtitle={chapter.subtitle}
-                  documentId={chapter.documentId}
+                  // documentId={chapter.documentId}
                   chapterId={chapter.id}
                   metadata={{
                     version: chapter.version,
