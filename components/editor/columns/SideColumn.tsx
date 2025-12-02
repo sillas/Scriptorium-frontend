@@ -1,5 +1,9 @@
+import { useState } from 'react';
 
-export function SideColumn({ side, isOpen, setOpen, children }: { side: "left" | "right", isOpen: boolean, setOpen: (open: boolean) => void, children: React.ReactNode }) {
+export function SideColumn({ side, children }: { side: "left" | "right", children: React.ReactNode }) {
+  
+  const [isOpen, setOpen] = useState(true);
+
   return (
     <>
       <button

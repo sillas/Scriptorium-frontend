@@ -25,9 +25,6 @@ export function EditorClient({
   chapters: ChapterInterface[],
   paragraphs: ParagraphInterface[],
 }) {
-
-  const [leftOpen, setLeftOpen] = useState(true);
-  const [rightOpen, setRightOpen] = useState(true);
   const [newChapter, setNewChapter] = useState(false);
   const [newParagraph, setNewParagraph] = useState<string | null>(null);
   const [localChapters, setLocalChapters] = useState<ChapterInterface[]>(chapters);
@@ -97,7 +94,7 @@ export function EditorClient({
       <div className="flex flex-1 overflow-hidden relative">
 
         {/* Coluna Lateral Esquerda */}
-        <SideColumn side="left" setOpen={setLeftOpen} isOpen={leftOpen}>
+        <SideColumn side="left">
           <div className="text-sm text-slate-200">
             <Contents
                 chapters={localChapters.map((ch) => ({
@@ -173,7 +170,7 @@ export function EditorClient({
         </main>
 
         {/* Coluna Lateral Direita */}
-        <SideColumn side="right" isOpen={rightOpen} setOpen={setRightOpen}>
+        <SideColumn side="right">
           <div className="text-sm text-slate-200">Coluna Direita</div>
         </SideColumn>
       </div>
