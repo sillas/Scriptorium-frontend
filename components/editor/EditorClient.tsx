@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import EditorHeader from '@/components/editor/Header';
 import Chapter from '@/components/editor/editorComponents/Chapter';
 import Paragraph from '@/components/editor/editorComponents/Paragraph';
 import Title from '@/components/editor/editorComponents/Title';
 import Contents from '@/components/editor/editorComponents/Contents';
 import AddButton from '@/components/editor/editorComponents/AddButton';
+import { EditorToggleButtons } from '@/components/editor/editorComponents/toggleButtons';
 import {
   TextDocumentInterface, 
   ParagraphInterface,
@@ -89,9 +91,7 @@ export function EditorClient({
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
       {/* Barra Superior */}
-      <header className="w-full h-14 bg-slate-700 flex items-center px-4 z-10">
-        <div className="text-white text-sm">Document {slug}</div>
-      </header>
+      <EditorHeader slug={slug} />
 
       {/* Container Principal */}
       <div className="flex flex-1 overflow-hidden relative">
@@ -115,15 +115,7 @@ export function EditorClient({
         </aside>
 
         {/* Botão Toggle Esquerda */}
-        <button
-          onClick={() => setLeftOpen(!leftOpen)}
-          className={`absolute left-0 top-0 z-20 text-white w-8 h-8 flex items-center justify-center text-xs hover:opacity-100 transition-all ${
-            leftOpen ? 'opacity-100 translate-x-0' : 'opacity-50 translate-x-0'
-          }`}
-          style={{ left: leftOpen ? 'calc(25% - 2rem)' : '0' }}
-        >
-          {leftOpen ? '◀' : '▶'}
-        </button>
+        <EditorToggleButtons side="left" isOpen={leftOpen} setOpen={setLeftOpen} />
 
         {/* Coluna Central */}
         <main
@@ -189,15 +181,7 @@ export function EditorClient({
         </main>
 
         {/* Botão Toggle Direita */}
-        <button
-          onClick={() => setRightOpen(!rightOpen)}
-          className={`absolute right-0 top-0 z-20 text-white w-8 h-8 flex items-center justify-center text-xs hover:opacity-100 transition-all ${
-            rightOpen ? 'opacity-100 translate-x-0' : 'opacity-50 translate-x-0'
-          }`}
-          style={{ right: rightOpen ? 'calc(25% - 2rem)' : '0' }}
-        >
-          {rightOpen ? '▶' : '◀'}
-        </button>
+        <EditorToggleButtons side="right" isOpen={rightOpen} setOpen={setRightOpen} />
 
         {/* Coluna Lateral Direita */}
         <aside
