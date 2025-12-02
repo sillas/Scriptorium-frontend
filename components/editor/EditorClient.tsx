@@ -7,7 +7,7 @@ import Paragraph from '@/components/editor/editorComponents/Paragraph';
 import Title from '@/components/editor/editorComponents/Title';
 import Contents from '@/components/editor/editorComponents/Contents';
 import AddButton from '@/components/editor/editorComponents/AddButton';
-import { EditorToggleButtons } from '@/components/editor/editorComponents/toggleButtons';
+import { SideColumn } from '@/components/editor/columns/SideColumn';
 import {
   TextDocumentInterface, 
   ParagraphInterface,
@@ -95,27 +95,19 @@ export function EditorClient({
 
       {/* Container Principal */}
       <div className="flex flex-1 overflow-hidden relative">
+
         {/* Coluna Lateral Esquerda */}
-        <aside
-          className={`bg-slate-600 transition-all duration-300 ease-in-out relative ${
-            leftOpen ? 'w-1/4' : 'w-0'
-          }`}
-        >
-          <div className={`h-full overflow-y-auto ${leftOpen ? 'p-4' : 'p-0'}`}>
-            {leftOpen && (
-              <Contents
+        <SideColumn side="left" setOpen={setLeftOpen} isOpen={leftOpen}>
+          <div className="text-sm text-slate-200">
+            <Contents
                 chapters={localChapters.map((ch) => ({
                   id: ch.id,
                   index: ch.index,
                   title: ch.title,
                 }))}
               />
-            )}
           </div>
-        </aside>
-
-        {/* Botão Toggle Esquerda */}
-        <EditorToggleButtons side="left" isOpen={leftOpen} setOpen={setLeftOpen} />
+        </SideColumn>
 
         {/* Coluna Central */}
         <main
@@ -180,19 +172,10 @@ export function EditorClient({
           )}
         </main>
 
-        {/* Botão Toggle Direita */}
-        <EditorToggleButtons side="right" isOpen={rightOpen} setOpen={setRightOpen} />
-
         {/* Coluna Lateral Direita */}
-        <aside
-          className={`bg-slate-600 transition-all duration-300 ease-in-out relative ${
-            rightOpen ? 'w-1/4' : 'w-0'
-          }`}
-        >
-          <div className={`h-full ${rightOpen ? 'pl-6 pt-4' : 'p-0'}`}>
-            {rightOpen && <div className="text-sm text-slate-200">Coluna Direita</div>}
-          </div>
-        </aside>
+        <SideColumn side="right" isOpen={rightOpen} setOpen={setRightOpen}>
+          <div className="text-sm text-slate-200">Coluna Direita</div>
+        </SideColumn>
       </div>
     </div>
   );
