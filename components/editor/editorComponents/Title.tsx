@@ -5,7 +5,6 @@ import { useRef, useState } from 'react';
 interface TitleProps {
   title: string;
   subtitle?: string;
-  // documentId: string;
   chapterId?: string;
   metadata?: {
     version?: number;
@@ -19,7 +18,6 @@ interface TitleProps {
 export default function Title({
   title,
   subtitle,
-  // documentId,
   chapterId,
   metadata,
   onTitleChange,
