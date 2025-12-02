@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function SideColumn({ side, children }: { side: "left" | "right", children: React.ReactNode }) {
+export default function SideColumn({ side, children }: { side: "left" | "right", children: React.ReactNode }) {
   
   const [isOpen, setOpen] = useState(true);
 

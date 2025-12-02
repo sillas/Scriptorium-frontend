@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import EditorHeader from '@/components/editor/Header';
+import Title from '@/components/editor/editorComponents/Title';
 import Chapter from '@/components/editor/editorComponents/Chapter';
 import Paragraph from '@/components/editor/editorComponents/Paragraph';
-import Title from '@/components/editor/editorComponents/Title';
 import Contents from '@/components/editor/editorComponents/Contents';
 import AddButton from '@/components/editor/editorComponents/AddButton';
-import { SideColumn } from '@/components/editor/columns/SideColumn';
+import SideColumn from '@/components/editor/columns/SideColumn';
 import {
   TextDocumentInterface, 
   ParagraphInterface,
@@ -60,6 +60,7 @@ export function EditorClient({
   // Add new paragraph when newParagraph is set with chapterId
   useEffect(() => {
     if (newParagraph) {
+      
       const now = new Date();
       const chapterParagraphs = localParagraphs.filter(p => p.chapterId === newParagraph);
       const lastIndex = chapterParagraphs.length > 0
