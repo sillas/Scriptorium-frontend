@@ -35,7 +35,7 @@ const proccessChapters = (
     unsyncedChapters: ChapterInterface[]
 ) => {
     console.log('Unsynced Chapters:', unsyncedChapters);
-    const updatedChapters = [...textDocument.chapters];
+    const updatedChapters = [...textDocument.chapters!];
 
     unsyncedChapters.forEach((unsyncedChapter: ChapterInterface) => {
         proccessChapter(unsyncedChapter, updatedChapters)
@@ -87,7 +87,7 @@ const processParagraphs = (
 
     console.log('Unsynced Paragraphs:', unsyncedParagraph);
 
-    const updatedParagraphs = [...chapter.paragraphs];
+    const updatedParagraphs = [...chapter.paragraphs!];
 
     unsyncedParagraph.forEach((unsyncedParagraph: ParagraphInterface) => {
         processParagraph(unsyncedParagraph, updatedParagraphs)
@@ -117,7 +117,7 @@ export const loadUnsyncedData = async (
         }
 
         if (unsyncedParagraphs.length > 0) {
-            updatedDocument.chapters.forEach(chapter => {
+            updatedDocument.chapters!.forEach(chapter => {
                 processParagraphs(
                     chapter,
                     unsyncedParagraphs.filter(p => p.chapterId === chapter.id)
@@ -127,9 +127,13 @@ export const loadUnsyncedData = async (
 
         if (unsyncedDocument) {
             // Merge document properties with unsynced version from IndexedDB
-            updatedDocument = {...updatedDocument, ...unsyncedDocument};
+            updatedDocument = {
+                ...updatedDocument, 
+                ...unsyncedDocument
+            };
         }
-
+        
+        console.log(updatedDocument.updatedAt);
         setLocalDocument(updatedDocument);
         console.log('=====================================');
         

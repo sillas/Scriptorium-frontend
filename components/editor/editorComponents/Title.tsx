@@ -6,6 +6,7 @@ import SyncIndicator from '@/components/editor/SyncIndicator';
 export interface TitleDataInterface {
   title: string;
   subtitle: string;
+  updatedAt?: Date;
 }
 
 interface TitleProps {
@@ -37,6 +38,7 @@ export function Title({
   const [isEditingSubtitle, setIsEditingSubtitle] = useState(false);
   const [localTitle, setLocalTitle] = useState(title);
   const [localSubtitle, setLocalSubtitle] = useState(subtitle || '');
+  const [localUpdatedAt, setLocalUpdatedAt] = useState(updatedAt);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLHeadingElement>(null);
   const syncTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -50,26 +52,18 @@ export function Title({
     const data: TitleDataInterface = {
       title: newTitle,
       subtitle: newSubtitle,
+      updatedAt: new Date(),
     };
 
+    setLocalUpdatedAt(data.updatedAt);
     onChange(data);
 
   }, [onChange, chapterId]);
 
   const triggerSync = useCallback(() => {
-
-    const newTitle = titleRef.current?.textContent || localTitle;
-    const newSubtitle = subtitleRef.current?.textContent || localSubtitle;
-
-    const data: TitleDataInterface = {
-      title: newTitle,
-      subtitle: newSubtitle,
-    };
-
-    onChange(data);
+    triggerLocalSave();
     setTimeout(onSync, 500);
-    
-  }, [onChange, onSync, chapterId]);
+  }, [onSync, chapterId]);
 
   const debouncedInput = useCallback(() => {
     if (syncTimerRef.current) {
@@ -88,6 +82,9 @@ export function Title({
     };
   }, []);
 
+  useEffect(() => {
+    setLocalUpdatedAt(updatedAt);
+  }, [updatedAt]);
 
   // # ======================================================
 
@@ -174,9 +171,9 @@ export function Title({
     <div
       className={`${
         isMainTitle
-          ? 'bg-slate-200 p-6 mb-6 rounded-lg'
-          : 'bg-slate-100 p-4 mb-3 rounded-md'
-      } shadow-sm`}
+          ? 'p-6 mb-6 rounded-lg'
+          : 'p-4 mb-3 rounded-md'
+      } bg-slate-100 shadow-sm`}
     >
       <div className="flex items-center gap-2">
         <h1
@@ -225,9 +222,9 @@ export function Title({
               Created: {createdAt.toLocaleDateString()}
             </span>
           )}
-          {updatedAt && (
+          {localUpdatedAt && ( 
             <span className="ml-2">
-              Updated: {updatedAt.toLocaleDateString()}
+              Updated: {localUpdatedAt.toLocaleDateString()}
             </span>
           )}
         </div>

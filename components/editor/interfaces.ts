@@ -18,7 +18,7 @@ export interface ChapterInterface {
   documentId: string;
   index: number;
   title: string;
-  paragraphs: ParagraphInterface[];
+  paragraphs?: ParagraphInterface[];
   subtitle: string;
   createdAt: Date;
   updatedAt: Date;
@@ -39,7 +39,7 @@ export interface DocumentInterface {
   updatedAt: Date;
   version: number;
   sync: boolean;
-  chapters: ChapterInterface[];
+  chapters?: ChapterInterface[];
   metadata?: {
     tags?: string[];
     status?: 'draft' | 'active' | 'archived';

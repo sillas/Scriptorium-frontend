@@ -12,8 +12,8 @@ import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import {
   DocumentInterface, 
-  ParagraphInterface,
-  // ChapterInterface
+  ChapterInterface
+  // ParagraphInterface,
 } from '@/components/editor/interfaces';
 import { useSync } from '@/hooks/useSync';
 
@@ -41,80 +41,97 @@ export function EditorClient({
   }, [theDocument]);
 
   // Handle Ctrl+S for manual sync
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        manualSync();
-      }
-    };
+  // useEffect(() => {
+  //   const handleKeyDown = (e: KeyboardEvent) => {
+  //     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+  //       e.preventDefault();
+  //       manualSync();
+  //     }
+  //   };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [manualSync]);
+  //   window.addEventListener('keydown', handleKeyDown);
+  //   return () => window.removeEventListener('keydown', handleKeyDown);
+  // }, [manualSync]);
 
-  // Sync handlers
+  // handlers
   const handleDocumentLocalSave = useCallback((
-    data: TitleDataInterface,
-    isNew: boolean = false
+    data: TitleDataInterface
   ) => {
 
-    console.log('Save Local Doc data: ', isNew);
-    
-    const toSave: TitleDataInterface & { id: string; sync: boolean, updatedAt: Date } = {
-      id: localDocument.id,
+    const toSave: DocumentInterface = {
+      ...localDocument,
+      ...data,
       updatedAt: new Date(),
-      sync: false,
-      ...data
+      sync: false
     }
 
-    saveLocal('document', toSave);
+    const { chapters, ...toSaveLocal } = toSave;
+    saveLocal('document', toSaveLocal);
   }, [saveLocal]);
 
-  // const handleChapterTitleSync = useCallback((
-  //   data: TitleDataInterface, 
+  const handleChapterLocalSave = useCallback((
+    chapter: ChapterInterface,
+    data: TitleDataInterface | {} = {},
+  ) => {
+
+    const toSave: ChapterInterface = {
+      ...chapter,
+      ...data,
+      sync: false,
+    }
+    
+    if( !(data as TitleDataInterface).updatedAt ) {
+      toSave.updatedAt = new Date();
+    }
+    
+    console.log('Save local chapter: ', toSave);
+    saveLocal('chapter', toSave);
+
+  }, [saveLocal]);
+
+  // const handleParagraphSync = useCallback((
+  //   data: ParagraphInterface, 
   //   isNew: boolean = false
   // ) => {
-  //   console.log('Sync chap data: ', data, isNew);
-  //   // saveLocal('chapter', data, isNew);
+  //   // saveLocal('paragraph', data, isNew);
+  //   console.log('Sync par data: ', data, isNew);
   // }, [saveLocal]);
 
-  const handleParagraphSync = useCallback((
-    data: ParagraphInterface, 
-    isNew: boolean = false
-  ) => {
-    // saveLocal('paragraph', data, isNew);
-    console.log('Sync par data: ', data, isNew);
-  }, [saveLocal]);
-
   // Add new chapter when newChapter is true
-  // useEffect(() => {
-  //   if (newChapter) {
-  //     const now = new Date();
-  //     const lastIndex = localChapters.length > 0 
-  //       ? Math.max(...localChapters.map(ch => ch.index))
-  //       : 0;
+  useEffect(() => {
+    if (newChapter) {
+
+      const documentUpdated = { ...localDocument };
+      const now = new Date();
+      const lastIndex = documentUpdated.chapters!.length > 0 
+        ? Math.max(...documentUpdated.chapters!.map(ch => ch.index))
+        : 0;
       
-  //     const newChapterData: ChapterInterface = {
-  //       id: `temp-${Date.now()}`,
-  //       documentId: localDocument.id,
-  //       index: lastIndex + 1,
-  //       title: "",
-  //       subtitle: "",
-  //       createdAt: now,
-  //       updatedAt: now,
-  //       sync: false,
-  //       version: 1,
-  //       metadata: {
-  //         wordCount: 0,
-  //       },
-  //     };
+      const newChapterData: ChapterInterface = {
+        id: `temp-${Date.now()}`,
+        documentId: documentUpdated.id,
+        index: lastIndex + 1,
+        title: "",
+        subtitle: "",
+        paragraphs: [],
+        createdAt: now,
+        updatedAt: now,
+        sync: false,
+        version: 1,
+        metadata: {
+          wordCount: 0,
+        },
+      };
+
+      documentUpdated.chapters!.push(newChapterData);
+      setLocalDocument(documentUpdated);
+      handleChapterLocalSave(newChapterData);
+
+      // saveLocal('chapter', newChapterData, true);
       
-  //     setLocalChapters([...localChapters, newChapterData]);
-  //     handleChapterTitleSync(newChapterData, true);
-  //     setNewChapter(false);
-  //   }
-  // }, [newChapter, localChapters, localDocument.id]);
+      setNewChapter(false);
+    }
+  }, [newChapter, localDocument.id]);
 
   // Add new paragraph when newParagraph is set with chapterId
   // useEffect(() => {
@@ -161,7 +178,7 @@ export function EditorClient({
         <SideColumn side="left">
           <div className="text-sm text-slate-200">
             <Contents
-                chapters={localDocument.chapters.map((ch) => ({
+                chapters={localDocument.chapters!.map((ch) => ({
                   id: ch.id,
                   index: ch.index,
                   title: ch.title === '' ? 'Insert a Title' : ch.title,
@@ -172,7 +189,7 @@ export function EditorClient({
 
         {/* Coluna Central */}
         <main
-          className={`bg-slate-500 flex-1 transition-all duration-300 ease-in-out p-4 overflow-y-auto`}
+          className={`bg-slate-200 flex-1 transition-all duration-300 ease-in-out p-4 overflow-y-auto`}
         >
           {/* Sync Status Indicator */}
           {syncStatus.pendingItems > 0 && (
@@ -197,27 +214,27 @@ export function EditorClient({
           />
           
           {/* Chapters with Titles and Paragraphs */}
-          {localDocument.chapters.map((chapter) => (
+          {localDocument.chapters!.map((chapter) => (
             <Chapter key={chapter.id} id={chapter.id}>
               <Title
                 title={chapter.title === '' ? 'Insert a Title' : chapter.title}
                 subtitle={chapter.subtitle === '' ? 'Add a subtitle' : chapter.subtitle}
                 chapterId={chapter.id}
                 onSync={() => console.log('onSync chapter title')}
-                onChange={(dt, isNew) => console.log('Chapter title changed: ', dt, isNew)}
+                onChange={ data => handleChapterLocalSave(chapter, data) }
                 isSynced={chapter.sync}
                 isOnline={isOnline}
                 version={chapter.version}
                 createdAt={chapter.createdAt}
                 updatedAt={chapter.updatedAt}
               />
-              {chapter.paragraphs
+              {chapter.paragraphs!
                 .map((paragraph) => (
                   <Paragraph
                     key={paragraph.id}
                     paragraph={paragraph}
                     onTextChange={(newText) => {}}
-                    onSync={handleParagraphSync}
+                    onSync={() => console.log('onSync paragraph')}
                     isOnline={isOnline}
                   />
                 ))}
