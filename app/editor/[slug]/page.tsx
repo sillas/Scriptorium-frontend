@@ -7,20 +7,20 @@ import {
   convertMongoChapters,
   convertMongoParagraphs
 } from '@/components/editor/conversions';
+import { MongoChapterInterface, MongoDocumentInterface, MongoParagraphInterface } from '@/components/editor/interfaces';
 
 
+/**
+ * Generates metadata for the document editor page
+ * Converts the slug into a human-readable title for SEO purposes
+ */
 export async function generateMetadata({
   params
 }: {
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params;
-  
-  // Formata o slug para um título mais legível
-  const title = slug
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  const title = formatSlugToTitle(slug);
   
   return {
     title: `${title} - Editor`,
@@ -28,43 +28,79 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * Converts a kebab-case slug to Title Case
+ * @example "hello-world" -> "Hello World"
+ */
+function formatSlugToTitle(slug: string): string {
+  return slug
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+// Database collection names
+const COLLECTIONS = {
+  DOCUMENTS: 'documents',
+  CHAPTERS: 'chapters',
+  PARAGRAPHS: 'paragraphs',
+} as const;
+
+/**
+ * Server component for the document editor page
+ * Fetches document data from MongoDB and renders the editor client
+ */
 export default async function Editor({
   params
 }: {
   params: Promise<{ slug: string }>
 }) {
-
   const { slug } = await params;
   const db = await getDatabase();
 
   // Fetch main document
-  const mongoDocument = await db.collection('documents')
-    .findOne({ slug })
+  const mongoDocument = await db
+    .collection(COLLECTIONS.DOCUMENTS)
+    .findOne({ slug });
 
   if (!mongoDocument) {
     notFound();
   }
 
-  // Fetch related chapters and paragraphs
+  // Fetch related chapters and paragraphs in parallel for better performance
   const [mongoChapters, mongoParagraphs] = await Promise.all([
-      db.collection('chapters')
-        .find({documentId: mongoDocument._id})
-        .sort({ index: 1 }).toArray(),
-      db.collection('paragraphs')
-        .find({documentId: mongoDocument._id})
-        .sort({ index: 1 }).toArray()
+    db.collection(COLLECTIONS.CHAPTERS)
+      .find({ documentId: mongoDocument._id })
+      .sort({ index: 1 })
+      .toArray(),
+    db.collection(COLLECTIONS.PARAGRAPHS)
+      .find({ documentId: mongoDocument._id })
+      .sort({ index: 1 })
+      .toArray(),
   ]);
 
   // Convert MongoDB documents to application interfaces
-  const document = convertMongoDocument(mongoDocument)
-  const chapters = convertMongoChapters(mongoChapters)
-  const paragraphs = convertMongoParagraphs(mongoParagraphs)
+  // Order matters: paragraphs first, then chapters (which need paragraphs), then document
+  const paragraphs = convertMongoParagraphs(
+    mongoParagraphs as unknown as MongoParagraphInterface[]
+  );
   
+  const chapters = convertMongoChapters(
+    mongoChapters as unknown as MongoChapterInterface[],
+    paragraphs
+  );
 
-  return <EditorClient 
-    slug={slug}
-    textDocument={document}
-    chapters={chapters}
-    paragraphs={paragraphs}
-  />;
+  const document = convertMongoDocument(
+    mongoDocument as unknown as MongoDocumentInterface
+  );
+
+  // Attach chapters to document
+  document.chapters = chapters;
+  
+  return (
+    <EditorClient 
+      slug={slug}
+      theDocument={document}
+    />
+  );
 }

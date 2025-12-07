@@ -1,16 +1,25 @@
 import { 
-  TextDocumentInterface, 
+  DocumentInterface, 
+  ChapterInterface,
   ParagraphInterface, 
-  ChapterInterface
+  MongoDocumentInterface,
+  MongoChapterInterface,
+  MongoParagraphInterface
 } from '@/components/editor/interfaces';
 
-export function convertMongoDocument(mongoDoc: any): TextDocumentInterface {
-    return {
+
+export function convertMongoDocument(
+  mongoDoc: MongoDocumentInterface
+): DocumentInterface {
+
+  return {
         id: mongoDoc._id.toString(),
         title: mongoDoc.title,
         slug: mongoDoc.slug,
         subtitle: mongoDoc.subtitle || '',
-        author: mongoDoc.author,
+        author: mongoDoc.author || '',
+        chapters: [],
+        sync: true,
         createdAt: new Date(mongoDoc.createdAt),
         updatedAt: new Date(mongoDoc.updatedAt),
         version: mongoDoc.version,
@@ -21,13 +30,20 @@ export function convertMongoDocument(mongoDoc: any): TextDocumentInterface {
     };
 }
 
-export function convertMongoChapters(mongoChapters: any[]): ChapterInterface[] {
+
+export function convertMongoChapters(
+  mongoChapters: MongoChapterInterface[],
+  mongoParagraphs: ParagraphInterface[]
+): ChapterInterface[] {
+
   return mongoChapters.map((chapter) => ({
     id: chapter._id.toString(),
     index: chapter.index,
     documentId: chapter.documentId.toString(),
     title: chapter.title,
     subtitle: chapter.subtitle || '',
+    paragraphs: mongoParagraphs.filter(p => p.chapterId === chapter._id.toString()),
+    sync: true,
     createdAt: new Date(chapter.createdAt),
     updatedAt: new Date(chapter.updatedAt),
     version: chapter.version,
@@ -37,7 +53,10 @@ export function convertMongoChapters(mongoChapters: any[]): ChapterInterface[] {
   }));
 }
 
-export function convertMongoParagraphs(mongoParagraphs: any[]): ParagraphInterface[] {
+export function convertMongoParagraphs(
+  mongoParagraphs: MongoParagraphInterface[]
+): ParagraphInterface[] {
+
   return mongoParagraphs.map((paragraph) => ({
     id: paragraph._id.toString(),
     documentId: paragraph.documentId.toString(),
@@ -48,8 +67,7 @@ export function convertMongoParagraphs(mongoParagraphs: any[]): ParagraphInterfa
     updatedAt: new Date(paragraph.updatedAt),
     version: paragraph.version,
     metadata: {
-      characterCount: paragraph.metadata?.characterCount || 0,
-      author: paragraph.metadata?.author || 'No Author',
+      characterCount: paragraph.metadata?.characterCount || 0
     },
   }));
 }
