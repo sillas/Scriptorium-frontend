@@ -66,6 +66,7 @@ export function convertMongoParagraphs(
     createdAt: new Date(paragraph.createdAt),
     updatedAt: new Date(paragraph.updatedAt),
     version: paragraph.version,
+    sync: true,
     metadata: {
       characterCount: paragraph.metadata?.characterCount || 0
     },
