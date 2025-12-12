@@ -11,7 +11,7 @@ export interface ParagraphDataInterface {
 interface ParagraphProps {
   paragraph: ParagraphInterface;
   onChange: (updatedText: ParagraphDataInterface) => void;
-  onSync?: (data: any, isNew?: boolean) => void;
+  onSync: () => void;
   isOnline?: boolean;
 }
 
@@ -26,10 +26,6 @@ export function Paragraph({
   const [localText, setLocalText] = useState(paragraph.text);
   const paragraphRef = useRef<HTMLDivElement>(null);
   const syncTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    setLocalText(paragraph.text);
-  }, []);
 
   const triggerLocalSave = useCallback(() => {
     const newText = paragraphRef.current?.textContent || localText;
@@ -50,6 +46,7 @@ export function Paragraph({
     }
     syncTimerRef.current = setTimeout(triggerLocalSave, 700);
   }, [triggerLocalSave]);
+
 
   useEffect(() => {
     return () => {

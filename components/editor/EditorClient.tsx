@@ -107,7 +107,8 @@ export function EditorClient({
     saveLocal('paragraph', localParagraph);    
   }, [saveLocal]);
 
-  // Add new chapter when newChapter is true
+
+  // Add new chapter when newChapter is set
   useEffect(() => {
     if (newChapter) {
 
@@ -139,7 +140,7 @@ export function EditorClient({
     }
   }, [newChapter, localDocument.id]);
 
-  // Add new paragraph when newParagraph is set with chapterId
+  // Add new paragraph when newParagraph is set with a chapter
   useEffect(() => {
     if (newParagraph) {
 
