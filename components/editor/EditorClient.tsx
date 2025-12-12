@@ -12,8 +12,8 @@ import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import {
   DocumentInterface, 
-  ChapterInterface
-  // ParagraphInterface,
+  ChapterInterface,
+  ParagraphInterface,
 } from '@/components/editor/interfaces';
 import { useSync } from '@/hooks/useSync';
 
@@ -26,7 +26,7 @@ export function EditorClient({
 }) {
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(theDocument);
   const [newChapter, setNewChapter] = useState(false);
-  const [newParagraph, setNewParagraph] = useState<string | null>(null);
+  const [newParagraph, setNewParagraph] = useState<ChapterInterface | null>(null);
   
   // Sync hook
   const { saveLocal } = useLocalStorage();
@@ -89,13 +89,19 @@ export function EditorClient({
 
   }, [saveLocal]);
 
-  // const handleParagraphSync = useCallback((
-  //   data: ParagraphInterface, 
-  //   isNew: boolean = false
-  // ) => {
-  //   // saveLocal('paragraph', data, isNew);
-  //   console.log('Sync par data: ', data, isNew);
-  // }, [saveLocal]);
+  const handleParagraphLocalSave = useCallback((
+    paragraph: ParagraphInterface,
+    textData: {text: string, updatedAt: Date} | null = null,
+  ) => {
+
+    if( textData !== null) {
+      paragraph.updatedAt = textData.updatedAt;
+      paragraph.text = textData.text; 
+    }
+
+    saveLocal('paragraph', paragraph);
+
+  }, [saveLocal]);
 
   // Add new chapter when newChapter is true
   useEffect(() => {
@@ -125,44 +131,49 @@ export function EditorClient({
       setLocalDocument(documentUpdated);
       handleChapterLocalSave(newChapterData);
 
-      // saveLocal('chapter', newChapterData, true);
-      
       setNewChapter(false);
     }
   }, [newChapter, localDocument.id]);
 
   // Add new paragraph when newParagraph is set with chapterId
-  // useEffect(() => {
-  //   if (newParagraph) {
+  useEffect(() => {
+    if (newParagraph) {
 
-  //     const now = new Date();
-  //     const chapterParagraphs = localParagraphs.filter(p => p.chapterId === newParagraph);
-  //     const lastIndex = chapterParagraphs.length > 0
-  //       ? Math.max(...chapterParagraphs.map(p => p.index))
-  //       : 0;
+      const documentUpdated = { ...localDocument };
+      const thisChapter = {...newParagraph}
+      const chapterParagraphs = thisChapter.paragraphs ?? [];
       
-  //     const newParagraphData: ParagraphInterface = {
-  //       id: `temp-${Date.now()}`,
-  //       documentId: localDocument.id,
-  //       chapterId: newParagraph,
-  //       index: lastIndex + 1,
-  //       text: "Insert your text here",
-  //       createdAt: now,
-  //       updatedAt: now,
-  //       version: 1,
-  //       metadata: {
-  //         characterCount: 0,
-  //       },
-  //     };
+      const lastIndex = chapterParagraphs.length > 0
+        ? Math.max(...chapterParagraphs.map(p => p.index))
+        : 0;
       
-  //     setLocalParagraphs([...localParagraphs, newParagraphData]);
-      
-  //     // Save to IndexedDB and queue for sync when user starts editing
-  //     handleParagraphSync(newParagraphData, true);
-      
-  //     setNewParagraph(null);
-  //   }
-  // }, [newParagraph, localParagraphs, localDocument.id]);
+      const now = new Date();
+      const newParagraphData: ParagraphInterface = {
+        id: `temp-${Date.now()}`,
+        documentId: localDocument.id,
+        chapterId: thisChapter.id,
+        index: lastIndex + 1,
+        text: "Insert your text here",
+        createdAt: now,
+        updatedAt: now,
+        version: 1,
+        characterCount: 0,
+        wordCount: 0,
+        sync: false,
+      };
+
+      thisChapter.paragraphs = [...chapterParagraphs, newParagraphData];
+  
+      handleParagraphLocalSave(newParagraphData);
+
+      documentUpdated.chapters = documentUpdated.chapters!.map(ch => 
+        ch.id === thisChapter.id ? thisChapter : ch
+      );
+
+      setLocalDocument(documentUpdated);
+      setNewParagraph(null);
+    }
+  }, [newParagraph, localDocument.id]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
@@ -226,8 +237,7 @@ export function EditorClient({
                 createdAt={chapter.createdAt}
                 updatedAt={chapter.updatedAt}
               />
-              {chapter.paragraphs!
-                .map((paragraph) => (
+              {chapter.paragraphs!.map((paragraph) => (
                   <Paragraph
                     key={paragraph.id}
                     paragraph={paragraph}
@@ -237,7 +247,7 @@ export function EditorClient({
                   />
                 ))}
               {/* Add Paragraph Button */}
-              <AddButton type="paragraph" onClick={() => setNewParagraph(chapter.id)} />
+              <AddButton type="paragraph" onClick={() => setNewParagraph(chapter)} />
             </Chapter>
           ))}
           

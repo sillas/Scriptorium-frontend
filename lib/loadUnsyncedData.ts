@@ -34,13 +34,12 @@ const proccessChapters = (
     textDocument: DocumentInterface,
     unsyncedChapters: ChapterInterface[]
 ) => {
-    console.log('Unsynced Chapters:', unsyncedChapters);
     const updatedChapters = [...textDocument.chapters!];
 
     unsyncedChapters.forEach((unsyncedChapter: ChapterInterface) => {
         proccessChapter(unsyncedChapter, updatedChapters)
     })
-
+    
     textDocument.chapters = updatedChapters;
 }
 
@@ -85,13 +84,13 @@ const processParagraphs = (
     chapter: ChapterInterface,
     unsyncedParagraph: ParagraphInterface[]) => {
 
-    console.log('Unsynced Paragraphs:', unsyncedParagraph);
+    const updatedParagraphs = [...chapter.paragraphs ?? []];
 
-    const updatedParagraphs = [...chapter.paragraphs!];
-
-    unsyncedParagraph.forEach((unsyncedParagraph: ParagraphInterface) => {
-        processParagraph(unsyncedParagraph, updatedParagraphs)
-    });
+    if( unsyncedParagraph.length > 0 ) {
+        unsyncedParagraph.forEach((unsyncedParagraph: ParagraphInterface) => {
+            processParagraph(unsyncedParagraph, updatedParagraphs)
+        });
+    }
 
     chapter.paragraphs = updatedParagraphs;
 }
@@ -111,20 +110,18 @@ export const loadUnsyncedData = async (
         
         // Create a working copy of the document
         let updatedDocument = { ...textDocument };
-
+    
         if (unsyncedChapters.length > 0) {
             proccessChapters(updatedDocument, unsyncedChapters)
         }
-
-        if (unsyncedParagraphs.length > 0) {
-            updatedDocument.chapters!.forEach(chapter => {
-                processParagraphs(
-                    chapter,
-                    unsyncedParagraphs.filter(p => p.chapterId === chapter.id)
-                )
-            })
-        }
-
+                
+        updatedDocument.chapters!.forEach(chapter => {
+            processParagraphs(
+                chapter,
+                unsyncedParagraphs.filter(p => p.chapterId === chapter.id)
+            )
+        })
+        
         if (unsyncedDocument) {
             // Merge document properties with unsynced version from IndexedDB
             updatedDocument = {
@@ -133,7 +130,6 @@ export const loadUnsyncedData = async (
             };
         }
         
-        console.log(updatedDocument.updatedAt);
         setLocalDocument(updatedDocument);
         console.log('=====================================');
         

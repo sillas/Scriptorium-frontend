@@ -66,9 +66,7 @@ export interface MongoChapterInterface {
   createdAt: string;
   updatedAt: string;
   version: number;
-  metadata?: {
-    wordCount: number;
-  };
+  wordCount: number;
 }
 
 export interface MongoParagraphInterface {
@@ -80,7 +78,6 @@ export interface MongoParagraphInterface {
   createdAt: string;
   updatedAt: string;
   version: number;
-  metadata?: {
-    characterCount: number
-  };
+  characterCount: number;
+  wordCount: number;
 }

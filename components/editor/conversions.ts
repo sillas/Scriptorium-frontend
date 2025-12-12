@@ -47,9 +47,7 @@ export function convertMongoChapters(
     createdAt: new Date(chapter.createdAt),
     updatedAt: new Date(chapter.updatedAt),
     version: chapter.version,
-    metadata: {
-      wordCount: chapter.metadata?.wordCount || 0,
-    },
+    wordCount: chapter.wordCount || 0
   }));
 }
 
@@ -67,8 +65,7 @@ export function convertMongoParagraphs(
     updatedAt: new Date(paragraph.updatedAt),
     version: paragraph.version,
     sync: true,
-    metadata: {
-      characterCount: paragraph.metadata?.characterCount || 0
-    },
+    characterCount: paragraph.characterCount || 0,
+    wordCount: paragraph.wordCount || 0
   }));
 }
