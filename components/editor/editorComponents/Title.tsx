@@ -171,7 +171,7 @@ export function Title({
         isMainTitle
           ? 'p-6 mb-6 rounded-lg'
           : 'p-4 mb-3 rounded-md'
-      } bg-slate-100 shadow-sm`}
+      } bg-slate-100 ${isEditingTitle || isEditingSubtitle ? 'shadow-sm' : ''}`}
     >
       <div className="flex items-center gap-2">
         <h1
@@ -186,7 +186,7 @@ export function Title({
             isMainTitle
               ? 'text-3xl font-bold text-slate-900'
               : 'text-xl font-semibold text-slate-800'
-          } ${isEditingTitle ? 'outline outline-2 outline-blue-500 rounded px-1' : 'cursor-pointer'} flex-1`}
+          } ${isEditingTitle ? 'rounded px-1' : 'cursor-pointer'} flex-1 outline-none`}
         >
           {title}
         </h1>
@@ -206,7 +206,7 @@ export function Title({
               isMainTitle
                 ? 'text-lg text-slate-600 mt-2'
                 : 'text-sm text-slate-600 mt-1'
-            } ${isEditingSubtitle ? 'outline outline-2 outline-blue-500 rounded px-1' : 'cursor-pointer'} flex-1`}
+            } ${isEditingSubtitle ? 'rounded px-1' : 'cursor-pointer'} flex-1 outline-none`}
           >
             {subtitle}
           </h2>

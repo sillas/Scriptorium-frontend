@@ -91,7 +91,7 @@ export function Paragraph({
   };
 
   return (
-    <div className="bg-slate-50 rounded-md p-3 mb-2 shadow-sm text-slate-800 relative group">
+    <div className={`${isEditing ? 'shadow-sm' : ''} rounded-md p-3 mb-2 text-slate-800 relative group`}>
       <div
         ref={paragraphRef}
         contentEditable={isEditing}
@@ -102,9 +102,9 @@ export function Paragraph({
         onKeyDown={handleKeyDown}
         className={`${
           isEditing
-            ? 'outline outline-2 outline-blue-500 rounded px-1'
+            ? 'rounded px-1'
             : 'cursor-pointer'
-        } min-h-[1.5rem]`}
+        } min-h-[1.5rem] outline-none`}
       >
         {paragraph.text}
       </div>
