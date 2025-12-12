@@ -84,8 +84,8 @@ export function EditorClient({
       toSave.updatedAt = new Date();
     }
     
-    console.log('Save local chapter: ', toSave);
-    saveLocal('chapter', toSave);
+    const { paragraphs, ...toSaveLocal } = toSave;
+    saveLocal('chapter', toSaveLocal);
 
   }, [saveLocal]);
 
@@ -118,9 +118,7 @@ export function EditorClient({
         updatedAt: now,
         sync: false,
         version: 1,
-        metadata: {
-          wordCount: 0,
-        },
+        wordCount: 0
       };
 
       documentUpdated.chapters!.push(newChapterData);
@@ -233,7 +231,7 @@ export function EditorClient({
                   <Paragraph
                     key={paragraph.id}
                     paragraph={paragraph}
-                    onTextChange={(newText) => {}}
+                    onChange={(newText) => console.log('Paragraph changed:', newText) }
                     onSync={() => console.log('onSync paragraph')}
                     isOnline={isOnline}
                   />

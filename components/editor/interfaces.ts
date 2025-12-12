@@ -8,10 +8,8 @@ export interface ParagraphInterface {
   updatedAt: Date;
   version: number;
   sync: boolean;
-  metadata?: {
-    characterCount?: number;
-    author?: string;
-  };
+  characterCount: number;
+  wordCount: number;
 }
 export interface ChapterInterface {
   id: string;
@@ -24,9 +22,7 @@ export interface ChapterInterface {
   updatedAt: Date;
   version: number;
   sync: boolean;
-  metadata?: {
-    wordCount?: number;
-  };
+  wordCount: number;
 }
 
 export interface DocumentInterface {

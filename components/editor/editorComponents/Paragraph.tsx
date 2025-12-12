@@ -2,23 +2,18 @@
 
 import { useRef, useState, useCallback, useEffect } from 'react';
 import SyncIndicator from '@/components/editor/SyncIndicator';
+import { ParagraphInterface } from '@/components/editor/interfaces';
 
-interface ParagraphInterface {
-  id: string;
-  documentId: string;
-  chapterId: string;
-  text: string;
-}
 interface ParagraphProps {
   paragraph: ParagraphInterface;
-  onTextChange?: (newText: string) => void;
+  onChange?: (newText: string) => void;
   onSync?: (data: any, isNew?: boolean) => void;
   isOnline?: boolean;
 }
 
 export default function Paragraph({
   paragraph,
-  onTextChange,
+  onChange,
   onSync,
   isOnline = true,
 }: ParagraphProps) {
@@ -79,8 +74,8 @@ export default function Paragraph({
       const newText = paragraphRef.current.textContent || '';
       if (newText !== localText) {
         setLocalText(newText);
-        if (onTextChange) {
-          onTextChange(newText);
+        if (onChange) {
+          onChange(newText);
         }
         triggerSync(); // Sync immediately on blur
       }
