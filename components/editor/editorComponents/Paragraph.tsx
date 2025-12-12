@@ -1,59 +1,55 @@
 'use client';
 
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect, use } from 'react';
 import SyncIndicator from '@/components/editor/SyncIndicator';
 import { ParagraphInterface } from '@/components/editor/interfaces';
 
+export interface ParagraphDataInterface {
+  text: string;
+  updatedAt: Date;
+}
 interface ParagraphProps {
   paragraph: ParagraphInterface;
-  onChange?: (newText: string) => void;
+  onChange: (updatedText: ParagraphDataInterface) => void;
   onSync?: (data: any, isNew?: boolean) => void;
   isOnline?: boolean;
 }
 
-export default function Paragraph({
+export function Paragraph({
   paragraph,
   onChange,
   onSync,
   isOnline = true,
 }: ParagraphProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [isSynced, setIsSynced] = useState(true);
+  const [isSynced, setIsSynced] = useState(paragraph.sync);
   const [localText, setLocalText] = useState(paragraph.text);
   const paragraphRef = useRef<HTMLDivElement>(null);
   const syncTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Trigger sync after changes
-  const triggerSync = useCallback(() => {
-    if (onSync && paragraph.id && paragraph.chapterId && paragraph.documentId) {
-      const data = {
-        id: paragraph.id,
-        documentId: paragraph.documentId,
-        chapterId: paragraph.chapterId,
-        text: localText,
-        updatedAt: new Date(),
-        metadata: {
-          characterCount: localText.length,
-        },
-      };
-      
-      onSync(data, false);
-      setIsSynced(true);
-    }
-  }, [onSync, paragraph.id, paragraph.chapterId, paragraph.documentId, localText]);
+  useEffect(() => {
+    setLocalText(paragraph.text);
+  }, []);
+
+  const triggerLocalSave = useCallback(() => {
+    const newText = paragraphRef.current?.textContent || localText;
+
+    const data: ParagraphDataInterface = {
+      text: newText,
+      updatedAt: new Date(),
+    };
+
+    onChange(data);
+  }, [localText, onChange]);
+
 
   // Debounced sync on input
-  const debouncedSync = useCallback(() => {
-    setIsSynced(false);
-    
+  const debouncedInput = useCallback(() => {    
     if (syncTimerRef.current) {
       clearTimeout(syncTimerRef.current);
     }
-    
-    syncTimerRef.current = setTimeout(() => {
-      triggerSync();
-    }, 500); // Sync after 500ms of no changes
-  }, [triggerSync]);
+    syncTimerRef.current = setTimeout(triggerLocalSave, 700);
+  }, [triggerLocalSave]);
 
   useEffect(() => {
     return () => {
@@ -74,10 +70,9 @@ export default function Paragraph({
       const newText = paragraphRef.current.textContent || '';
       if (newText !== localText) {
         setLocalText(newText);
-        if (onChange) {
-          onChange(newText);
-        }
-        triggerSync(); // Sync immediately on blur
+        onChange({ text: newText, updatedAt: new Date() });
+
+        setIsSynced(true);
       }
     }
   };
@@ -86,7 +81,7 @@ export default function Paragraph({
     if (paragraphRef.current) {
       const newText = paragraphRef.current.textContent || '';
       setLocalText(newText);
-      debouncedSync();
+      debouncedInput();
     }
   };
 
@@ -116,11 +111,11 @@ export default function Paragraph({
       >
         {paragraph.text}
       </div>
-      {isEditing && (
-        <div className="absolute top-1 right-2">
-          <SyncIndicator isSynced={isSynced} isOnline={isOnline} />
-        </div>
-      )}
+    
+      <div className="absolute top-1 right-2">
+        <SyncIndicator isSynced={isSynced} isOnline={isOnline} />
+      </div>
+
     </div>
   );
 }

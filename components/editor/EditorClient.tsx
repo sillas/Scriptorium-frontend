@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import EditorHeader from '@/components/editor/Header';
 import { Title, TitleDataInterface } from '@/components/editor/editorComponents/Title';
 import Chapter from '@/components/editor/editorComponents/Chapter';
-import Paragraph from '@/components/editor/editorComponents/Paragraph';
+import { Paragraph, ParagraphDataInterface } from '@/components/editor/editorComponents/Paragraph';
 import Contents from '@/components/editor/editorComponents/Contents';
 import AddButton from '@/components/editor/editorComponents/AddButton';
 import SideColumn from '@/components/editor/columns/SideColumn';
@@ -91,16 +91,20 @@ export function EditorClient({
 
   const handleParagraphLocalSave = useCallback((
     paragraph: ParagraphInterface,
-    textData: {text: string, updatedAt: Date} | null = null,
+    textData: ParagraphDataInterface | null = null,
   ) => {
 
-    if( textData !== null) {
-      paragraph.updatedAt = textData.updatedAt;
-      paragraph.text = textData.text; 
+    const localParagraph: ParagraphInterface = {
+      ...paragraph,
+      sync: false,
     }
 
-    saveLocal('paragraph', paragraph);
+    if( textData !== null) {
+      localParagraph.updatedAt = textData.updatedAt;
+      localParagraph.text = textData.text; 
+    }
 
+    saveLocal('paragraph', localParagraph);    
   }, [saveLocal]);
 
   // Add new chapter when newChapter is true
@@ -241,7 +245,7 @@ export function EditorClient({
                   <Paragraph
                     key={paragraph.id}
                     paragraph={paragraph}
-                    onChange={(newText) => console.log('Paragraph changed:', newText) }
+                    onChange={(updatedText) => handleParagraphLocalSave(paragraph, updatedText) }
                     onSync={() => console.log('onSync paragraph')}
                     isOnline={isOnline}
                   />

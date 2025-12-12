@@ -69,10 +69,8 @@ export function Title({
     if (syncTimerRef.current) {
       clearTimeout(syncTimerRef.current);
     }
-    syncTimerRef.current = setTimeout(() => {
-      triggerLocalSave();
-    }, 700);
-  }, []);
+    syncTimerRef.current = setTimeout(triggerLocalSave, 700);
+  }, [ triggerLocalSave ]);
 
   useEffect(() => {
     return () => {
