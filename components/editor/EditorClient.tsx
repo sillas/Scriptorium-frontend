@@ -1,21 +1,21 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import EditorHeader from '@/components/editor/Header';
-import { Title, TitleDataInterface } from '@/components/editor/editorComponents/Title';
-import Chapter from '@/components/editor/editorComponents/Chapter';
-import { Paragraph, ParagraphDataInterface } from '@/components/editor/editorComponents/Paragraph';
 import Contents from '@/components/editor/editorComponents/Contents';
-import AddButton from '@/components/editor/editorComponents/AddButton';
+import EditorHeader from '@/components/editor/Header';
 import SideColumn from '@/components/editor/columns/SideColumn';
+import AddButton from '@/components/editor/editorComponents/AddButton';
+import Chapter from '@/components/editor/editorComponents/Chapter';
+import { Title, TitleDataInterface } from '@/components/editor/editorComponents/Title';
+import { Paragraph, ParagraphDataInterface } from '@/components/editor/editorComponents/Paragraph';
 import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useSync } from '@/hooks/useSync';
 import {
   DocumentInterface, 
   ChapterInterface,
   ParagraphInterface,
 } from '@/components/editor/interfaces';
-import { useSync } from '@/hooks/useSync';
 
 export function EditorClient({
   slug,
