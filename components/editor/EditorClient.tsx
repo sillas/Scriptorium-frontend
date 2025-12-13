@@ -6,7 +6,7 @@ import EditorHeader from '@/components/editor/Header';
 import SideColumn from '@/components/editor/columns/SideColumn';
 import AddButton from '@/components/editor/editorComponents/AddButton';
 import Chapter from '@/components/editor/editorComponents/Chapter';
-import { Title, TitleDataInterface } from '@/components/editor/editorComponents/Title';
+import { Title, UpdatedTitleInterface } from '@/components/editor/editorComponents/Title';
 import { Paragraph, ParagraphDataInterface } from '@/components/editor/editorComponents/Paragraph';
 import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -55,7 +55,7 @@ export function EditorClient({
 
   // handlers
   const handleDocumentLocalSave = useCallback((
-    data: TitleDataInterface
+    data: UpdatedTitleInterface
   ) => {
 
     const toSave: DocumentInterface = {
@@ -71,7 +71,7 @@ export function EditorClient({
 
   const handleChapterLocalSave = useCallback((
     chapter: ChapterInterface,
-    data: TitleDataInterface | {} = {},
+    data: UpdatedTitleInterface | {} = {},
   ) => {
 
     const toSave: ChapterInterface = {
@@ -80,7 +80,7 @@ export function EditorClient({
       sync: false,
     }
     
-    if( !(data as TitleDataInterface).updatedAt ) {
+    if( !(data as UpdatedTitleInterface).updatedAt ) {
       toSave.updatedAt = new Date();
     }
     
@@ -225,6 +225,7 @@ export function EditorClient({
             onChange={handleDocumentLocalSave}
             isOnline={isOnline}
             isSynced={localDocument.sync}
+            isMainTitle={true}
           />
           
           {/* Chapters with Titles and Paragraphs */}
@@ -233,11 +234,11 @@ export function EditorClient({
               <Title
                 title={chapter.title === '' ? 'Insert a Title' : chapter.title}
                 subtitle={chapter.subtitle === '' ? 'Add a subtitle' : chapter.subtitle}
-                chapterId={chapter.id}
                 onSync={() => console.log('onSync chapter title')}
                 onChange={ data => handleChapterLocalSave(chapter, data) }
                 isSynced={chapter.sync}
                 isOnline={isOnline}
+                isMainTitle={false}
                 version={chapter.version}
                 createdAt={chapter.createdAt}
                 updatedAt={chapter.updatedAt}
