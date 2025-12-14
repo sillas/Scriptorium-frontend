@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getDatabase } from '@/app/lib/mongodb';
-import { EditorClient } from '@/components/editor/EditorClient';
+import { EditorClientSide } from '@/components/editor/EditorClientSide';
 import { 
   convertMongoDocument,
   convertMongoChapters,
@@ -63,9 +63,7 @@ export default async function Editor({
     .collection(COLLECTIONS.DOCUMENTS)
     .findOne({ slug });
 
-  if (!mongoDocument) {
-    notFound();
-  }
+  if (!mongoDocument) notFound();
 
   // Fetch related chapters and paragraphs in parallel for better performance
   const [mongoChapters, mongoParagraphs] = await Promise.all([
@@ -98,7 +96,7 @@ export default async function Editor({
   document.chapters = chapters;
   
   return (
-    <EditorClient 
+    <EditorClientSide 
       slug={slug}
       theDocument={document}
     />

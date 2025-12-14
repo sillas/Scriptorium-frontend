@@ -17,7 +17,7 @@ import {
   ParagraphInterface,
 } from '@/components/editor/interfaces';
 
-export function EditorClient({
+export function EditorClientSide({
   slug,
   theDocument
 }: {
