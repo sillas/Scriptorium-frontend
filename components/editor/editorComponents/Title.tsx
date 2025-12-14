@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect, use } from 'react';
 import SyncIndicator from '@/components/editor/SyncIndicator';
 
 export interface UpdatedTitleInterface {
@@ -66,19 +66,17 @@ export function Title({
   
   const titleRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLHeadingElement>(null);
-  const syncTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const clearSyncTimer = () => {
-    if (syncTimerRef.current) {
-      clearTimeout(syncTimerRef.current);
-      syncTimerRef.current = null;
-    }
-  }
-
+  const clearDebounceTimer = useCallback(() => {
+    if (!debounceTimerRef.current) return;
+    clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = null;
+  }, []);
 
   useEffect(() => {
-    return () => clearSyncTimer()
-  }, []);
+    return () => clearDebounceTimer()
+  }, [clearDebounceTimer]);
 
 
   useEffect(() => {
@@ -105,58 +103,54 @@ export function Title({
 
   const triggerSync = useCallback(() => {
     triggerLocalSave();
-    setTimeout(onRemoteSync, DEBOUNCE_DELAY_MS);
+    onRemoteSync();
   }, [onRemoteSync, triggerLocalSave]);
 
 
   const debouncedInput = useCallback(() => {
-    clearSyncTimer();
-    syncTimerRef.current = setTimeout(triggerLocalSave, DEBOUNCE_DELAY_MS);
+    clearDebounceTimer();
+    debounceTimerRef.current = setTimeout(triggerLocalSave, DEBOUNCE_DELAY_MS);
   }, [ triggerLocalSave ]);
 
 
-  const stopEditingAndTriggerSync = () => {
-    clearSyncTimer();
+  const stopEditingAndTriggerSync = useCallback(() => {
+    clearDebounceTimer();
     triggerSync();
-  }
+  }, [triggerSync]);
 
-  const shouldStopEditing = (key: string) => ['Tab', 'Enter', 'Escape'].includes(key);
+  const shouldStopEditing = useCallback((key: string) => ['Tab', 'Enter', 'Escape'].includes(key), []);
 
-
-  const handleClick = (itemRef: React.RefObject<HTMLHeadingElement | null>, setEditing: React.Dispatch<React.SetStateAction<boolean>>) => {
+  const handleClick = useCallback((itemRef: React.RefObject<HTMLHeadingElement | null>, setEditing: React.Dispatch<React.SetStateAction<boolean>>) => {
     setEditing(true);
-    setTimeout(() => itemRef.current?.focus(), DEBOUNCE_DELAY_MS);
-  }
+    itemRef.current?.focus();
+  }, []);
 
-  const handleBlur = (setIsEditing: React.Dispatch<React.SetStateAction<boolean>>) => {
+  const handleFinishEditing = useCallback((setIsEditing: React.Dispatch<React.SetStateAction<boolean>>) => {
     stopEditingAndTriggerSync();
     setIsEditing(false);
-  }
+  }, [stopEditingAndTriggerSync]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
-
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLHeadingElement>, setIsEditing: React.Dispatch<React.SetStateAction<boolean>>): boolean => {
     if (!shouldStopEditing(e.key)) return false;
-    
     e.preventDefault();
     stopEditingAndTriggerSync();
+    setIsEditing(false);
     return true
-  };
+  }, [stopEditingAndTriggerSync, shouldStopEditing]);
 
-  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLHeadingElement>) => {
+  const handleTitleKeyDown = useCallback((e: React.KeyboardEvent<HTMLHeadingElement>) => {
 
-    if (!handleKeyDown(e)) return
-    setIsEditingTitle(false);
+    if (!handleKeyDown(e, setIsEditingTitle)) return
 
     if (e.key === 'Tab' && subtitle) {
       setIsEditingSubtitle(true);
-      setTimeout(() => subtitleRef.current?.focus(), DEBOUNCE_DELAY_MS);
+      subtitleRef.current?.focus();
     }
-  };
+  }, [handleKeyDown, subtitle]);
 
-  const handleSubtitleKeyDown = (e: React.KeyboardEvent<HTMLHeadingElement>) => {
-    if (!handleKeyDown(e)) return
-    setIsEditingSubtitle(false);
-  };
+  const handleSubtitleKeyDown = useCallback((e: React.KeyboardEvent<HTMLHeadingElement>) => {
+    handleKeyDown(e, setIsEditingSubtitle)
+  }, [handleKeyDown]);
 
   return (
     <div
@@ -174,7 +168,7 @@ export function Title({
           onClick={() => handleClick(titleRef, setIsEditingTitle)}
           onInput={debouncedInput}
           onKeyDown={handleTitleKeyDown}
-          onBlur={() => handleBlur(setIsEditingTitle)}
+          onBlur={() => handleFinishEditing(setIsEditingTitle)}
           className={`${
             isDocumentTitle
               ? 'text-3xl font-bold text-slate-900'
@@ -194,7 +188,7 @@ export function Title({
             onClick={() => handleClick(subtitleRef, setIsEditingSubtitle)}
             onInput={debouncedInput}
             onKeyDown={handleSubtitleKeyDown}
-            onBlur={() => handleBlur(setIsEditingSubtitle)}
+            onBlur={() => handleFinishEditing(setIsEditingSubtitle)}
             className={`${
               isDocumentTitle
                 ? 'text-lg text-slate-600 mt-2'
