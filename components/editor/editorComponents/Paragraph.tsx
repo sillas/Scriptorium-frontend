@@ -26,6 +26,7 @@ export function Paragraph({
   const DEBOUNCE_DELAY_MS = 700;
   const [isEditing, setIsEditing] = useState(false);
 
+  const previousTextRef = useRef(paragraph.text);
   const paragraphRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -39,19 +40,19 @@ export function Paragraph({
     return () => clearDebounceTimer();
   }, [clearDebounceTimer]);
 
-  const triggerLocalSave = useCallback((): boolean => {
-    if (!paragraphRef.current) return false;
+  const triggerLocalSave = useCallback(() => {
+    if (!paragraphRef || !previousTextRef) return;
 
     const newText = paragraphRef.current?.textContent.trim() || '';
+    if (newText === previousTextRef.current) return;
+
+    previousTextRef.current = newText;
+
     onChange({
       text: newText,
       updatedAt: new Date(),
     });
-    
-    const currentText = paragraph.text.trim();
-    if (newText === currentText) return false;
-    return true;
-  }, [paragraph.text, onChange]);
+  }, [onChange]);
 
 
   const debouncedInput = useCallback(() => {    
@@ -62,7 +63,9 @@ export function Paragraph({
 
   const handleFinishEditing = useCallback(() => {
     setIsEditing(false);
-    if(triggerLocalSave()) onRemoteSync();
+    triggerLocalSave()
+    if(paragraph.sync) return;
+    onRemoteSync();
     paragraphRef.current?.blur();
   }, [onRemoteSync, triggerLocalSave]);
 

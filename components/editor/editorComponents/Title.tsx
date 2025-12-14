@@ -39,7 +39,7 @@ const TitleMetadata = ({version, createdAt, localUpdatedAt}:TitleMetadataInterfa
     )}
     {localUpdatedAt && (
       <span className="ml-2">
-        Updated: {localUpdatedAt.toLocaleDateString()}
+        Updated: {localUpdatedAt.toLocaleDateString()} {localUpdatedAt.toLocaleTimeString()}
       </span>
     )}
   </div>);
@@ -65,6 +65,7 @@ export function Title({
   // never on local edits.
   const [localUpdatedAt, setLocalUpdatedAt] = useState(updatedAt);
   
+  const previousTitleAndSubtitle = useRef<string>(title + (subtitle || ''));
   const titleRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLHeadingElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -75,37 +76,43 @@ export function Title({
     debounceTimerRef.current = null;
   }, []);
 
+
   useEffect(() => {
     return () => clearDebounceTimer()
   }, [clearDebounceTimer]);
 
-
-  useEffect(() => {
-    setLocalUpdatedAt(updatedAt);
-  }, [updatedAt]);
-
-
-  const triggerLocalSave = useCallback((): boolean => {
-
+  
+  const getNewTitleAndSubtitle = useCallback((): [string, string] => {
     const newTitle = titleRef.current?.textContent.trim() || '';
     const newSubtitle = subtitleRef.current?.textContent.trim() || '';
+    return [newTitle, newSubtitle];
+  }, []);
 
+
+  const triggerLocalSave = useCallback((): void => {
+    if (!titleRef.current || !subtitleRef.current || !previousTitleAndSubtitle.current) return;
+
+    const [newTitle, newSubtitle] = getNewTitleAndSubtitle();
+    if( newTitle + newSubtitle === previousTitleAndSubtitle.current ) return;
+    
     const data: UpdatedTitleInterface = {
       title: newTitle,
       subtitle: newSubtitle,
       updatedAt: new Date(),
     };
-
+    
+    previousTitleAndSubtitle.current = newTitle + newSubtitle;
     setLocalUpdatedAt(data.updatedAt);
     onChange(data);
-
-    if( newTitle === title.trim() && newSubtitle === (subtitle?.trim() || '') ) return false
-    return true;
   }, [onChange]);
 
 
   const triggerSync = useCallback(() => {
-    if(triggerLocalSave()) onRemoteSync();
+    triggerLocalSave()
+
+    if( isSynced ) return
+
+    onRemoteSync();
   }, [onRemoteSync, triggerLocalSave]);
 
 
