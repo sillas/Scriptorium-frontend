@@ -16,7 +16,7 @@ interface TitleProps {
   updatedAt?: Date;
   createdAt?: Date;
   isSynced: boolean;
-  isMainTitle: boolean;
+  isDocumentTitle: boolean;
   onSync: () => void;
   onChange: (data: UpdatedTitleInterface, isNew?: boolean) => void;
   isOnline?: boolean;
@@ -50,7 +50,7 @@ export function Title({
   version,
   updatedAt,
   createdAt,
-  isMainTitle,
+  isDocumentTitle,
   onSync,
   onChange,
   isOnline = true,
@@ -60,6 +60,10 @@ export function Title({
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingSubtitle, setIsEditingSubtitle] = useState(false);
+
+  // Track local updateAt to show in metadata,
+  // as props' updateAt only changes on remote sync,
+  // never on local edits.
   const [localUpdatedAt, setLocalUpdatedAt] = useState(updatedAt);
   
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -113,7 +117,7 @@ export function Title({
   }, [ triggerLocalSave ]);
 
 
-  const stopEditingAndSync = () => {
+  const stopEditingAndTriggerSync = () => {
     clearSyncTimer();
     triggerSync();
   }
@@ -127,20 +131,17 @@ export function Title({
   }
 
   const handleBlur = (setIsEditing: React.Dispatch<React.SetStateAction<boolean>>) => {
-    stopEditingAndSync();
+    stopEditingAndTriggerSync();
     setIsEditing(false);
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
 
-    if (shouldStopEditing(e.key)) {
-      e.preventDefault();
-
-      stopEditingAndSync();
-
-      return true
-    }
-    return false;
+    if (!shouldStopEditing(e.key)) return false;
+    
+    e.preventDefault();
+    stopEditingAndTriggerSync();
+    return true
   };
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLHeadingElement>) => {
@@ -162,7 +163,7 @@ export function Title({
   return (
     <div
       className={`${
-        isMainTitle
+        isDocumentTitle
           ? 'p-6 mb-6 rounded-lg'
           : 'p-4 mb-3 rounded-md'
       } bg-slate-100 ${isEditingTitle || isEditingSubtitle ? 'shadow-sm' : ''}`}
@@ -177,7 +178,7 @@ export function Title({
           onKeyDown={handleTitleKeyDown}
           onBlur={() => handleBlur(setIsEditingTitle)}
           className={`${
-            isMainTitle
+            isDocumentTitle
               ? 'text-3xl font-bold text-slate-900'
               : 'text-xl font-semibold text-slate-800'
           } ${isEditingTitle ? 'rounded px-1' : 'cursor-pointer'} flex-1 outline-none`}
@@ -197,7 +198,7 @@ export function Title({
             onKeyDown={handleSubtitleKeyDown}
             onBlur={() => handleBlur(setIsEditingSubtitle)}
             className={`${
-              isMainTitle
+              isDocumentTitle
                 ? 'text-lg text-slate-600 mt-2'
                 : 'text-sm text-slate-600 mt-1'
             } ${isEditingSubtitle ? 'rounded px-1' : 'cursor-pointer'} flex-1 outline-none`}

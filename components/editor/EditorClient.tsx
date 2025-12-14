@@ -225,7 +225,7 @@ export function EditorClient({
             onChange={handleDocumentLocalSave}
             isOnline={isOnline}
             isSynced={localDocument.sync}
-            isMainTitle={true}
+            isDocumentTitle={true}
           />
           
           {/* Chapters with Titles and Paragraphs */}
@@ -238,7 +238,7 @@ export function EditorClient({
                 onChange={ data => handleChapterLocalSave(chapter, data) }
                 isSynced={chapter.sync}
                 isOnline={isOnline}
-                isMainTitle={false}
+                isDocumentTitle={false}
                 version={chapter.version}
                 createdAt={chapter.createdAt}
                 updatedAt={chapter.updatedAt}
