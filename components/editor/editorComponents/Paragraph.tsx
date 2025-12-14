@@ -91,14 +91,14 @@ export function Paragraph({
           isEditing
             ? 'rounded px-1'
             : ''
-        } cursor-text min-h-[1.5rem] outline-none`}
+        } cursor-text min-h-[1.5rem] outline-none text-justify`}
       >
         {paragraph.text}
       </div>
 
       {isTheLastParagraph && <span className="text-gray-400">[Last]</span>}
     
-      <div className="absolute top-1 right-2">
+      <div className="absolute top-0 right-0">
         <SyncIndicator isSynced={paragraph.sync} isOnline={isOnline} />
       </div>
 
