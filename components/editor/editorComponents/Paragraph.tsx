@@ -21,14 +21,29 @@ export function Paragraph({
   onRemoteSync,
   isOnline = true,
 }: ParagraphProps) {
+
+  const DEBOUNCE_DELAY_MS = 700;
   const [isEditing, setIsEditing] = useState(false);
-  const [isSynced, setIsSynced] = useState(paragraph.sync);
-  const [localText, setLocalText] = useState(paragraph.text);
+
   const paragraphRef = useRef<HTMLDivElement>(null);
   const syncTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const clearSyncTimer = () => {
+    if (syncTimerRef.current) {
+      clearTimeout(syncTimerRef.current);
+      syncTimerRef.current = null;
+    }
+  }
+
+  useEffect(() => {
+    return () => clearSyncTimer();
+  }, []);
+
   const triggerLocalSave = useCallback(() => {
-    const newText = paragraphRef.current?.textContent || localText;
+    if (!paragraphRef.current) return;
+
+    const newText = paragraphRef.current?.textContent || '';
+    if (newText === paragraph.text) return;
 
     const data: ParagraphDataInterface = {
       text: newText,
@@ -36,58 +51,30 @@ export function Paragraph({
     };
 
     onChange(data);
-  }, [localText, onChange]);
+  }, [onChange]);
 
 
-  // Debounced sync on input
   const debouncedInput = useCallback(() => {    
-    if (syncTimerRef.current) {
-      clearTimeout(syncTimerRef.current);
-    }
-    syncTimerRef.current = setTimeout(triggerLocalSave, 700);
+    clearSyncTimer();
+    syncTimerRef.current = setTimeout(triggerLocalSave, DEBOUNCE_DELAY_MS);
   }, [triggerLocalSave]);
 
 
-  useEffect(() => {
-    return () => {
-      if (syncTimerRef.current) {
-        clearTimeout(syncTimerRef.current);
-      }
-    };
-  }, []);
-
   const handleClick = () => {
     setIsEditing(true);
-    setTimeout(() => paragraphRef.current?.focus(), 0);
+    setTimeout(() => paragraphRef.current?.focus(), DEBOUNCE_DELAY_MS);
   };
 
   const handleBlur = () => {
     setIsEditing(false);
-    if (paragraphRef.current) {
-      const newText = paragraphRef.current.textContent || '';
-      if (newText !== localText) {
-        setLocalText(newText);
-        onChange({ text: newText, updatedAt: new Date() });
-
-        setIsSynced(true);
-      }
-    }
-  };
-
-  const handleInput = () => {
-    if (paragraphRef.current) {
-      const newText = paragraphRef.current.textContent || '';
-      setLocalText(newText);
-      debouncedInput();
-    }
+    triggerLocalSave();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      setIsEditing(false);
-      paragraphRef.current?.blur();
-    }
+    if (!['Enter', 'Escape'].includes(e.key)) return
+    e.preventDefault();
+    setIsEditing(false);
+    paragraphRef.current?.blur();
   };
 
   return (
@@ -98,7 +85,7 @@ export function Paragraph({
         suppressContentEditableWarning
         onClick={handleClick}
         onBlur={handleBlur}
-        onInput={handleInput}
+        onInput={debouncedInput}
         onKeyDown={handleKeyDown}
         className={`${
           isEditing
@@ -110,7 +97,7 @@ export function Paragraph({
       </div>
     
       <div className="absolute top-1 right-2">
-        <SyncIndicator isSynced={isSynced} isOnline={isOnline} />
+        <SyncIndicator isSynced={paragraph.sync} isOnline={isOnline} />
       </div>
 
     </div>

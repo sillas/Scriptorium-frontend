@@ -56,8 +56,6 @@ export function Title({
   isOnline = true,
 }: TitleProps) {
   const DEBOUNCE_DELAY_MS = 700;
-  const FOCUS_DELAY_MS = 700;
-
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingSubtitle, setIsEditingSubtitle] = useState(false);
 
@@ -107,7 +105,7 @@ export function Title({
 
   const triggerSync = useCallback(() => {
     triggerLocalSave();
-    setTimeout(onRemoteSync, FOCUS_DELAY_MS);
+    setTimeout(onRemoteSync, DEBOUNCE_DELAY_MS);
   }, [onRemoteSync, triggerLocalSave]);
 
 
@@ -127,7 +125,7 @@ export function Title({
 
   const handleClick = (itemRef: React.RefObject<HTMLHeadingElement | null>, setEditing: React.Dispatch<React.SetStateAction<boolean>>) => {
     setEditing(true);
-    setTimeout(() => itemRef.current?.focus(), FOCUS_DELAY_MS);
+    setTimeout(() => itemRef.current?.focus(), DEBOUNCE_DELAY_MS);
   }
 
   const handleBlur = (setIsEditing: React.Dispatch<React.SetStateAction<boolean>>) => {
@@ -151,7 +149,7 @@ export function Title({
 
     if (e.key === 'Tab' && subtitle) {
       setIsEditingSubtitle(true);
-      setTimeout(() => subtitleRef.current?.focus(), FOCUS_DELAY_MS);
+      setTimeout(() => subtitleRef.current?.focus(), DEBOUNCE_DELAY_MS);
     }
   };
 
