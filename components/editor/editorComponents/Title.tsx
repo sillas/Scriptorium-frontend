@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect, use } from 'react';
 import SyncIndicator from '@/components/editor/SyncIndicator';
-import { handleContentEditableClick } from '@/components/editor/utils';
+import { handleClick } from '@/components/editor/utils';
 
 export interface UpdatedTitleInterface {
   title: string;
@@ -85,10 +85,10 @@ export function Title({
   }, [updatedAt]);
 
 
-  const triggerLocalSave = useCallback(() => {
+  const triggerLocalSave = useCallback((): boolean => {
 
-    const newTitle = titleRef.current?.textContent || '';
-    const newSubtitle = subtitleRef.current?.textContent || '';
+    const newTitle = titleRef.current?.textContent.trim() || '';
+    const newSubtitle = subtitleRef.current?.textContent.trim() || '';
 
     const data: UpdatedTitleInterface = {
       title: newTitle,
@@ -99,12 +99,13 @@ export function Title({
     setLocalUpdatedAt(data.updatedAt);
     onChange(data);
 
+    if( newTitle === title.trim() && newSubtitle === (subtitle?.trim() || '') ) return false
+    return true;
   }, [onChange]);
 
 
   const triggerSync = useCallback(() => {
-    triggerLocalSave();
-    onRemoteSync();
+    if(triggerLocalSave()) onRemoteSync();
   }, [onRemoteSync, triggerLocalSave]);
 
 
@@ -120,12 +121,6 @@ export function Title({
   }, [triggerSync]);
 
   const shouldStopEditing = useCallback((key: string) => ['Tab', 'Enter', 'Escape'].includes(key), []);
-
-  const handleClick = useCallback((e: React.MouseEvent<HTMLHeadingElement>, itemRef: React.RefObject<HTMLHeadingElement | null>, isEditing: boolean, setEditing: React.Dispatch<React.SetStateAction<boolean>>) => {
-    if (isEditing) return;
-    setEditing(true)
-    handleContentEditableClick(e, itemRef);
-  }, []);
 
   const handleFinishEditing = useCallback((setIsEditing: React.Dispatch<React.SetStateAction<boolean>>) => {
     stopEditingAndTriggerSync();

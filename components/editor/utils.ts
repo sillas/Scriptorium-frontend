@@ -39,3 +39,9 @@ export function handleContentEditableClick(
     elementRef.current?.focus();
     setTimeout(() => setCursorPositionAtClick(e.clientX, e.clientY), 20);
 }
+
+export function handleClick(e: React.MouseEvent<HTMLHeadingElement>, itemRef: React.RefObject<HTMLHeadingElement | null>, isEditing: boolean, setEditing: React.Dispatch<React.SetStateAction<boolean>>): void {
+    if (isEditing) return;
+    setEditing(true)
+    handleContentEditableClick(e, itemRef);
+}
