@@ -17,7 +17,7 @@ interface TitleProps {
   createdAt?: Date;
   isSynced: boolean;
   isDocumentTitle: boolean;
-  onSync: () => void;
+  onRemoteSync: () => void;
   onChange: (data: UpdatedTitleInterface, isNew?: boolean) => void;
   isOnline?: boolean;
 }
@@ -51,7 +51,7 @@ export function Title({
   updatedAt,
   createdAt,
   isDocumentTitle,
-  onSync,
+  onRemoteSync,
   onChange,
   isOnline = true,
 }: TitleProps) {
@@ -107,8 +107,8 @@ export function Title({
 
   const triggerSync = useCallback(() => {
     triggerLocalSave();
-    setTimeout(onSync, FOCUS_DELAY_MS);
-  }, [onSync, triggerLocalSave]);
+    setTimeout(onRemoteSync, FOCUS_DELAY_MS);
+  }, [onRemoteSync, triggerLocalSave]);
 
 
   const debouncedInput = useCallback(() => {

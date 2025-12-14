@@ -221,7 +221,7 @@ export function EditorClient({
             version={localDocument.version}
             updatedAt={localDocument.updatedAt}
             createdAt={localDocument.createdAt}
-            onSync={() => console.log('onSync Doc title')}
+            onRemoteSync={() => console.log('onRemoteSync Doc title')}
             onChange={handleDocumentLocalSave}
             isOnline={isOnline}
             isSynced={localDocument.sync}
@@ -234,7 +234,7 @@ export function EditorClient({
               <Title
                 title={chapter.title === '' ? 'Insert a Title' : chapter.title}
                 subtitle={chapter.subtitle === '' ? 'Add a subtitle' : chapter.subtitle}
-                onSync={() => console.log('onSync chapter title')}
+                onRemoteSync={() => console.log('onRemoteSync chapter title')}
                 onChange={ data => handleChapterLocalSave(chapter, data) }
                 isSynced={chapter.sync}
                 isOnline={isOnline}
@@ -248,7 +248,7 @@ export function EditorClient({
                     key={paragraph.id}
                     paragraph={paragraph}
                     onChange={(updatedText) => handleParagraphLocalSave(paragraph, updatedText) }
-                    onSync={() => console.log('onSync paragraph')}
+                    onRemoteSync={() => console.log('onRemoteSync paragraph')}
                     isOnline={isOnline}
                   />
                 ))}

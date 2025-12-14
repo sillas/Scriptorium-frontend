@@ -127,7 +127,7 @@ Este sistema implementa sincronização automática entre o cliente (navegador) 
   subtitle={subtitle}
   documentId={documentId}
   chapterId={chapterId}  // Opcional, para capítulos
-  onSync={handleSync}    // Callback de sincronização
+  onRemoteSync={handleSync}    // Callback de sincronização
   isOnline={isOnline}    // Status de conexão
 />
 ```
@@ -140,7 +140,7 @@ Este sistema implementa sincronização automática entre o cliente (navegador) 
   documentId={documentId}
   chapterId={chapterId}
   text={text}
-  onSync={handleSync}
+  onRemoteSync={handleSync}
   isOnline={isOnline}
 />
 ```

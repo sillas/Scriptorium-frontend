@@ -1,8 +1,8 @@
 'use client';
 
-import { useRef, useState, useCallback, useEffect, use } from 'react';
-import SyncIndicator from '@/components/editor/SyncIndicator';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { ParagraphInterface } from '@/components/editor/interfaces';
+import SyncIndicator from '@/components/editor/SyncIndicator';
 
 export interface ParagraphDataInterface {
   text: string;
@@ -11,14 +11,14 @@ export interface ParagraphDataInterface {
 interface ParagraphProps {
   paragraph: ParagraphInterface;
   onChange: (updatedText: ParagraphDataInterface) => void;
-  onSync: () => void;
+  onRemoteSync: () => void;
   isOnline?: boolean;
 }
 
 export function Paragraph({
   paragraph,
   onChange,
-  onSync,
+  onRemoteSync,
   isOnline = true,
 }: ParagraphProps) {
   const [isEditing, setIsEditing] = useState(false);
