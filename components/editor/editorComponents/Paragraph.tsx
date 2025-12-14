@@ -13,6 +13,7 @@ interface ParagraphProps {
   paragraph: ParagraphInterface;
   onChange: (updatedText: ParagraphDataInterface) => void;
   onRemoteSync: () => void;
+  isTheLastParagraph: boolean;
   isOnline?: boolean;
 }
 
@@ -20,6 +21,7 @@ export function Paragraph({
   paragraph,
   onChange,
   onRemoteSync,
+  isTheLastParagraph,
   isOnline = true,
 }: ParagraphProps) {
 
@@ -93,6 +95,8 @@ export function Paragraph({
       >
         {paragraph.text}
       </div>
+
+      {isTheLastParagraph && <span className="text-gray-400">[Last]</span>}
     
       <div className="absolute top-1 right-2">
         <SyncIndicator isSynced={paragraph.sync} isOnline={isOnline} />
