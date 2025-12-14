@@ -9,7 +9,6 @@ interface ContentsProps {
 }
 
 export default function Contents({ chapters }: ContentsProps) {
-  const sortedChapters = [...chapters].sort((a, b) => a.index - b.index);
 
   const scrollToChapter = (chapterId: string) => {
     const element = document.getElementById(`chapter-${chapterId}`);
@@ -24,7 +23,7 @@ export default function Contents({ chapters }: ContentsProps) {
         Contents
       </h3>
       <nav className="space-y-0">
-        {sortedChapters.map((chapter, idx) => (
+        {chapters.map((chapter, idx) => (
           <button
             key={chapter.id}
             onClick={() => scrollToChapter(chapter.id)}
