@@ -3,6 +3,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { ParagraphInterface } from '@/components/editor/interfaces';
 import SyncIndicator from '@/components/editor/SyncIndicator';
+import { handleContentEditableClick } from '@/components/editor/utils';
 
 export interface ParagraphDataInterface {
   text: string;
@@ -60,10 +61,11 @@ export function Paragraph({
   }, [triggerLocalSave, clearDebounceTimer]);
 
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (isEditing) return;
     setIsEditing(true);
-    paragraphRef.current?.focus();
-  }, []);
+    handleContentEditableClick(e, paragraphRef);
+  }, [isEditing]);
 
   const handleFinishEditing = useCallback(() => {
     setIsEditing(false);
@@ -91,8 +93,8 @@ export function Paragraph({
         className={`${
           isEditing
             ? 'rounded px-1'
-            : 'cursor-pointer'
-        } min-h-[1.5rem] outline-none`}
+            : ''
+        } cursor-text min-h-[1.5rem] outline-none`}
       >
         {paragraph.text}
       </div>

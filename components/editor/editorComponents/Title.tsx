@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect, use } from 'react';
 import SyncIndicator from '@/components/editor/SyncIndicator';
+import { handleContentEditableClick } from '@/components/editor/utils';
 
 export interface UpdatedTitleInterface {
   title: string;
@@ -120,9 +121,10 @@ export function Title({
 
   const shouldStopEditing = useCallback((key: string) => ['Tab', 'Enter', 'Escape'].includes(key), []);
 
-  const handleClick = useCallback((itemRef: React.RefObject<HTMLHeadingElement | null>, setEditing: React.Dispatch<React.SetStateAction<boolean>>) => {
-    setEditing(true);
-    itemRef.current?.focus();
+  const handleClick = useCallback((e: React.MouseEvent<HTMLHeadingElement>, itemRef: React.RefObject<HTMLHeadingElement | null>, isEditing: boolean, setEditing: React.Dispatch<React.SetStateAction<boolean>>) => {
+    if (isEditing) return;
+    setEditing(true)
+    handleContentEditableClick(e, itemRef);
   }, []);
 
   const handleFinishEditing = useCallback((setIsEditing: React.Dispatch<React.SetStateAction<boolean>>) => {
@@ -165,7 +167,7 @@ export function Title({
           ref={titleRef}
           contentEditable={isEditingTitle}
           suppressContentEditableWarning
-          onClick={() => handleClick(titleRef, setIsEditingTitle)}
+          onClick={(e) => handleClick(e, titleRef, isEditingTitle, setIsEditingTitle)}
           onInput={debouncedInput}
           onKeyDown={handleTitleKeyDown}
           onBlur={() => handleFinishEditing(setIsEditingTitle)}
@@ -173,7 +175,7 @@ export function Title({
             isDocumentTitle
               ? 'text-3xl font-bold text-slate-900'
               : 'text-xl font-semibold text-slate-800'
-          } ${isEditingTitle ? 'rounded px-1' : 'cursor-pointer'} flex-1 outline-none`}
+          } ${isEditingTitle ? 'rounded px-1' : 'cursor-text'} flex-1 outline-none`}
         >
           {title}
         </h1>
@@ -185,7 +187,7 @@ export function Title({
             ref={subtitleRef}
             contentEditable={isEditingSubtitle}
             suppressContentEditableWarning
-            onClick={() => handleClick(subtitleRef, setIsEditingSubtitle)}
+            onClick={(e) => handleClick(e, subtitleRef, isEditingSubtitle, setIsEditingSubtitle)}
             onInput={debouncedInput}
             onKeyDown={handleSubtitleKeyDown}
             onBlur={() => handleFinishEditing(setIsEditingSubtitle)}
@@ -193,7 +195,7 @@ export function Title({
               isDocumentTitle
                 ? 'text-lg text-slate-600 mt-2'
                 : 'text-sm text-slate-600 mt-1'
-            } ${isEditingSubtitle ? 'rounded px-1' : 'cursor-pointer'} flex-1 outline-none`}
+            } ${isEditingSubtitle ? 'rounded px-1' : 'cursor-text'} flex-1 outline-none`}
           >
             {subtitle}
           </h2>
