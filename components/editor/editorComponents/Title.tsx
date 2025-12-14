@@ -22,11 +22,14 @@ interface TitleProps {
   isOnline?: boolean;
 }
 
-const TitleMetadata = ({version, createdAt, localUpdatedAt}: {
+interface TitleMetadataInterface {
   version?: number;
   createdAt?: Date;
   localUpdatedAt?: Date;
-}) => (<div className="mt-2 text-xs text-slate-500">
+}
+
+const TitleMetadata = ({version, createdAt, localUpdatedAt}:TitleMetadataInterface) => (
+  <div className="mt-2 text-xs text-slate-500">
     {version !== undefined && <span>v{version}</span>}
     {createdAt && (
       <span className="ml-2">
@@ -44,21 +47,19 @@ export function Title({
   title,
   subtitle,
   isSynced,
+  version,
+  updatedAt,
+  createdAt,
   isMainTitle,
   onSync,
   onChange,
   isOnline = true,
-  version,
-  updatedAt,
-  createdAt,
 }: TitleProps) {
   const DEBOUNCE_DELAY_MS = 700;
-  const FOCUS_DELAY_MS = 0;
+  const FOCUS_DELAY_MS = 700;
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingSubtitle, setIsEditingSubtitle] = useState(false);
-  const [localTitle, setLocalTitle] = useState(title);
-  const [localSubtitle, setLocalSubtitle] = useState(subtitle || '');
   const [localUpdatedAt, setLocalUpdatedAt] = useState(updatedAt);
   
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -72,6 +73,7 @@ export function Title({
     }
   }
 
+
   useEffect(() => {
     return () => clearSyncTimer()
   }, []);
@@ -84,8 +86,8 @@ export function Title({
 
   const triggerLocalSave = useCallback(() => {
 
-    const newTitle = titleRef.current?.textContent || localTitle;
-    const newSubtitle = subtitleRef.current?.textContent || localSubtitle;
+    const newTitle = titleRef.current?.textContent || '';
+    const newSubtitle = subtitleRef.current?.textContent || '';
 
     const data: UpdatedTitleInterface = {
       title: newTitle,
@@ -96,7 +98,7 @@ export function Title({
     setLocalUpdatedAt(data.updatedAt);
     onChange(data);
 
-  }, [onChange, localTitle, localSubtitle]);
+  }, [onChange]);
 
 
   const triggerSync = useCallback(() => {
@@ -111,31 +113,30 @@ export function Title({
   }, [ triggerLocalSave ]);
 
 
+  const stopEditingAndSync = () => {
+    clearSyncTimer();
+    triggerSync();
+  }
+
+  const shouldStopEditing = (key: string) => ['Tab', 'Enter', 'Escape'].includes(key);
+
+
   const handleClick = (itemRef: React.RefObject<HTMLHeadingElement | null>, setEditing: React.Dispatch<React.SetStateAction<boolean>>) => {
     setEditing(true);
     setTimeout(() => itemRef.current?.focus(), FOCUS_DELAY_MS);
   }
 
-
-  const handleInput = (refItem: React.RefObject<HTMLHeadingElement | null>, setLocal: React.Dispatch<React.SetStateAction<string>>) => {
-    if (refItem && refItem.current) {
-      const newValue = refItem.current.textContent || '';
-      setLocal(newValue);
-      debouncedInput();
-    }
+  const handleBlur = (setIsEditing: React.Dispatch<React.SetStateAction<boolean>>) => {
+    stopEditingAndSync();
+    setIsEditing(false);
   }
-
-  const shouldStopEditing = (key: string) => ['Tab', 'Enter', 'Escape'].includes(key);
-
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
 
     if (shouldStopEditing(e.key)) {
       e.preventDefault();
 
-      clearSyncTimer();
-
-      triggerSync();
+      stopEditingAndSync();
 
       return true
     }
@@ -144,27 +145,19 @@ export function Title({
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLHeadingElement>) => {
 
-    if (handleKeyDown(e)) {
-      setIsEditingTitle(false);
+    if (!handleKeyDown(e)) return
+    setIsEditingTitle(false);
 
-      if (e.key === 'Tab' && subtitle) {
-        setIsEditingSubtitle(true);
-        setTimeout(() => subtitleRef.current?.focus(), FOCUS_DELAY_MS);
-      }
+    if (e.key === 'Tab' && subtitle) {
+      setIsEditingSubtitle(true);
+      setTimeout(() => subtitleRef.current?.focus(), FOCUS_DELAY_MS);
     }
   };
 
   const handleSubtitleKeyDown = (e: React.KeyboardEvent<HTMLHeadingElement>) => {
-    if (handleKeyDown(e)) {
-      setIsEditingSubtitle(false);
-    }
+    if (!handleKeyDown(e)) return
+    setIsEditingSubtitle(false);
   };
-
-  const handleBlur = (setIsEditing: React.Dispatch<React.SetStateAction<boolean>>) => {
-    clearSyncTimer();
-    triggerSync();
-    setIsEditing(false);
-  }
 
   return (
     <div
@@ -180,7 +173,7 @@ export function Title({
           contentEditable={isEditingTitle}
           suppressContentEditableWarning
           onClick={() => handleClick(titleRef, setIsEditingTitle)}
-          onInput={() => handleInput(titleRef, setLocalTitle)}
+          onInput={debouncedInput}
           onKeyDown={handleTitleKeyDown}
           onBlur={() => handleBlur(setIsEditingTitle)}
           className={`${
@@ -200,7 +193,7 @@ export function Title({
             contentEditable={isEditingSubtitle}
             suppressContentEditableWarning
             onClick={() => handleClick(subtitleRef, setIsEditingSubtitle)}
-            onInput={() => handleInput(subtitleRef, setLocalSubtitle)}
+            onInput={debouncedInput}
             onKeyDown={handleSubtitleKeyDown}
             onBlur={() => handleBlur(setIsEditingSubtitle)}
             className={`${
