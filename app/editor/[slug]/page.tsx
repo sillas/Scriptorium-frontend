@@ -9,6 +9,9 @@ import {
 } from '@/components/editor/conversions';
 import { MongoChapterInterface, MongoDocumentInterface, MongoParagraphInterface } from '@/components/editor/interfaces';
 
+interface EditorProps {
+  params: Promise<{ slug: string }>
+}
 
 /**
  * Generates metadata for the document editor page
@@ -16,9 +19,7 @@ import { MongoChapterInterface, MongoDocumentInterface, MongoParagraphInterface 
  */
 export async function generateMetadata({
   params
-}: {
-  params: Promise<{ slug: string }>
-}): Promise<Metadata> {
+}: EditorProps): Promise<Metadata> {
   const { slug } = await params;
   const title = formatSlugToTitle(slug);
   
@@ -50,11 +51,7 @@ const COLLECTIONS = {
  * Server component for the document editor page
  * Fetches document data from MongoDB and renders the editor client
  */
-export default async function Editor({
-  params
-}: {
-  params: Promise<{ slug: string }>
-}) {
+export default async function Editor({ params }: EditorProps) {
   const { slug } = await params;
   const db = await getDatabase();
 
