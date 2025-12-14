@@ -17,13 +17,12 @@ import {
   ParagraphInterface,
 } from '@/components/editor/interfaces';
 
-export function EditorClientSide({
-  slug,
-  theDocument
-}: {
+interface EditorClientSideProps {
   slug: string;
-  theDocument: DocumentInterface
-}) {
+  theDocument: DocumentInterface;
+}
+
+export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(theDocument);
   const [newChapter, setNewChapter] = useState(false);
   const [newParagraph, setNewParagraph] = useState<ChapterInterface | null>(null);

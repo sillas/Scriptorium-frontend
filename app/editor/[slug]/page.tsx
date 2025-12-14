@@ -7,7 +7,11 @@ import {
   convertMongoChapters,
   convertMongoParagraphs
 } from '@/components/editor/conversions';
-import { MongoChapterInterface, MongoDocumentInterface, MongoParagraphInterface } from '@/components/editor/interfaces';
+import { 
+  MongoChapterInterface, 
+  MongoDocumentInterface, 
+  MongoParagraphInterface 
+} from '@/components/editor/interfaces';
 
 interface EditorProps {
   params: Promise<{ slug: string }>

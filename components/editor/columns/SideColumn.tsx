@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ArrowButtonProps {
   side: "left" | "right";
@@ -55,7 +55,19 @@ interface SideColumnProps {
 }
 
 export default function SideColumn({ side, children }: SideColumnProps) {
+  const storageKey = `sideColumn-${side}-isOpen`;
   const [isOpen, setOpen] = useState(true);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem(storageKey);
+    if (stored !== null) {
+      setOpen(stored === 'true');
+    }
+  }, [storageKey]);
+  
+  useEffect(() => {
+    sessionStorage.setItem(storageKey, isOpen ? 'true' : 'false');
+  }, [isOpen, storageKey]);
   
   return (
     <>
