@@ -3,7 +3,7 @@ import {
     DocumentInterface,
     ParagraphInterface,
     ChapterInterface
-} from '@/components/editor/interfaces';
+} from '@/components/editor/utils/interfaces';
 
 const proccessChapter = (unsyncedChapter: ChapterInterface, updatedChapters: ChapterInterface[]) => {
 

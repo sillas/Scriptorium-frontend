@@ -15,7 +15,7 @@ import {
   DocumentInterface, 
   ChapterInterface,
   ParagraphInterface,
-} from '@/components/editor/interfaces';
+} from '@/components/editor/utils/interfaces';
 
 interface EditorClientSideProps {
   slug: string;

@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect, use } from 'react';
 import SyncIndicator from '@/components/editor/SyncIndicator';
-import { handleClick } from '@/components/editor/utils';
+import { handleClick } from '@/components/editor/utils/utils';
 
 export interface UpdatedTitleInterface {
   title: string;

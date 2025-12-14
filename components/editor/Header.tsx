@@ -1,4 +1,9 @@
-export default function EditorHeader({ slug }: { slug: string }) {
+
+interface EditorHeaderProps {
+  slug: string;
+}
+
+export default function EditorHeader({ slug }: EditorHeaderProps) {
     return (<header className="w-full h-14 bg-slate-700 flex items-center px-4 z-10">
         <div className="text-white text-sm">Document {slug}</div>
       </header>);

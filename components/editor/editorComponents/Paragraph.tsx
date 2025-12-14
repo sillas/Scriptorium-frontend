@@ -1,9 +1,9 @@
 'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { ParagraphInterface } from '@/components/editor/interfaces';
+import { ParagraphInterface } from '@/components/editor/utils/interfaces';
 import SyncIndicator from '@/components/editor/SyncIndicator';
-import { handleClick } from '@/components/editor/utils';
+import { handleClick } from '@/components/editor/utils/utils';
 
 export interface ParagraphDataInterface {
   text: string;

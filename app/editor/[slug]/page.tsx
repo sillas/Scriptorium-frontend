@@ -6,12 +6,12 @@ import {
   convertMongoDocument,
   convertMongoChapters,
   convertMongoParagraphs
-} from '@/components/editor/conversions';
+} from '@/components/editor/utils/conversions';
 import { 
   MongoChapterInterface, 
   MongoDocumentInterface, 
   MongoParagraphInterface 
-} from '@/components/editor/interfaces';
+} from '@/components/editor/utils/interfaces';
 
 interface EditorProps {
   params: Promise<{ slug: string }>
