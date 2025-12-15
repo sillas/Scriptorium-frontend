@@ -13,6 +13,7 @@ interface ParagraphProps {
   paragraph: ParagraphInterface;
   onChange: (updatedText: ParagraphDataInterface) => void;
   onRemoteSync: () => void;
+  isTheFirstParagraph: boolean;
   isTheLastParagraph: boolean;
   isOnline?: boolean;
 }
@@ -21,6 +22,7 @@ export function Paragraph({
   paragraph,
   onChange,
   onRemoteSync,
+  isTheFirstParagraph,
   isTheLastParagraph,
   isOnline = true,
 }: ParagraphProps) {
@@ -31,6 +33,43 @@ export function Paragraph({
   const previousTextRef = useRef(paragraph.text);
   const paragraphRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
+  const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
+
+  const updateCursorPosition = () => {
+    if (!isEditing || !paragraphRef.current) return;
+
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+
+    const range = selection.getRangeAt(0);
+    const preSelectionRange = range.cloneRange();
+    preSelectionRange.selectNodeContents(paragraphRef.current);
+    preSelectionRange.setEnd(range.startContainer, range.startOffset);
+
+    const cursorPosition = preSelectionRange.toString().length;
+    const totalLength = paragraphRef.current.textContent.length;
+
+    setIsCursorAtFirstPosition(cursorPosition === 0);
+    setIsCursorAtLastPosition(cursorPosition === totalLength);
+  };
+
+  useEffect(() => {
+    if (!isEditing) return;
+
+    const element = paragraphRef.current;
+    
+    // Eventos que indicam mudança de posição do cursor
+    element?.addEventListener('keyup', updateCursorPosition);
+    element?.addEventListener('mouseup', updateCursorPosition);
+    element?.addEventListener('focus', updateCursorPosition);
+
+    return () => {
+      element?.removeEventListener('keyup', updateCursorPosition);
+      element?.removeEventListener('mouseup', updateCursorPosition);
+      element?.removeEventListener('focus', updateCursorPosition);
+    };
+  }, [isEditing]);
 
   const clearDebounceTimer = useCallback(() => {
     if (!debounceTimerRef.current) return;
@@ -69,6 +108,9 @@ export function Paragraph({
     if(paragraph.sync) return;
     onRemoteSync();
     paragraphRef.current?.blur();
+    
+    setIsCursorAtFirstPosition(false);
+    setIsCursorAtLastPosition(false);
   }, [onRemoteSync, triggerLocalSave]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -78,7 +120,10 @@ export function Paragraph({
   }, [handleFinishEditing]);
 
   return (
-    <div className={`${isEditing ? 'shadow-sm' : ''} rounded-md p-3 mb-2 text-slate-800 relative group`}>
+    <div className={`${isEditing ? 'shadow-sm':''} rounded-md p-3 mb-2 text-slate-800 relative group`}>
+      
+      {!isTheFirstParagraph && isCursorAtFirstPosition && <span className="text-gray-400">[Up]</span>}
+
       <div
         ref={paragraphRef}
         contentEditable={isEditing}
@@ -87,21 +132,16 @@ export function Paragraph({
         onBlur={handleFinishEditing}
         onInput={debouncedInput}
         onKeyDown={handleKeyDown}
-        className={`${
-          isEditing
-            ? 'rounded px-1'
-            : ''
-        } cursor-text min-h-[1.5rem] outline-none text-justify`}
+        className={`${isEditing ? 'rounded':''} pr-2 cursor-text min-h-[1.5rem] outline-none text-justify`}
       >
         {paragraph.text}
       </div>
 
-      {isTheLastParagraph && <span className="text-gray-400">[Last]</span>}
+      {!isTheLastParagraph &&isCursorAtLastPosition && <span className="text-gray-400">[Down]</span>}
     
       <div className="absolute top-0 right-0">
         <SyncIndicator isSynced={paragraph.sync} isOnline={isOnline} />
       </div>
-
     </div>
   );
 }

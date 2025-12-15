@@ -249,6 +249,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
                     onChange={(updatedText) => handleParagraphLocalSave(paragraph, updatedText) }
                     onRemoteSync={() => console.log('onRemoteSync paragraph')}
                     isOnline={isOnline}
+                    isTheFirstParagraph={paragraph.index === chapter.paragraphs![0]?.index}
                     isTheLastParagraph={paragraph.index === chapter.paragraphs!.at(-1)?.index}
                   />
                 ))}
