@@ -106,6 +106,22 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
     saveLocal('paragraph', localParagraph);    
   }, [saveLocal]);
 
+  const setActiveParagraph = useCallback((
+    CurrentParagraphId: string,
+    toUp: boolean
+  ) => {
+
+    console.log(CurrentParagraphId);
+
+    if( toUp ) {
+      console.log('goto up');  
+      
+      return
+    }
+
+    console.log('goto down');
+    
+  }, []);
 
   // Add new chapter when newChapter is set
   useEffect(() => {
@@ -246,11 +262,12 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
                   <Paragraph
                     key={paragraph.id}
                     paragraph={paragraph}
-                    onChange={(updatedText) => handleParagraphLocalSave(paragraph, updatedText) }
-                    onRemoteSync={() => console.log('onRemoteSync paragraph')}
                     isOnline={isOnline}
                     isTheFirstParagraph={paragraph.index === chapter.paragraphs![0]?.index}
                     isTheLastParagraph={paragraph.index === chapter.paragraphs!.at(-1)?.index}
+                    onChange={(updatedText) => handleParagraphLocalSave(paragraph, updatedText) }
+                    onRemoteSync={() => console.log('onRemoteSync paragraph')}
+                    setActiveParagraph={setActiveParagraph}
                   />
                 ))}
               {/* Add Paragraph Button */}

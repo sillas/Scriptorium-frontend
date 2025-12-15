@@ -13,6 +13,7 @@ interface ParagraphProps {
   paragraph: ParagraphInterface;
   onChange: (updatedText: ParagraphDataInterface) => void;
   onRemoteSync: () => void;
+  setActiveParagraph: (CurrentParagraphId: string, toUp: boolean) => void;
   isTheFirstParagraph: boolean;
   isTheLastParagraph: boolean;
   isOnline?: boolean;
@@ -20,11 +21,12 @@ interface ParagraphProps {
 
 export function Paragraph({
   paragraph,
-  onChange,
-  onRemoteSync,
   isTheFirstParagraph,
   isTheLastParagraph,
   isOnline = true,
+  onChange,
+  onRemoteSync,
+  setActiveParagraph,
 }: ParagraphProps) {
 
   const DEBOUNCE_DELAY_MS = 700;
@@ -114,15 +116,34 @@ export function Paragraph({
   }, [onRemoteSync, triggerLocalSave]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+
+    if(['ArrowUp', 'ArrowDown'].includes(e.key)) {
+      
+      if( e.key === 'ArrowUp' && !isTheFirstParagraph && isCursorAtFirstPosition ) {
+        e.preventDefault();
+        handleFinishEditing();
+        setActiveParagraph(paragraph.id, true);
+        return;
+      }
+
+      if( e.key === 'ArrowDown' && !isTheLastParagraph && isCursorAtLastPosition ) {
+        e.preventDefault();
+        handleFinishEditing();
+        setActiveParagraph(paragraph.id, false);
+        return;
+      }
+    }
+
     if (!['Enter', 'Escape'].includes(e.key)) return
     e.preventDefault();
     handleFinishEditing();
-  }, [handleFinishEditing]);
+
+  }, [handleFinishEditing, isCursorAtFirstPosition, isCursorAtLastPosition, paragraph.id, setActiveParagraph]);
 
   return (
     <div className={`${isEditing ? 'shadow-sm':''} rounded-md p-3 mb-2 text-slate-800 relative group`}>
       
-      {!isTheFirstParagraph && isCursorAtFirstPosition && <span className="text-gray-400">[Up]</span>}
+      {!isTheFirstParagraph && isCursorAtFirstPosition && <span className="text-gray-400">▲</span>}
 
       <div
         ref={paragraphRef}
@@ -137,7 +158,7 @@ export function Paragraph({
         {paragraph.text}
       </div>
 
-      {!isTheLastParagraph &&isCursorAtLastPosition && <span className="text-gray-400">[Down]</span>}
+      {!isTheLastParagraph &&isCursorAtLastPosition && <span className="text-gray-400">▼</span>}
     
       <div className="absolute top-0 right-0">
         <SyncIndicator isSynced={paragraph.sync} isOnline={isOnline} />
