@@ -95,3 +95,7 @@ export  const setCursorAt = (
         sel?.addRange(range);
     }, 20);
 }
+
+export const handleWordCount = (text: string) => {
+  return text === '' ? 0 : text.split(/\s+/).length;
+}

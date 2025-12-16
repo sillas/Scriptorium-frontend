@@ -3,7 +3,12 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { ParagraphInterface } from '@/components/editor/utils/interfaces';
 import SyncIndicator from '@/components/editor/SyncIndicator';
-import { handleClick, updateCursorPosition, setCursorAt } from '@/components/editor/utils/utils';
+import { 
+  handleClick, 
+  updateCursorPosition, 
+  setCursorAt, 
+  handleWordCount
+} from '@/components/editor/utils/utils';
 
 const DEBOUNCE_DELAY_MS = 700;
 
@@ -52,8 +57,12 @@ export function Paragraph({
   const [isEditing, setIsEditing] = useState(false);
   const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
   const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
+  const [characterCount, setCharacterCount] = useState(paragraph.text.length);
+  const [wordCount, setWordCount] = useState(
+    handleWordCount(paragraph.text)
+  );
 
-  // TODO: Implement "isQuote", "characterCount" and "wordCount"
+  // TODO: Implement "isQuote"
 
   /**
    * Updates the cursor position state to track whether the cursor is at the first or last position
@@ -144,7 +153,7 @@ export function Paragraph({
     onTextChange({
       text: newText,
       characterCount: newText.length,
-      wordCount: newText === '' ? 0 : newText.split(/\s+/).length,
+      wordCount: handleWordCount(newText),
       isQuote: paragraph.isQuote || false,
       updatedAt: new Date(),
     });
@@ -154,11 +163,22 @@ export function Paragraph({
   /**
    * Schedules an auto-save operation after the debounce delay
    * Clears any existing timer to reset the debounce period
+   * Also updates character and word counts based on current text
    */
   const scheduleAutoSave = useCallback(() => {    
     clearDebounceTimer();
     debounceTimerRef.current = setTimeout(triggerLocalSave, DEBOUNCE_DELAY_MS);
-  }, [triggerLocalSave, clearDebounceTimer]);
+    const text = paragraphRef.current?.textContent.trim() || '';
+    setCharacterCount(text.length);
+    setWordCount(
+      handleWordCount(text)
+    );
+  }, [
+    triggerLocalSave,
+    clearDebounceTimer,
+    setCharacterCount,
+    setWordCount
+  ]);
 
 
   /**
@@ -299,6 +319,12 @@ export function Paragraph({
       >
         {paragraph.text}
       </div>
+
+      { isEditing && (
+        <span className="absolute right-0 bottom-0 text-gray-400 bg-slate-100 rounded px-2 translate-y-1/2">
+          {characterCount} chars • {wordCount} words
+        </span>
+      )}
 
       {isCursorAtLastPosition && navigation.canNavigateNext && (
         <span className="absolute left-0 bottom-0 text-gray-400 translate-y-1/2">▼</span>
