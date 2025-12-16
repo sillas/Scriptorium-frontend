@@ -143,6 +143,24 @@ export function Paragraph({
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
 
+    if (e.key === 'Tab' && isEditing && !isTheLastParagraph) {
+      e.preventDefault();
+      handleFinishEditing();
+      setActiveParagraph(false);
+      // const selection = window.getSelection();
+      // const range = selection?.getRangeAt(0);
+      // if (range) {
+      //   range.deleteContents();
+      //   const tabNode = document.createTextNode('');
+      //   range.insertNode(tabNode);
+        
+      //   // Move o cursor após o tab
+      //   range.setStartAfter(tabNode);
+      //   range.setEndAfter(tabNode);
+      //   selection?.removeAllRanges();
+      //   selection?.addRange(range);
+    }
+
     if(['ArrowUp', 'ArrowDown'].includes(e.key)) {
       
       if( e.key === 'ArrowUp' && !isTheFirstParagraph && isCursorAtFirstPosition ) {
@@ -164,7 +182,7 @@ export function Paragraph({
     e.preventDefault();
     handleFinishEditing();
 
-  }, [handleFinishEditing, isCursorAtFirstPosition, isCursorAtLastPosition, paragraph.id, setActiveParagraph]);
+  }, [handleFinishEditing, isCursorAtFirstPosition, isCursorAtLastPosition, paragraph.id, setActiveParagraph, isEditing]);
 
   const handleOnBlur = useCallback(() => {
     handleFinishEditing();
@@ -172,7 +190,7 @@ export function Paragraph({
   }, [handleFinishEditing]);
 
   return (
-    <div className={`${isEditing ? 'shadow-sm':''} rounded-md p-3 mb-2 text-slate-800 relative group`}>
+    <div className={`${isEditing ? 'bg-slate-200 shadow-sm':''} rounded-md p-3 mb-2 text-slate-800 relative group`}>
       
       {!isTheFirstParagraph && isCursorAtFirstPosition && (
         <span className="absolute left-0 top-0 text-gray-400 -translate-y-1/2">▲</span>
