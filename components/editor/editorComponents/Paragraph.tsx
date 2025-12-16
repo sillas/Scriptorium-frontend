@@ -186,7 +186,6 @@ export function Paragraph({
    * Saves changes locally, triggers remote sync if not already synced, and resets editing state
    */
   const handleFinishEditing = useCallback(() => {
-    
     setIsEditing(false);
     triggerLocalSave();
 

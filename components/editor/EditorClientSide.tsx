@@ -284,33 +284,24 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
 
           {/* Document Title */}
           <Title
+            isDocumentTitle={true}
             title={localDocument.title}
             subtitle={localDocument.subtitle}
             version={localDocument.version}
             updatedAt={localDocument.updatedAt}
             createdAt={localDocument.createdAt}
+            isSynced={localDocument.sync}
             onRemoteSync={() => {}}
             onChange={handleDocumentLocalSave}
-            isOnline={isOnline}
-            isSynced={localDocument.sync}
-            isDocumentTitle={true}
           />
           
           {/* Chapters with Titles and Paragraphs */}
           {localDocument.chapters!.map((chapter, chIndex) => (
-            <Chapter key={chapter.id} id={chapter.id}>
-              <Title
-                title={chapter.title === '' ? 'Insert a Title' : chapter.title}
-                subtitle={chapter.subtitle === '' ? 'Add a subtitle' : chapter.subtitle}
-                onRemoteSync={() => {}}
-                onChange={ data => handleChapterLocalSave(chapter, data) }
-                isSynced={chapter.sync}
-                isOnline={isOnline}
-                isDocumentTitle={false}
-                version={chapter.version}
-                createdAt={chapter.createdAt}
-                updatedAt={chapter.updatedAt}
-              />
+            <Chapter
+              key={chapter.id} 
+              chapter={chapter}
+              onChange={handleChapterLocalSave}
+            >
               {chapter.paragraphs!.map((paragraph, pIndex) => (
                   <Paragraph
                     key={paragraph.id}

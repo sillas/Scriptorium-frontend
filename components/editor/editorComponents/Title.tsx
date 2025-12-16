@@ -160,9 +160,9 @@ export function Title({
     <div
       className={`${
         isDocumentTitle
-          ? 'p-6 mb-6 rounded-lg'
-          : 'p-4 mb-3 rounded-md'
-      } bg-slate-100 ${isEditingTitle || isEditingSubtitle ? 'shadow-sm' : ''}`}
+          ? 'pl-8 mb-6 rounded-lg'
+          : 'pl-3 mb-3 rounded-md'
+      } pr-3 bg-slate-100 ${isEditingTitle || isEditingSubtitle ? 'shadow-sm' : ''}`}
     >
       <div className="flex items-center gap-2">
         <h1
@@ -181,7 +181,9 @@ export function Title({
         >
           {title}
         </h1>
-        <SyncIndicator isSynced={isSynced} isOnline={isOnline} />
+        <div className="top-0 right-0">
+          <SyncIndicator isSynced={isSynced} isOnline={isOnline} />
+        </div>
       </div>
       {subtitle && (
         <div className="flex items-center gap-2">
