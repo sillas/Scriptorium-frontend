@@ -76,6 +76,12 @@ export function Paragraph({
       setIsEditing(true);
       paragraphRef.current?.focus();
 
+      // Scroll para garantir que o elemento fique visível no centro
+      paragraphRef.current?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+
       if (activeFrom) setCursorAt('END');
       else setCursorAt('START');
     }
