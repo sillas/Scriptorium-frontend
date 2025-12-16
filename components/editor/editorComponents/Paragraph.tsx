@@ -15,7 +15,7 @@ export interface ParagraphUpdate {
 }
 interface ParagraphProps {
   paragraph: ParagraphInterface;
-  activation?: {
+  focusActivation?: {
     direction: NavigationDirection;
   } | null;
   isOnline: boolean;
@@ -30,7 +30,7 @@ interface ParagraphProps {
 
 export function Paragraph({
   paragraph,
-  activation,
+  focusActivation,
   navigation,
   isOnline = true,
   onTextChange,
@@ -45,6 +45,10 @@ export function Paragraph({
   const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
   const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
 
+  /**
+   * Updates the cursor position state to track whether the cursor is at the first or last position
+   * Used for navigation hints display
+   */
   const handleCursorPositionUpdate = useCallback(() => {
     updateCursorPosition(
       paragraphRef,
@@ -55,32 +59,40 @@ export function Paragraph({
   }, [isEditing]);
 
 
+  /**
+   * Handles paragraph activation when navigating from other paragraphs
+   * Sets editing mode, scrolls element into view, and positions cursor based on navigation direction
+   */
   useEffect(() => {
-    if (activation) {
+    if (focusActivation) {
       setIsEditing(true);
       paragraphRef.current?.focus();
 
-      // Scroll para garantir que o elemento fique visível no centro
+      // Scroll to ensure the element is visible in the center
       paragraphRef.current?.scrollIntoView({ 
         behavior: 'smooth', 
         block: 'center' 
       });
 
-      if (activation.direction === 'previous') {
+      if (focusActivation.direction === 'previous') {
         setCursorAt(paragraphRef, 'END');
       } else {
         setCursorAt(paragraphRef, 'START');
       }
     }
-  }, [activation]);
+  }, [focusActivation]);
 
+  /**
+   * Sets up event listeners for cursor position tracking when in editing mode
+   * Tracks keyup, mouseup, and focus events to update cursor position state
+   */
   useEffect(() => {
     if (!isEditing) return;
 
     const element = paragraphRef.current;
     if( !element ) return;
     
-    // Eventos que indicam mudança de posição do cursor
+    // Events that indicate cursor position change
     element.addEventListener('keyup', handleCursorPositionUpdate);
     element.addEventListener('mouseup', handleCursorPositionUpdate);
     element.addEventListener('focus', handleCursorPositionUpdate);
@@ -92,16 +104,27 @@ export function Paragraph({
     };
   }, [isEditing]);
 
+  /**
+   * Clears the active debounce timer if one exists
+   * Used to cancel pending auto-save operations
+   */
   const clearDebounceTimer = useCallback(() => {
     if (!debounceTimerRef.current) return;
     clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = null;
   }, []);
 
+  /**
+   * Cleanup effect to clear debounce timer when component unmounts
+   */
   useEffect(() => {
     return () => clearDebounceTimer();
   }, [clearDebounceTimer]);
 
+  /**
+   * Triggers a local save of the paragraph text if it has changed
+   * Compares current text with previous text to avoid unnecessary updates
+   */
   const triggerLocalSave = useCallback(() => {
     const newText = paragraphRef.current?.textContent.trim() || '';
     if (newText === previousTextRef.current) return;
@@ -115,12 +138,20 @@ export function Paragraph({
   }, [onTextChange]);
 
 
+  /**
+   * Schedules an auto-save operation after the debounce delay
+   * Clears any existing timer to reset the debounce period
+   */
   const scheduleAutoSave = useCallback(() => {    
     clearDebounceTimer();
     debounceTimerRef.current = setTimeout(triggerLocalSave, DEBOUNCE_DELAY_MS);
   }, [triggerLocalSave, clearDebounceTimer]);
 
 
+  /**
+   * Completes the editing session
+   * Saves changes locally, triggers remote sync if not already synced, and resets editing state
+   */
   const handleFinishEditing = useCallback(() => {
     
     setIsEditing(false);
@@ -134,52 +165,67 @@ export function Paragraph({
     setIsCursorAtLastPosition(false);
   }, [onRemoteSync, triggerLocalSave, paragraph.sync]);
 
+  /**
+   * Finishes editing and navigates to another paragraph
+   * @param event - The keyboard event to prevent default behavior
+   * @param direction - The navigation direction ('previous' or 'next')
+   */
   const handleFinishEditingAndNavigate = useCallback((
-    e: React.KeyboardEvent<HTMLDivElement>,
+    event: React.KeyboardEvent<HTMLDivElement>,
     direction: NavigationDirection
   ) => {
-    e.preventDefault();
+    event.preventDefault();
     handleFinishEditing();
     onNavigate(direction);
   }, [handleFinishEditing, onNavigate]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+  /**
+   * Handles keyboard navigation and editing controls
+   * - Tab: Navigate to next paragraph
+   * - ArrowUp/ArrowDown: Navigate between paragraphs when cursor is at boundaries
+   * - Enter/Escape: Finish editing
+   */
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
 
-    const key = e.key;
+    const pressedKey = event.key;
 
     // Go to next paragraph on Tab
-    if (key === 'Tab' && isEditing && navigation.canNavigateNext) {
-      handleFinishEditingAndNavigate(e, 'next');
+    if (pressedKey === 'Tab' && isEditing && navigation.canNavigateNext) {
+      handleFinishEditingAndNavigate(event, 'next');
       return;
     }
 
     // Navigate between paragraphs with ArrowUp and ArrowDown
-    if(['ArrowUp', 'ArrowDown'].includes(key)) {
+    if(['ArrowUp', 'ArrowDown'].includes(pressedKey)) {
       
-      if(key === 'ArrowUp' && isCursorAtFirstPosition && navigation.canNavigatePrevious) {
-        handleFinishEditingAndNavigate(e, 'previous');
+      if(pressedKey === 'ArrowUp' && isCursorAtFirstPosition && navigation.canNavigatePrevious) {
+        handleFinishEditingAndNavigate(event, 'previous');
       }
 
       else if(isCursorAtLastPosition && navigation.canNavigateNext) {
-        handleFinishEditingAndNavigate(e, 'next');
+        handleFinishEditingAndNavigate(event, 'next');
       }
 
       return;
     }
 
     // Finish editing on Enter or Escape
-    if (['Enter', 'Escape'].includes(key)) {
-      e.preventDefault();
+    if (['Enter', 'Escape'].includes(pressedKey)) {
+      event.preventDefault();
       handleFinishEditing();
     }
   }, [
-    handleFinishEditing, 
     isCursorAtFirstPosition, 
     isCursorAtLastPosition, 
+    isEditing,
+    handleFinishEditing, 
     onNavigate,
-    isEditing
   ]);
 
+  /**
+   * Handles the blur event when the paragraph loses focus
+   * Triggers the finish editing flow to save changes
+   */
   const handleOnBlur = useCallback(() => {
     handleFinishEditing();
   }, [handleFinishEditing, onNavigate]);
@@ -195,7 +241,7 @@ export function Paragraph({
         ref={paragraphRef}
         contentEditable={isEditing}
         suppressContentEditableWarning
-        onClick={(e) => handleClick(e, paragraphRef, isEditing, setIsEditing)}
+        onClick={(event) => handleClick(event, paragraphRef, isEditing, setIsEditing)}
         onBlur={handleOnBlur}
         onInput={scheduleAutoSave}
         onKeyDown={handleKeyDown}

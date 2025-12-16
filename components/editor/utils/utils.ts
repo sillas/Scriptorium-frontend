@@ -29,21 +29,25 @@ export function setCursorPositionAtClick(x: number, y: number): void {
  * Handles click on a contentEditable element, focusing it and positioning the cursor
  * at the click coordinates.
  * 
- * @param e - The mouse click event
+ * @param event - The mouse click event
  * @param elementRef - Reference to the element to make editable
  */
 export function handleContentEditableClick(
-    e: React.MouseEvent,
+    event: React.MouseEvent,
     elementRef: React.RefObject<HTMLElement | null>
 ): void {
     elementRef.current?.focus();
-    setTimeout(() => setCursorPositionAtClick(e.clientX, e.clientY), 20);
+    setTimeout(() => setCursorPositionAtClick(event.clientX, event.clientY), 20);
 }
 
-export function handleClick(e: React.MouseEvent<HTMLHeadingElement>, itemRef: React.RefObject<HTMLHeadingElement | null>, isEditing: boolean, setEditing: React.Dispatch<React.SetStateAction<boolean>>): void {
+export function handleClick(
+    event: React.MouseEvent<HTMLHeadingElement>, 
+    itemRef: React.RefObject<HTMLHeadingElement | null>, 
+    isEditing: boolean, setEditing: React.Dispatch<React.SetStateAction<boolean>>
+): void {
     if (isEditing) return;
     setEditing(true)
-    handleContentEditableClick(e, itemRef);
+    handleContentEditableClick(event, itemRef);
 }
 
 /**
@@ -77,11 +81,15 @@ export const updateCursorPosition = (
     setIsCursorAtLastPosition(cursorPosition === totalLength);
   };
 
-export  const setCursorAt = (elementRef: React.RefObject<HTMLElement | null>, position: 'START' | 'END') => {
+export  const setCursorAt = (
+    elementRef: React.RefObject<HTMLElement | null>, 
+    position: 'START' | 'END'
+) => {
     setTimeout(() => {
     const range = document.createRange();
     range.selectNodeContents(elementRef.current!);
     range.collapse(position === 'START');
+    
     const sel = window.getSelection();
     sel?.removeAllRanges();
     sel?.addRange(range);

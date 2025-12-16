@@ -112,7 +112,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
     paragraphIndex: number,
     direction: NavigationDirection
   ) => {
-        
+
     if( direction === null ) {
       setactiveParagraph(null);
       return;
@@ -292,7 +292,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
                     }}
                     onTextChange={(updatedText) => handleParagraphLocalSave(paragraph, updatedText) }
                     onRemoteSync={() => {}}
-                    activation={paragraph.id === activeParagraph?.id ? {direction: activeParagraph.direction} : null}
+                    focusActivation={paragraph.id === activeParagraph?.id ? {direction: activeParagraph.direction} : null}
                     onNavigate={(direction) => setNextParagraph(chIndex, pIndex, direction)}
                   />
                 ))}
