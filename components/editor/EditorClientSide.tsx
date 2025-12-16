@@ -26,7 +26,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(theDocument);
   const [newChapter, setNewChapter] = useState(false);
   const [newParagraph, setNewParagraph] = useState<ChapterInterface | null>(null);
-  const [activeParagraph, setactiveParagraph] = useState<{ id: string; direction: NavigationDirection } | null>(null);
+  const [activeParagraph, setActiveParagraph] = useState<{ id: string; direction: NavigationDirection } | null>(null);
   
   // Sync hook
   const { saveLocal } = useLocalStorage();
@@ -114,7 +114,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   ) => {
 
     if( direction === null ) {
-      setactiveParagraph(null);
+      setActiveParagraph(null);
       return;
     }
 
@@ -136,7 +136,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
 
     const currentChapter = localDocument.chapters![chapterIndex];
     
-    setactiveParagraph({
+    setActiveParagraph({
       id: currentChapter.paragraphs![paragraphIndex].id,
       direction
     });
@@ -211,7 +211,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
 
       setLocalDocument(documentUpdated);
       setNewParagraph(null);
-      setactiveParagraph({
+      setActiveParagraph({
         id: newParagraphData.id,
         direction: 'previous'
       });
