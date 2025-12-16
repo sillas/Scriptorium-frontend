@@ -6,30 +6,33 @@ import SyncIndicator from '@/components/editor/SyncIndicator';
 import { handleClick, updateCursorPosition, setCursorAt } from '@/components/editor/utils/utils';
 
 const DEBOUNCE_DELAY_MS = 700;
-export interface ParagraphDataInterface {
+
+export type NavigationDirection = 'previous' | 'next' | null;
+
+export interface ParagraphUpdate {
   text: string;
   updatedAt: Date;
 }
 interface ParagraphProps {
   paragraph: ParagraphInterface;
-  onChange: (updatedText: ParagraphDataInterface) => void;
-  onRemoteSync: () => void;
-  setActiveParagraph: (toUp: boolean | null) => void;
+  activationDirection: NavigationDirection;
+  isActive: boolean;
+  isOnline: boolean;
   isTheFirstParagraph: boolean;
   isTheLastParagraph: boolean;
-  isActive: boolean;
-  activeFrom: boolean | null | undefined;
-  isOnline?: boolean;
+  onTextChange: (updatedText: ParagraphUpdate) => void;
+  onRemoteSync: () => void;
+  setActiveParagraph: (navigateToParagraph: NavigationDirection) => void;
 }
 
 export function Paragraph({
   paragraph,
   isTheFirstParagraph,
   isTheLastParagraph,
-  activeFrom,
+  activationDirection,
   isActive = false,
   isOnline = true,
-  onChange,
+  onTextChange,
   onRemoteSync,
   setActiveParagraph,
 }: ParagraphProps) {
@@ -41,7 +44,7 @@ export function Paragraph({
   const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
   const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
 
-  const _updateCursorPosition = useCallback(() => {
+  const handleCursorPositionUpdate = useCallback(() => {
     updateCursorPosition(
       paragraphRef,
       isEditing,
@@ -52,7 +55,7 @@ export function Paragraph({
 
 
   useEffect(() => {
-    if (isActive && (typeof activeFrom === 'boolean')) {
+    if (isActive && (typeof activationDirection === 'string')) {
       setIsEditing(true);
       paragraphRef.current?.focus();
 
@@ -62,13 +65,13 @@ export function Paragraph({
         block: 'center' 
       });
 
-      if (activeFrom) {
+      if (activationDirection === 'previous') {
         setCursorAt(paragraphRef, 'END');
       } else {
         setCursorAt(paragraphRef, 'START');
       }
     }
-  }, [isActive, activeFrom]);
+  }, [isActive, activationDirection]);
 
   useEffect(() => {
     if (!isEditing) return;
@@ -77,14 +80,14 @@ export function Paragraph({
     if( !element ) return;
     
     // Eventos que indicam mudança de posição do cursor
-    element.addEventListener('keyup', _updateCursorPosition);
-    element.addEventListener('mouseup', _updateCursorPosition);
-    element.addEventListener('focus', _updateCursorPosition);
+    element.addEventListener('keyup', handleCursorPositionUpdate);
+    element.addEventListener('mouseup', handleCursorPositionUpdate);
+    element.addEventListener('focus', handleCursorPositionUpdate);
 
     return () => {
-      element.removeEventListener('keyup', _updateCursorPosition);
-      element.removeEventListener('mouseup', _updateCursorPosition);
-      element.removeEventListener('focus', _updateCursorPosition);
+      element.removeEventListener('keyup', handleCursorPositionUpdate);
+      element.removeEventListener('mouseup', handleCursorPositionUpdate);
+      element.removeEventListener('focus', handleCursorPositionUpdate);
     };
   }, [isEditing]);
 
@@ -104,14 +107,14 @@ export function Paragraph({
 
     previousTextRef.current = newText;
 
-    onChange({
+    onTextChange({
       text: newText,
       updatedAt: new Date(),
     });
-  }, [onChange]);
+  }, [onTextChange]);
 
 
-  const debouncedInput = useCallback(() => {    
+  const scheduleAutoSave = useCallback(() => {    
     clearDebounceTimer();
     debounceTimerRef.current = setTimeout(triggerLocalSave, DEBOUNCE_DELAY_MS);
   }, [triggerLocalSave, clearDebounceTimer]);
@@ -135,7 +138,7 @@ export function Paragraph({
     if (e.key === 'Tab' && isEditing && !isTheLastParagraph) {
       e.preventDefault();
       handleFinishEditing();
-      setActiveParagraph(false);
+      setActiveParagraph('next');
       // const selection = window.getSelection();
       // const range = selection?.getRangeAt(0);
       // if (range) {
@@ -156,14 +159,14 @@ export function Paragraph({
       if(e.key === 'ArrowUp' && !isTheFirstParagraph && isCursorAtFirstPosition) {
         e.preventDefault();
         handleFinishEditing();
-        setActiveParagraph(true);
+        setActiveParagraph('previous');
         return;
       }
 
       if(e.key === 'ArrowDown' && !isTheLastParagraph && isCursorAtLastPosition) {
         e.preventDefault();
         handleFinishEditing();
-        setActiveParagraph(false);
+        setActiveParagraph('next');
         return;
       }
     }
@@ -198,7 +201,7 @@ export function Paragraph({
         suppressContentEditableWarning
         onClick={(e) => handleClick(e, paragraphRef, isEditing, setIsEditing)}
         onBlur={handleOnBlur}
-        onInput={debouncedInput}
+        onInput={scheduleAutoSave}
         onKeyDown={handleKeyDown}
         className={`${isEditing ? 'rounded':''} pr-2 cursor-text min-h-[1.5rem] outline-none text-justify`}
       >

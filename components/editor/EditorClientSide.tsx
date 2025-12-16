@@ -7,7 +7,7 @@ import SideColumn from '@/components/editor/columns/SideColumn';
 import AddButton from '@/components/editor/editorComponents/AddButton';
 import Chapter from '@/components/editor/editorComponents/Chapter';
 import { Title, UpdatedTitleInterface } from '@/components/editor/editorComponents/Title';
-import { Paragraph, ParagraphDataInterface } from '@/components/editor/editorComponents/Paragraph';
+import { Paragraph, ParagraphUpdate, NavigationDirection } from '@/components/editor/editorComponents/Paragraph';
 import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useSync } from '@/hooks/useSync';
@@ -26,7 +26,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(theDocument);
   const [newChapter, setNewChapter] = useState(false);
   const [newParagraph, setNewParagraph] = useState<ChapterInterface | null>(null);
-  const [activeParagraph, setactiveParagraph] = useState<{ id: string; toUp: boolean | null } | null>(null);
+  const [activeParagraph, setactiveParagraph] = useState<{ id: string; navigateToParagraph: NavigationDirection } | null>(null);
   
   // Sync hook
   const { saveLocal } = useLocalStorage();
@@ -91,7 +91,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
 
   const handleParagraphLocalSave = useCallback((
     paragraph: ParagraphInterface,
-    textData: ParagraphDataInterface | null = null,
+    textData: ParagraphUpdate | null = null,
   ) => {
 
     const localParagraph: ParagraphInterface = {
@@ -110,19 +110,19 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const setNextParagraph = useCallback((
     chapterIndex: number,
     paragraphIndex: number,
-    toUp: boolean | null
+    navigateToParagraph: NavigationDirection
   ) => {
-    if( toUp === null ) {
+    if( navigateToParagraph === null ) {
       setactiveParagraph(null);
       return;
     }
 
-    if( toUp ) paragraphIndex -= 1;
+    if( navigateToParagraph === 'previous' ) paragraphIndex -= 1;
     else paragraphIndex += 1;
     
     setactiveParagraph({
       id: localDocument.chapters![chapterIndex].paragraphs![paragraphIndex].id,
-      toUp
+      navigateToParagraph
     });
   }, [localDocument.chapters]);
 
@@ -268,12 +268,12 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
                     isOnline={isOnline}
                     isTheFirstParagraph={paragraph.index === chapter.paragraphs![0]?.index}
                     isTheLastParagraph={paragraph.index === chapter.paragraphs!.at(-1)?.index}
-                    onChange={(updatedText) => handleParagraphLocalSave(paragraph, updatedText) }
+                    onTextChange={(updatedText) => handleParagraphLocalSave(paragraph, updatedText) }
                     onRemoteSync={() => {}}
                     isActive={paragraph.id === activeParagraph?.id}
-                    activeFrom={activeParagraph?.toUp}
-                    setActiveParagraph={(toUp) => setNextParagraph(cIndex, pIndex, toUp)}
-                  />
+                    activationDirection={activeParagraph?.navigateToParagraph ?? null}
+                    setActiveParagraph={(navigateToParagraph) => setNextParagraph(cIndex, pIndex, navigateToParagraph)}
+                  /> 
                 ))}
               {/* Add Paragraph Button */}
               <AddButton type="paragraph" onClick={() => setNewParagraph(chapter)} />
