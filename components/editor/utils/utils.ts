@@ -45,3 +45,34 @@ export function handleClick(e: React.MouseEvent<HTMLHeadingElement>, itemRef: Re
     setEditing(true)
     handleContentEditableClick(e, itemRef);
 }
+
+/**
+ * 
+ * @param elementRef 
+ * @param isEditing 
+ * @param setIsCursorAtFirstPosition 
+ * @param setIsCursorAtLastPosition 
+ * @returns 
+ */
+export const updateCursorPosition = (
+    elementRef: React.RefObject<HTMLElement | null>,
+    isEditing: boolean,
+    setIsCursorAtFirstPosition: React.Dispatch<React.SetStateAction<boolean>>,
+    setIsCursorAtLastPosition: React.Dispatch<React.SetStateAction<boolean>>
+) => {
+    if (!isEditing || !elementRef.current) return;
+
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+
+    const range = selection.getRangeAt(0);
+    const preSelectionRange = range.cloneRange();
+    preSelectionRange.selectNodeContents(elementRef.current);
+    preSelectionRange.setEnd(range.startContainer, range.startOffset);
+
+    const cursorPosition = preSelectionRange.toString().length;
+    const totalLength = elementRef.current.textContent.length;
+
+    setIsCursorAtFirstPosition(cursorPosition === 0);
+    setIsCursorAtLastPosition(cursorPosition === totalLength);
+  };

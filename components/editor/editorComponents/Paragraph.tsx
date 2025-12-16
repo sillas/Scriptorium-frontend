@@ -3,7 +3,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { ParagraphInterface } from '@/components/editor/utils/interfaces';
 import SyncIndicator from '@/components/editor/SyncIndicator';
-import { handleClick } from '@/components/editor/utils/utils';
+import { handleClick, updateCursorPosition } from '@/components/editor/utils/utils';
 
 export interface ParagraphDataInterface {
   text: string;
@@ -42,23 +42,14 @@ export function Paragraph({
   const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
   const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
 
-  const updateCursorPosition = () => {
-    if (!isEditing || !paragraphRef.current) return;
-
-    const selection = window.getSelection();
-    if (!selection || !selection.rangeCount) return;
-
-    const range = selection.getRangeAt(0);
-    const preSelectionRange = range.cloneRange();
-    preSelectionRange.selectNodeContents(paragraphRef.current);
-    preSelectionRange.setEnd(range.startContainer, range.startOffset);
-
-    const cursorPosition = preSelectionRange.toString().length;
-    const totalLength = paragraphRef.current.textContent.length;
-
-    setIsCursorAtFirstPosition(cursorPosition === 0);
-    setIsCursorAtLastPosition(cursorPosition === totalLength);
-  };
+  const _updateCursorPosition = useCallback(() => {
+    updateCursorPosition(
+      paragraphRef,
+      isEditing,
+      setIsCursorAtFirstPosition,
+      setIsCursorAtLastPosition
+    );
+  }, [isEditing]);
 
   const setCursorAt = (position: 'START' | 'END') => {
     setTimeout(() => {
@@ -94,14 +85,14 @@ export function Paragraph({
     if( !element ) return;
     
     // Eventos que indicam mudança de posição do cursor
-    element.addEventListener('keyup', updateCursorPosition);
-    element.addEventListener('mouseup', updateCursorPosition);
-    element.addEventListener('focus', updateCursorPosition);
+    element.addEventListener('keyup', _updateCursorPosition);
+    element.addEventListener('mouseup', _updateCursorPosition);
+    element.addEventListener('focus', _updateCursorPosition);
 
     return () => {
-      element.removeEventListener('keyup', updateCursorPosition);
-      element.removeEventListener('mouseup', updateCursorPosition);
-      element.removeEventListener('focus', updateCursorPosition);
+      element.removeEventListener('keyup', _updateCursorPosition);
+      element.removeEventListener('mouseup', _updateCursorPosition);
+      element.removeEventListener('focus', _updateCursorPosition);
     };
   }, [isEditing]);
 
@@ -137,8 +128,10 @@ export function Paragraph({
 
 
   const handleFinishEditing = useCallback(() => {
+    
     setIsEditing(false);
     triggerLocalSave()
+
     if(paragraph.sync) return;
     onRemoteSync();
     paragraphRef.current?.blur();
