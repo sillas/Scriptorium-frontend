@@ -26,7 +26,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(theDocument);
   const [newChapter, setNewChapter] = useState(false);
   const [newParagraph, setNewParagraph] = useState<ChapterInterface | null>(null);
-  const [activeParagraph, setactiveParagraph] = useState<{ id: string; navigateToParagraph: NavigationDirection } | null>(null);
+  const [activeParagraph, setactiveParagraph] = useState<{ id: string; direction: NavigationDirection } | null>(null);
   
   // Sync hook
   const { saveLocal } = useLocalStorage();
@@ -110,19 +110,35 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const setNextParagraph = useCallback((
     chapterIndex: number,
     paragraphIndex: number,
-    navigateToParagraph: NavigationDirection
+    direction: NavigationDirection
   ) => {
-    if( navigateToParagraph === null ) {
+        
+    if( direction === null ) {
       setactiveParagraph(null);
       return;
     }
 
-    if( navigateToParagraph === 'previous' ) paragraphIndex -= 1;
+    if( direction === 'previous' ) paragraphIndex -= 1;
     else paragraphIndex += 1;
+
+    const paragraphLength = localDocument.chapters![chapterIndex].paragraphs!.length;
+
+    if(paragraphIndex >= paragraphLength) {
+      chapterIndex++;
+      paragraphIndex = 0;
+    }
+
+    if(paragraphIndex < 0) {
+      chapterIndex--;
+      const previousChapter = localDocument.chapters![chapterIndex];
+      paragraphIndex = previousChapter.paragraphs!.length -1;
+    }
+
+    const currentChapter = localDocument.chapters![chapterIndex];
     
     setactiveParagraph({
-      id: localDocument.chapters![chapterIndex].paragraphs![paragraphIndex].id,
-      navigateToParagraph
+      id: currentChapter.paragraphs![paragraphIndex].id,
+      direction
     });
   }, [localDocument.chapters]);
 
@@ -195,6 +211,10 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
 
       setLocalDocument(documentUpdated);
       setNewParagraph(null);
+      setactiveParagraph({
+        id: newParagraphData.id,
+        direction: 'previous'
+      });
     }
   }, [newParagraph, localDocument.id]);
 
@@ -247,7 +267,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
           />
           
           {/* Chapters with Titles and Paragraphs */}
-          {localDocument.chapters!.map((chapter, cIndex) => (
+          {localDocument.chapters!.map((chapter, chIndex) => (
             <Chapter key={chapter.id} id={chapter.id}>
               <Title
                 title={chapter.title === '' ? 'Insert a Title' : chapter.title}
@@ -266,14 +286,15 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
                     key={paragraph.id}
                     paragraph={paragraph}
                     isOnline={isOnline}
-                    isTheFirstParagraph={paragraph.index === chapter.paragraphs![0]?.index}
-                    isTheLastParagraph={paragraph.index === chapter.paragraphs!.at(-1)?.index}
+                    navigation={{
+                      canNavigatePrevious: !(chIndex === 0 && pIndex === 0),
+                      canNavigateNext: !(chIndex === localDocument.chapters!.length -1 && pIndex === chapter.paragraphs!.length -1)
+                    }}
                     onTextChange={(updatedText) => handleParagraphLocalSave(paragraph, updatedText) }
                     onRemoteSync={() => {}}
-                    isActive={paragraph.id === activeParagraph?.id}
-                    activationDirection={activeParagraph?.navigateToParagraph ?? null}
-                    setActiveParagraph={(navigateToParagraph) => setNextParagraph(cIndex, pIndex, navigateToParagraph)}
-                  /> 
+                    activation={paragraph.id === activeParagraph?.id ? {direction: activeParagraph.direction} : null}
+                    onNavigate={(direction) => setNextParagraph(chIndex, pIndex, direction)}
+                  />
                 ))}
               {/* Add Paragraph Button */}
               <AddButton type="paragraph" onClick={() => setNewParagraph(chapter)} />

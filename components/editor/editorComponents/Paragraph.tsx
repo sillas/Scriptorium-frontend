@@ -15,26 +15,27 @@ export interface ParagraphUpdate {
 }
 interface ParagraphProps {
   paragraph: ParagraphInterface;
-  activationDirection: NavigationDirection;
-  isActive: boolean;
+  activation?: {
+    direction: NavigationDirection;
+  } | null;
   isOnline: boolean;
-  isTheFirstParagraph: boolean;
-  isTheLastParagraph: boolean;
+  navigation: {
+    canNavigatePrevious: boolean;
+    canNavigateNext: boolean;
+  };
   onTextChange: (updatedText: ParagraphUpdate) => void;
   onRemoteSync: () => void;
-  setActiveParagraph: (navigateToParagraph: NavigationDirection) => void;
+  onNavigate: (direction: NavigationDirection) => void;
 }
 
 export function Paragraph({
   paragraph,
-  isTheFirstParagraph,
-  isTheLastParagraph,
-  activationDirection,
-  isActive = false,
+  activation,
+  navigation,
   isOnline = true,
   onTextChange,
   onRemoteSync,
-  setActiveParagraph,
+  onNavigate,
 }: ParagraphProps) {
   const previousTextRef = useRef(paragraph.text);
   const paragraphRef = useRef<HTMLDivElement>(null);
@@ -55,7 +56,7 @@ export function Paragraph({
 
 
   useEffect(() => {
-    if (isActive && (typeof activationDirection === 'string')) {
+    if (activation) {
       setIsEditing(true);
       paragraphRef.current?.focus();
 
@@ -65,13 +66,13 @@ export function Paragraph({
         block: 'center' 
       });
 
-      if (activationDirection === 'previous') {
+      if (activation.direction === 'previous') {
         setCursorAt(paragraphRef, 'END');
       } else {
         setCursorAt(paragraphRef, 'START');
       }
     }
-  }, [isActive, activationDirection]);
+  }, [activation]);
 
   useEffect(() => {
     if (!isEditing) return;
@@ -135,10 +136,10 @@ export function Paragraph({
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
 
-    if (e.key === 'Tab' && isEditing && !isTheLastParagraph) {
+    if (e.key === 'Tab' && isEditing && navigation.canNavigateNext) {
       e.preventDefault();
       handleFinishEditing();
-      setActiveParagraph('next');
+      onNavigate('next');
       // const selection = window.getSelection();
       // const range = selection?.getRangeAt(0);
       // if (range) {
@@ -156,17 +157,17 @@ export function Paragraph({
 
     if(['ArrowUp', 'ArrowDown'].includes(e.key)) {
       
-      if(e.key === 'ArrowUp' && !isTheFirstParagraph && isCursorAtFirstPosition) {
+      if(e.key === 'ArrowUp' && isCursorAtFirstPosition && navigation.canNavigatePrevious) {
         e.preventDefault();
         handleFinishEditing();
-        setActiveParagraph('previous');
+        onNavigate('previous');
         return;
       }
 
-      if(e.key === 'ArrowDown' && !isTheLastParagraph && isCursorAtLastPosition) {
+      if(e.key === 'ArrowDown' && isCursorAtLastPosition && navigation.canNavigateNext) {
         e.preventDefault();
         handleFinishEditing();
-        setActiveParagraph('next');
+        onNavigate('next');
         return;
       }
     }
@@ -179,19 +180,18 @@ export function Paragraph({
     handleFinishEditing, 
     isCursorAtFirstPosition, 
     isCursorAtLastPosition, 
-    setActiveParagraph, 
+    onNavigate,
     isEditing
   ]);
 
   const handleOnBlur = useCallback(() => {
     handleFinishEditing();
-    setActiveParagraph(null);
-  }, [handleFinishEditing, setActiveParagraph]);
+  }, [handleFinishEditing, onNavigate]);
 
   return (
     <div className={`${isEditing ? 'bg-slate-200 shadow-sm':''} rounded-md p-3 mb-2 text-slate-800 relative group`}>
       
-      {!isTheFirstParagraph && isCursorAtFirstPosition && (
+      {isCursorAtFirstPosition && navigation.canNavigatePrevious && (
         <span className="absolute left-0 top-0 text-gray-400 -translate-y-1/2">▲</span>
       )}
 
@@ -208,7 +208,7 @@ export function Paragraph({
         {paragraph.text}
       </div>
 
-      {!isTheLastParagraph && isCursorAtLastPosition && (
+      {isCursorAtLastPosition && navigation.canNavigateNext && (
         <span className="absolute left-0 bottom-0 text-gray-400 translate-y-1/2">▼</span>
       )}
     
