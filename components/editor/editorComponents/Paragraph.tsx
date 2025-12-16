@@ -223,13 +223,18 @@ export function Paragraph({
       return
     }
 
+    
     // Delete paragraph on Escape if it's the last in chapter and empty
-    if(
-      pressedKey === 'Escape' && 
+    if (['Backspace', 'Escape'].includes(pressedKey) && 
       navigation.isTheLastParagraphInChapter &&
       paragraphRef.current?.textContent?.trim() === ''
     ) {
       event.preventDefault();
+
+      if( pressedKey === 'Backspace' ) {
+        handleFinishEditingAndNavigate(event, 'previous');
+      }
+
       onDelete();
       return;
     }
@@ -245,6 +250,7 @@ export function Paragraph({
     isEditing,
     navigation,
     paragraphRef,
+    onDelete,
     handleFinishEditingAndNavigate,
     createNewParagraphInChapter,
     handleFinishEditing, 

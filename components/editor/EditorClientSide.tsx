@@ -118,9 +118,16 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
       return;
     }
 
-    if( direction === 'previous' ) paragraphIndex -= 1;
-    else paragraphIndex += 1;
+    if( direction === 'previous' ) {
+      paragraphIndex -= 1;
 
+      if( paragraphIndex < 0 && chapterIndex === 0 ) {
+        setActiveParagraph(null);
+        return;
+      }
+    }
+    else paragraphIndex += 1;
+    
     const paragraphLength = localDocument.chapters![chapterIndex].paragraphs!.length;
 
     if(paragraphIndex >= paragraphLength) {
@@ -136,10 +143,17 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
 
     const currentChapter = localDocument.chapters![chapterIndex];
     
+    if(currentChapter.paragraphs!.length === 0) {
+      setActiveParagraph(null)
+
+      return
+    }
+
     setActiveParagraph({
       id: currentChapter.paragraphs![paragraphIndex].id,
       direction
     });
+
   }, [localDocument.chapters]);
 
 
@@ -152,7 +166,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
     }));
 
     setLocalDocument(documentUpdated);
-    setActiveParagraph(null);
+    // setActiveParagraph(null);
     
     await deleteLocal('paragraph', paragraphId);
   }, [localDocument, deleteLocal]);
