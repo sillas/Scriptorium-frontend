@@ -30,6 +30,9 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
   }, forwardedRef) {
     const ref = useRef<HTMLHeadingElement>(null);
 
+    /**
+     * Expose imperative methods to parent components
+     */
     useImperativeHandle(forwardedRef, () => ({
       focus: () => {
         ref.current?.focus();
@@ -39,6 +42,15 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
       },
     }), []);
 
+    
+    /**
+     * Handles keydown events on the heading element.
+     * @param event - The keyboard event triggered on the heading element
+     * @remarks
+     * This callback checks if the key press should stop editing by calling the optional `onKeyDown` handler.
+     * If editing should stop, it prevents the default behavior, triggers the finish editing callback,
+     * and removes focus from the heading element.
+     */
     const handleHeadingKeyDown = useCallback((event: React.KeyboardEvent<HTMLHeadingElement>) => {
       
         const shouldStop = onKeyDown?.(event);
@@ -51,6 +63,9 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
         
     }, [onKeyDown, onFinishEditing]);
 
+    /**
+     * Handles blur event on the heading element by triggering the finish editing callback.
+     */
     const handleBlur = useCallback(onFinishEditing, [onFinishEditing]);
 
     const isTitle = level === 'title';

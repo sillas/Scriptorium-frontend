@@ -4,11 +4,13 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import SyncIndicator from '@/components/editor/SyncIndicator';
 import { EditableHeading, EditableHeadingHandle } from './EditableHeading';
 
-export interface UpdatedTitleInterface {
+export interface TitleUpdateData {
   title: string;
   subtitle: string;
   updatedAt?: Date;
 }
+
+const KEYS_TAB_ENTER_ESCAPE = ['Tab', 'Enter', 'Escape'];
 
 interface TitleProps {
   title: string;
@@ -17,19 +19,27 @@ interface TitleProps {
   updatedAt?: Date;
   createdAt?: Date;
   isSynced: boolean;
-  isDocumentTitle: boolean;
+  isDocumentLevel: boolean;
   onRemoteSync: () => void;
-  onChange: (data: UpdatedTitleInterface, isNew?: boolean) => void;
+  onChange: (data: TitleUpdateData, isNew?: boolean) => void;
+  onSubtitleTab?: () => boolean;
   isOnline?: boolean;
 }
 
-interface TitleMetadataInterface {
+interface TitleMetadataProps {
   version?: number;
   createdAt?: Date;
   localUpdatedAt?: Date;
 }
 
-const TitleMetadata = ({version, createdAt, localUpdatedAt}:TitleMetadataInterface) => (
+/**
+ * Displays metadata information for a title component.
+ * @param version - Optional version number of the document
+ * @param createdAt - Optional creation date of the document
+ * @param localUpdatedAt - Optional last update date of the document
+ * @returns A formatted metadata display showing version, creation date, and last update time
+ */
+const TitleMetadata = ({version, createdAt, localUpdatedAt}:TitleMetadataProps) => (
   <div className="mt-2 text-xs text-slate-500">
     {version !== undefined && <span>v{version}</span>}
     {createdAt && (
@@ -51,9 +61,10 @@ export function Title({
   version,
   updatedAt,
   createdAt,
-  isDocumentTitle,
+  isDocumentLevel,
   onRemoteSync,
   onChange,
+  onSubtitleTab,
   isOnline = true,
 }: TitleProps) {
   const DEBOUNCE_DELAY_MS = 700;
@@ -63,15 +74,20 @@ export function Title({
   // never on local edits.
   const [localUpdatedAt, setLocalUpdatedAt] = useState(updatedAt);
   
-  const previousTitleAndSubtitle = useRef<string>(title + (subtitle || ''));
+  const previousContentSnapshot = useRef<string>(title + (subtitle || ''));
   const titleRef = useRef<EditableHeadingHandle>(null);
   const subtitleRef = useRef<EditableHeadingHandle>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Use browser-compatible timeout return type to avoid NodeJS vs browser type conflicts
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /**
+   * Clears the active debounce timer if one exists.
+   * Resets the debounce timer reference to null after clearing.
+   */
   const clearDebounceTimer = useCallback(() => {
-    if (!debounceTimerRef.current) return;
-    clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = null;
+    if (!debounceTimeoutRef.current) return;
+    clearTimeout(debounceTimeoutRef.current);
+    debounceTimeoutRef.current = null;
   }, []);
 
 
@@ -79,57 +95,81 @@ export function Title({
     return () => clearDebounceTimer()
   }, [clearDebounceTimer]);
 
-  
-  const getNewTitleAndSubtitle = useCallback((): [string, string] => {
+  /**
+   * Retrieves the current text content from both title and subtitle elements.
+   * @returns A tuple containing the current title and subtitle text content
+   */
+  const getTitleAndSubtitleContent = useCallback((): [string, string] => {
     const newTitle = titleRef.current?.getTextContent() || '';
     const newSubtitle = subtitleRef.current?.getTextContent() || '';
     return [newTitle, newSubtitle];
   }, []);
 
+  /**
+   * Saves the current title and subtitle changes locally if they differ from the previous values.
+   * Updates the local timestamp and invokes the onChange callback with the new data.
+   */
+  const persistLocalChanges = useCallback((): void => {
+    if (previousContentSnapshot.current === null) return;
 
-  const triggerLocalSave = useCallback((): void => {
-    if (!titleRef.current || !subtitleRef.current || !previousTitleAndSubtitle.current) return;
-
-    const [newTitle, newSubtitle] = getNewTitleAndSubtitle();
-    if( newTitle + newSubtitle === previousTitleAndSubtitle.current ) return;
+    const [newTitle, newSubtitle] = getTitleAndSubtitleContent();
+    if( newTitle + newSubtitle === previousContentSnapshot.current ) return;
     
-    const data: UpdatedTitleInterface = {
+    const data: TitleUpdateData = {
       title: newTitle,
       subtitle: newSubtitle,
       updatedAt: new Date(),
     };
     
-    previousTitleAndSubtitle.current = newTitle + newSubtitle;
+    previousContentSnapshot.current = newTitle + newSubtitle;
     setLocalUpdatedAt(data.updatedAt);
     onChange(data);
   }, [onChange]);
 
+  /**
+   * Triggers a local save and initiates remote synchronization if the document is not already synced.
+   * Calls the onRemoteSync callback only when the document has unsaved changes.
+   */
+  const synchronize = useCallback(() => {
+    persistLocalChanges()
 
-  const triggerSync = useCallback(() => {
-    triggerLocalSave()
-
-    if( isSynced ) return
+    if( isSynced ) return;
 
     onRemoteSync();
-  }, [onRemoteSync, triggerLocalSave]);
+  }, [isSynced, onRemoteSync, persistLocalChanges]);
 
-
-  const debouncedInput = useCallback(() => {
+  /**
+   * Handles input changes with a debounce delay.
+   * Clears any existing debounce timer and sets a new one to trigger local save after the delay period.
+   */
+  const handleInputWithDebounce = useCallback(() => {
     clearDebounceTimer();
-    debounceTimerRef.current = setTimeout(triggerLocalSave, DEBOUNCE_DELAY_MS);
-  }, [ triggerLocalSave ]);
+    debounceTimeoutRef.current = setTimeout(persistLocalChanges, DEBOUNCE_DELAY_MS);
+  }, [ persistLocalChanges ]);
 
-
-  const stopEditingAndTriggerSync = useCallback(() => {
+  /**
+   * Stops the editing process by clearing the debounce timer and immediately triggering synchronization.
+   * Called when the user finishes editing (e.g., on blur or specific key press).
+   */
+  const handleEditingComplete = useCallback(() => {
     clearDebounceTimer();
-    triggerSync();
-  }, [triggerSync]);
+    synchronize();
+  }, [synchronize]);
 
-  
+  /**
+   * Handles keyboard events for the title heading element.
+   * @param e - The keyboard event from the title heading element
+   * @returns `true` if the event should stop editing (Tab with subtitle, Enter, or Escape), `false` otherwise
+   * 
+   * @remarks
+   * - Tab key moves focus to subtitle if it exists
+   * - Enter and Escape keys stop editing mode
+   * - Prevents default Tab behavior when subtitle is present
+   */
   const handleTitleKeyDown = useCallback((e: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
     
     // Only handle Tab, Enter and Escape keys
-    if (!['Tab', 'Enter', 'Escape'].includes(e.key)) return false;
+    if (!KEYS_TAB_ENTER_ESCAPE.includes(e.key)) return false;
     
     // Handle Tab key to move focus to subtitle if it exists
     if (e.key === 'Tab' && subtitle) {
@@ -142,24 +182,43 @@ export function Title({
     return true;
   }, [subtitle]);
 
+  /**
+   * Handles keyboard events for the subtitle heading element.
+   * @param e - The keyboard event from the subtitle heading element
+   * @returns `true` if the event should stop editing (Tab, Enter, or Escape pressed), `false` otherwise
+   * 
+   * @remarks
+   * - If Tab is pressed and `onSubtitleTab` callback is provided, it attempts to move focus to the first paragraph
+   * - Prevents default Tab behavior if the callback successfully handles the event
+   * - Automatically stops editing mode on Tab, Enter, or Escape key press
+   */
   const handleSubtitleKeyDown = useCallback((e: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
+    // Handle Tab key to move focus to first paragraph if callback is provided
+    if (e.key === 'Tab' && onSubtitleTab) {
+      const handled = onSubtitleTab();
+      if (handled) {
+        e.preventDefault();
+        return true;
+      }
+    }
+    
     // Tab, Enter and Escape should stop editing
-    if (['Tab', 'Enter', 'Escape'].includes(e.key)) {
+    if (KEYS_TAB_ENTER_ESCAPE.includes(e.key)) {
       return true;
     }
     
     return false;
-  }, []);
+  }, [onSubtitleTab]);
 
   return (
     <div
       className={`${
-        isDocumentTitle
+        isDocumentLevel
           ? 'px-8 mb-6 rounded-lg'
           : 'px-3 mb-3 rounded-md'
       } bg-slate-100 relative`}
     >
-      <div className={`absolute top-0 right-0 ${isDocumentTitle ? 'mr-3' : ''}`}>
+      <div className={`absolute top-0 right-0 ${isDocumentLevel ? 'mr-3' : ''}`}>
         <SyncIndicator isSynced={isSynced} isOnline={isOnline} />
       </div>
 
@@ -168,9 +227,9 @@ export function Title({
           ref={titleRef}
           content={title}
           level="title"
-          isDocumentLevel={isDocumentTitle}
-          onInput={debouncedInput}
-          onFinishEditing={stopEditingAndTriggerSync}
+          isDocumentLevel={isDocumentLevel}
+          onInput={handleInputWithDebounce}
+          onFinishEditing={handleEditingComplete}
           onKeyDown={handleTitleKeyDown}
         />
       </div>
@@ -181,9 +240,9 @@ export function Title({
             ref={subtitleRef}
             content={subtitle}
             level="subtitle"
-            isDocumentLevel={isDocumentTitle}
-            onInput={debouncedInput}
-            onFinishEditing={stopEditingAndTriggerSync}
+            isDocumentLevel={isDocumentLevel}
+            onInput={handleInputWithDebounce}
+            onFinishEditing={handleEditingComplete}
             onKeyDown={handleSubtitleKeyDown}
           />
         </div>

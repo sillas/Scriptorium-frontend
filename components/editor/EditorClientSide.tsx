@@ -6,7 +6,7 @@ import EditorHeader from '@/components/editor/Header';
 import SideColumn from '@/components/editor/columns/SideColumn';
 import AddButton from '@/components/editor/editorComponents/AddButton';
 import Chapter from '@/components/editor/editorComponents/Chapter';
-import { Title, UpdatedTitleInterface } from '@/components/editor/editorComponents/Title';
+import { Title, TitleUpdateData } from '@/components/editor/editorComponents/Title';
 import { Paragraph, ParagraphUpdate, NavigationDirection } from '@/components/editor/editorComponents/Paragraph';
 import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -55,7 +55,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
 
   // handlers
   const handleDocumentLocalSave = useCallback((
-    data: UpdatedTitleInterface
+    data: TitleUpdateData
   ) => {
 
     const toSave: DocumentInterface = {
@@ -71,7 +71,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
 
   const handleChapterLocalSave = useCallback((
     chapter: ChapterInterface,
-    data: UpdatedTitleInterface | {} = {},
+    data: TitleUpdateData | {} = {},
   ) => {
 
     const toSave: ChapterInterface = {
@@ -80,7 +80,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
       sync: false,
     }
     
-    if( !(data as UpdatedTitleInterface).updatedAt ) {
+    if( !(data as TitleUpdateData).updatedAt ) {
       toSave.updatedAt = new Date();
     }
     
@@ -284,7 +284,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
 
           {/* Document Title */}
           <Title
-            isDocumentTitle={true}
+            isDocumentLevel={true}
             title={localDocument.title}
             subtitle={localDocument.subtitle}
             version={localDocument.version}
@@ -301,6 +301,13 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
               key={chapter.id} 
               chapter={chapter}
               onChange={handleChapterLocalSave}
+              onSubtitleTab={() => {
+                if (!chapter.paragraphs || chapter.paragraphs.length === 0) {
+                  return false;
+                }
+                setNextParagraph(chIndex, -1, 'next');
+                return true;
+              }}
             >
               {chapter.paragraphs!.map((paragraph, pIndex) => (
                   <Paragraph
