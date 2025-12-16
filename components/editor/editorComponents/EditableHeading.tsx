@@ -50,12 +50,12 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
 
     const handleBlur = useCallback(onFinishEditing, [onFinishEditing]);
 
+    const isTitle = level === 'title';
+    const sizeStyles = isTitle
+        ? isDocumentLevel ? 'text-3xl font-bold text-slate-900' : 'text-xl font-semibold text-slate-800'
+        : isDocumentLevel ? 'text-lg mt-2 text-slate-600' : 'text-sm mt-1 text-slate-600';
     const baseStyles = 'cursor-text flex-1 outline-none focus:bg-slate-200 focus:shadow-sm focus:rounded focus:px-1';
-    const sizeStyles = level === 'title'
-      ? isDocumentLevel ? 'text-3xl font-bold text-slate-900' : 'text-xl font-semibold text-slate-800'
-      : isDocumentLevel ? 'text-lg mt-2 text-slate-600' : 'text-sm mt-1 text-slate-600';
-
-    const Component = level === 'title' ? 'h1' : 'h2';
+    const Component = isTitle ? 'h1' : 'h2';
 
     return (
       <Component
