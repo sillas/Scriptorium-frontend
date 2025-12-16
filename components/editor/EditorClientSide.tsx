@@ -101,7 +101,10 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
 
     if( textData !== null) {
       localParagraph.updatedAt = textData.updatedAt;
-      localParagraph.text = textData.text; 
+      localParagraph.text = textData.text;
+      localParagraph.wordCount = textData.wordCount ?? 0;
+      localParagraph.characterCount = textData.characterCount ?? 0;
+      localParagraph.isQuote = textData.isQuote ?? false;
     }
 
     saveLocal('paragraph', localParagraph);    
@@ -127,7 +130,6 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
       }
     }
     else paragraphIndex += 1;
-    
     const paragraphLength = localDocument.chapters![chapterIndex].paragraphs!.length;
 
     if(paragraphIndex >= paragraphLength) {

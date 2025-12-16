@@ -11,9 +11,9 @@ export type NavigationDirection = 'previous' | 'next' | null;
 
 export interface ParagraphUpdate {
   text: string;
-  // characterCount: number;
-  // wordCount: number;
-  // isQuote: boolean;
+  characterCount: number;
+  wordCount: number;
+  isQuote: boolean;
   updatedAt: Date;
 }
 interface ParagraphProps {
@@ -143,6 +143,9 @@ export function Paragraph({
 
     onTextChange({
       text: newText,
+      characterCount: newText.length,
+      wordCount: newText === '' ? 0 : newText.split(/\s+/).length,
+      isQuote: paragraph.isQuote || false,
       updatedAt: new Date(),
     });
   }, [onTextChange]);
