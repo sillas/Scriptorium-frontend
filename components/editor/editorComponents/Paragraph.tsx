@@ -184,6 +184,7 @@ export function Paragraph({
    * - Tab: Navigate to next paragraph
    * - ArrowUp/ArrowDown: Navigate between paragraphs when cursor is at boundaries
    * - Enter/Escape: Finish editing
+   * @param event - The keyboard event triggered by user input
    */
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
 
@@ -230,6 +231,14 @@ export function Paragraph({
     handleFinishEditing();
   }, [handleFinishEditing, onNavigate]);
 
+  /**
+   * Handles click events on the paragraph element.
+   * @param event - The React mouse event triggered by clicking the paragraph
+   */
+  const handleParagraphClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    handleClick(event, paragraphRef, isEditing, setIsEditing);
+  }, [isEditing]);
+
   return (
     <div className={`${isEditing ? 'bg-slate-200 shadow-sm':''} rounded-md p-3 mb-2 text-slate-800 relative group`}>
       
@@ -241,7 +250,7 @@ export function Paragraph({
         ref={paragraphRef}
         contentEditable={isEditing}
         suppressContentEditableWarning
-        onClick={(event) => handleClick(event, paragraphRef, isEditing, setIsEditing)}
+        onClick={handleParagraphClick}
         onBlur={handleOnBlur}
         onInput={scheduleAutoSave}
         onKeyDown={handleKeyDown}
