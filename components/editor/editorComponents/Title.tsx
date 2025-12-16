@@ -127,16 +127,29 @@ export function Title({
 
   
   const handleTitleKeyDown = useCallback((e: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
+    
+    // Only handle Tab, Enter and Escape keys
     if (!['Tab', 'Enter', 'Escape'].includes(e.key)) return false;
     
+    // Handle Tab key to move focus to subtitle if it exists
     if (e.key === 'Tab' && subtitle) {
       e.preventDefault();
       subtitleRef.current?.focus();
       return true;
     }
     
-    return false;
+    // Enter and Escape should stop editing
+    return true;
   }, [subtitle]);
+
+  const handleSubtitleKeyDown = useCallback((e: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
+    // Tab, Enter and Escape should stop editing
+    if (['Tab', 'Enter', 'Escape'].includes(e.key)) {
+      return true;
+    }
+    
+    return false;
+  }, []);
 
   return (
     <div
@@ -171,6 +184,7 @@ export function Title({
             isDocumentLevel={isDocumentTitle}
             onInput={debouncedInput}
             onFinishEditing={stopEditingAndTriggerSync}
+            onKeyDown={handleSubtitleKeyDown}
           />
         </div>
       )}

@@ -39,13 +39,16 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
       },
     }), []);
 
-    const handleHeadingKeyDown = useCallback((e: React.KeyboardEvent<HTMLHeadingElement>) => {
-      const shouldStop = onKeyDown?.(e);
-      if (!shouldStop && ['Tab', 'Enter', 'Escape'].includes(e.key)) {
-        e.preventDefault();
-        onFinishEditing();
-        ref.current?.blur();
-      }
+    const handleHeadingKeyDown = useCallback((event: React.KeyboardEvent<HTMLHeadingElement>) => {
+      
+        const shouldStop = onKeyDown?.(event);
+
+        if (shouldStop) {
+          event.preventDefault();
+          onFinishEditing();
+          ref.current?.blur();
+        }
+        
     }, [onKeyDown, onFinishEditing]);
 
     const handleBlur = useCallback(onFinishEditing, [onFinishEditing]);
