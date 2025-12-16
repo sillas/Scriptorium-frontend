@@ -3,8 +3,9 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { ParagraphInterface } from '@/components/editor/utils/interfaces';
 import SyncIndicator from '@/components/editor/SyncIndicator';
-import { handleClick, updateCursorPosition } from '@/components/editor/utils/utils';
+import { handleClick, updateCursorPosition, setCursorAt } from '@/components/editor/utils/utils';
 
+const DEBOUNCE_DELAY_MS = 700;
 export interface ParagraphDataInterface {
   text: string;
   updatedAt: Date;
@@ -32,8 +33,6 @@ export function Paragraph({
   onRemoteSync,
   setActiveParagraph,
 }: ParagraphProps) {
-
-  const DEBOUNCE_DELAY_MS = 700;
   const [isEditing, setIsEditing] = useState(false);
 
   const previousTextRef = useRef(paragraph.text);
@@ -51,16 +50,6 @@ export function Paragraph({
     );
   }, [isEditing]);
 
-  const setCursorAt = (position: 'START' | 'END') => {
-    setTimeout(() => {
-      const range = document.createRange();
-      range.selectNodeContents(paragraphRef.current!);
-      range.collapse(position === 'START');
-      const sel = window.getSelection();
-      sel?.removeAllRanges();
-      sel?.addRange(range);
-    }, 0);
-  }
 
   useEffect(() => {
     if (isActive && (typeof activeFrom === 'boolean')) {
@@ -73,8 +62,11 @@ export function Paragraph({
         block: 'center' 
       });
 
-      if (activeFrom) setCursorAt('END');
-      else setCursorAt('START');
+      if (activeFrom) {
+        setCursorAt(paragraphRef, 'END');
+      } else {
+        setCursorAt(paragraphRef, 'START');
+      }
     }
   }, [isActive, activeFrom]);
 
@@ -107,8 +99,6 @@ export function Paragraph({
   }, [clearDebounceTimer]);
 
   const triggerLocalSave = useCallback(() => {
-    if (!paragraphRef || !previousTextRef) return;
-
     const newText = paragraphRef.current?.textContent.trim() || '';
     if (newText === previousTextRef.current) return;
 
@@ -130,7 +120,7 @@ export function Paragraph({
   const handleFinishEditing = useCallback(() => {
     
     setIsEditing(false);
-    triggerLocalSave()
+    triggerLocalSave();
 
     if(paragraph.sync) return;
     onRemoteSync();
@@ -138,7 +128,7 @@ export function Paragraph({
     
     setIsCursorAtFirstPosition(false);
     setIsCursorAtLastPosition(false);
-  }, [onRemoteSync, triggerLocalSave]);
+  }, [onRemoteSync, triggerLocalSave, paragraph.sync]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
 
@@ -158,18 +148,19 @@ export function Paragraph({
       //   range.setEndAfter(tabNode);
       //   selection?.removeAllRanges();
       //   selection?.addRange(range);
+      return;
     }
 
     if(['ArrowUp', 'ArrowDown'].includes(e.key)) {
       
-      if( e.key === 'ArrowUp' && !isTheFirstParagraph && isCursorAtFirstPosition ) {
+      if(e.key === 'ArrowUp' && !isTheFirstParagraph && isCursorAtFirstPosition) {
         e.preventDefault();
         handleFinishEditing();
         setActiveParagraph(true);
         return;
       }
 
-      if( e.key === 'ArrowDown' && !isTheLastParagraph && isCursorAtLastPosition ) {
+      if(e.key === 'ArrowDown' && !isTheLastParagraph && isCursorAtLastPosition) {
         e.preventDefault();
         handleFinishEditing();
         setActiveParagraph(false);
@@ -178,15 +169,21 @@ export function Paragraph({
     }
 
     if (!['Enter', 'Escape'].includes(e.key)) return
+
     e.preventDefault();
     handleFinishEditing();
-
-  }, [handleFinishEditing, isCursorAtFirstPosition, isCursorAtLastPosition, paragraph.id, setActiveParagraph, isEditing]);
+  }, [
+    handleFinishEditing, 
+    isCursorAtFirstPosition, 
+    isCursorAtLastPosition, 
+    setActiveParagraph, 
+    isEditing
+  ]);
 
   const handleOnBlur = useCallback(() => {
     handleFinishEditing();
     setActiveParagraph(null);
-  }, [handleFinishEditing]);
+  }, [handleFinishEditing, setActiveParagraph]);
 
   return (
     <div className={`${isEditing ? 'bg-slate-200 shadow-sm':''} rounded-md p-3 mb-2 text-slate-800 relative group`}>
