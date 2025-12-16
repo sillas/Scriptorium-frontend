@@ -192,7 +192,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
         documentId: localDocument.id,
         chapterId: thisChapter.id,
         index: lastIndex + 1,
-        text: "Insert your text here",
+        text: '',
         createdAt: now,
         updatedAt: now,
         version: 1,
@@ -288,12 +288,14 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
                     isOnline={isOnline}
                     navigation={{
                       canNavigatePrevious: !(chIndex === 0 && pIndex === 0),
-                      canNavigateNext: !(chIndex === localDocument.chapters!.length -1 && pIndex === chapter.paragraphs!.length -1)
+                      canNavigateNext: !(chIndex === localDocument.chapters!.length -1 && pIndex === chapter.paragraphs!.length -1),
+                      isTheLastParagraphInChapter: pIndex === chapter.paragraphs!.length -1,
                     }}
                     onTextChange={(updatedText) => handleParagraphLocalSave(paragraph, updatedText) }
                     onRemoteSync={() => {}}
                     focusActivation={paragraph.id === activeParagraph?.id ? {direction: activeParagraph.direction} : null}
                     onNavigate={(direction) => setNextParagraph(chIndex, pIndex, direction)}
+                    createNewParagraphInChapter={() => setNewParagraph(chapter)}
                   />
                 ))}
               {/* Add Paragraph Button */}

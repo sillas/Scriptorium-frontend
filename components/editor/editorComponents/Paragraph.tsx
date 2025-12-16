@@ -22,10 +22,12 @@ interface ParagraphProps {
   navigation: {
     canNavigatePrevious: boolean;
     canNavigateNext: boolean;
+    isTheLastParagraphInChapter: boolean;
   };
   onTextChange: (updatedText: ParagraphUpdate) => void;
-  onRemoteSync: () => void;
   onNavigate: (direction: NavigationDirection) => void;
+  onRemoteSync: () => void;
+  createNewParagraphInChapter: () => void;
 }
 
 export function Paragraph({
@@ -36,6 +38,7 @@ export function Paragraph({
   onTextChange,
   onRemoteSync,
   onNavigate,
+  createNewParagraphInChapter,
 }: ParagraphProps) {
   const previousTextRef = useRef(paragraph.text);
   const paragraphRef = useRef<HTMLDivElement>(null);
@@ -210,6 +213,25 @@ export function Paragraph({
       return;
     }
 
+    if(pressedKey === 'Enter' && navigation.isTheLastParagraphInChapter) {
+      event.preventDefault();
+      handleFinishEditing();
+      createNewParagraphInChapter();
+      return
+    }
+
+    // Delete paragraph on Escape if it's the last in chapter and empty
+    if(
+      pressedKey === 'Escape' && 
+      navigation.isTheLastParagraphInChapter &&
+      paragraphRef.current?.textContent?.trim() === ''
+    ) {
+      event.preventDefault();
+      console.log('DELETE PARAGRAPH'); // TODO: Implement paragraph deletion
+      
+      return;
+    }
+
     // Finish editing on Enter or Escape
     if (['Enter', 'Escape'].includes(pressedKey)) {
       event.preventDefault();
@@ -219,8 +241,11 @@ export function Paragraph({
     isCursorAtFirstPosition, 
     isCursorAtLastPosition, 
     isEditing,
+    navigation,
+    paragraphRef,
+    handleFinishEditingAndNavigate,
+    createNewParagraphInChapter,
     handleFinishEditing, 
-    onNavigate,
   ]);
 
   /**
