@@ -33,11 +33,11 @@ export function Paragraph({
   onRemoteSync,
   setActiveParagraph,
 }: ParagraphProps) {
-  const [isEditing, setIsEditing] = useState(false);
-
   const previousTextRef = useRef(paragraph.text);
   const paragraphRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [isEditing, setIsEditing] = useState(false);
   const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
   const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
 
