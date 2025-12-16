@@ -29,7 +29,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const [activeParagraph, setActiveParagraph] = useState<{ id: string; direction: NavigationDirection } | null>(null);
   
   // Sync hook
-  const { saveLocal } = useLocalStorage();
+  const { saveLocal, deleteLocal } = useLocalStorage();
   const { manualSync, isOnline, syncStatus } = useSync();
 
   // Load unsynced data from IndexedDB on mount
@@ -141,6 +141,21 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
       direction
     });
   }, [localDocument.chapters]);
+
+
+  const handleDeleteParagraph = useCallback(async (paragraphId: string) => {
+    const documentUpdated = { ...localDocument };
+    
+    documentUpdated.chapters = documentUpdated.chapters!.map(chapter => ({
+      ...chapter,
+      paragraphs: chapter.paragraphs!.filter(p => p.id !== paragraphId)
+    }));
+
+    setLocalDocument(documentUpdated);
+    setActiveParagraph(null);
+    
+    await deleteLocal('paragraph', paragraphId);
+  }, [localDocument, deleteLocal]);
 
   // Add new chapter when newChapter is set
   useEffect(() => {
@@ -296,6 +311,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
                     focusActivation={paragraph.id === activeParagraph?.id ? {direction: activeParagraph.direction} : null}
                     onNavigate={(direction) => setNextParagraph(chIndex, pIndex, direction)}
                     createNewParagraphInChapter={() => setNewParagraph(chapter)}
+                    onDelete={() => handleDeleteParagraph(paragraph.id)}
                   />
                 ))}
               {/* Add Paragraph Button */}

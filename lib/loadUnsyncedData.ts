@@ -7,6 +7,16 @@ import {
 
 const proccessChapter = (unsyncedChapter: ChapterInterface, updatedChapters: ChapterInterface[]) => {
 
+    // Skip deleted chapters
+    if ((unsyncedChapter as any).deleted) {
+        console.log(`Removing deleted chapter: ${unsyncedChapter.id}`);
+        const chapterIndex = updatedChapters.findIndex(ch => ch.id === unsyncedChapter.id);
+        if (chapterIndex !== -1) {
+            updatedChapters.splice(chapterIndex, 1);
+        }
+        return;
+    }
+
     if (unsyncedChapter.id.startsWith('temp-')) {
         // New chapter - add it in the correct position by index
         console.log(`Adding new chapter (temp): ${unsyncedChapter.id}`);
@@ -45,6 +55,16 @@ const proccessChapters = (
 
 const processParagraph = (unsyncedParagraph: ParagraphInterface, updatedParagraphs: ParagraphInterface[]) => {
     
+    // Skip deleted paragraphs
+    if ((unsyncedParagraph as any).deleted) {
+        console.log(`Removing deleted paragraph: ${unsyncedParagraph.id}`);
+        const paragraphIndex = updatedParagraphs.findIndex(p => p.id === unsyncedParagraph.id);
+        if (paragraphIndex !== -1) {
+            updatedParagraphs.splice(paragraphIndex, 1);
+        }
+        return;
+    }
+
     if (unsyncedParagraph.id.startsWith('temp-')) {
         // New paragraph - add it in the correct position by index within its chapter
         // const chapterParagraphs = updatedParagraphs.filter(p => p.chapterId === unsyncedParagraph.chapterId);

@@ -28,6 +28,7 @@ interface ParagraphProps {
   onNavigate: (direction: NavigationDirection) => void;
   onRemoteSync: () => void;
   createNewParagraphInChapter: () => void;
+  onDelete: () => void;
 }
 
 export function Paragraph({
@@ -39,6 +40,7 @@ export function Paragraph({
   onRemoteSync,
   onNavigate,
   createNewParagraphInChapter,
+  onDelete,
 }: ParagraphProps) {
   const previousTextRef = useRef(paragraph.text);
   const paragraphRef = useRef<HTMLDivElement>(null);
@@ -228,8 +230,7 @@ export function Paragraph({
       paragraphRef.current?.textContent?.trim() === ''
     ) {
       event.preventDefault();
-      console.log('DELETE PARAGRAPH'); // TODO: Implement paragraph deletion
-      
+      onDelete();
       return;
     }
 

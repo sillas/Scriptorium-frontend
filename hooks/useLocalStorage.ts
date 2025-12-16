@@ -26,8 +26,34 @@ export function useLocalStorage() {
         },
         []
       );
+
+    const deleteLocal = useCallback(
+        async (
+          type: 'document' | 'chapter' | 'paragraph',
+          id: string
+        ) => {
+          try {
+            await initDB();
+            const storeName = `${type}s`;
+    
+            const deletedData = {
+              id,
+              deleted: true,
+              sync: false
+            };
+    
+            await saveToIndexedDB(storeName, deletedData);
+        
+          } catch (error) {
+            console.error('Error in deleteLocal:', error);
+            throw error;
+          }
+        },
+        []
+      );
     
     return {
-        saveLocal
+        saveLocal,
+        deleteLocal
     };
 }
