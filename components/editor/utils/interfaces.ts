@@ -10,6 +10,7 @@ export interface ParagraphInterface {
   sync: boolean;
   characterCount: number;
   wordCount: number;
+  isQuote?: boolean;
 }
 export interface ChapterInterface {
   id: string;

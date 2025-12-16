@@ -11,6 +11,9 @@ export type NavigationDirection = 'previous' | 'next' | null;
 
 export interface ParagraphUpdate {
   text: string;
+  // characterCount: number;
+  // wordCount: number;
+  // isQuote: boolean;
   updatedAt: Date;
 }
 interface ParagraphProps {
@@ -49,6 +52,8 @@ export function Paragraph({
   const [isEditing, setIsEditing] = useState(false);
   const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
   const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
+
+  // TODO: Implement "isQuote", "characterCount" and "wordCount"
 
   /**
    * Updates the cursor position state to track whether the cursor is at the first or last position
@@ -287,7 +292,7 @@ export function Paragraph({
         onBlur={handleOnBlur}
         onInput={scheduleAutoSave}
         onKeyDown={handleKeyDown}
-        className={`${isEditing ? 'rounded':''} pr-2 cursor-text min-h-[1.5rem] outline-none text-justify`}
+        className={`${isEditing ? 'rounded':''} ${paragraph.isQuote ? 'pl-4 italic text-gray-600' : ''} pr-2 cursor-text min-h-[1.5rem] outline-none text-justify`}
       >
         {paragraph.text}
       </div>
