@@ -134,39 +134,44 @@ export function Paragraph({
     setIsCursorAtLastPosition(false);
   }, [onRemoteSync, triggerLocalSave, paragraph.sync]);
 
+  const handleFinishEditingAndNavigate = useCallback((
+    e: React.KeyboardEvent<HTMLDivElement>,
+    direction: NavigationDirection
+  ) => {
+    e.preventDefault();
+    handleFinishEditing();
+    onNavigate(direction);
+  }, [handleFinishEditing, onNavigate]);
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
 
+    const key = e.key;
+
     // Go to next paragraph on Tab
-    if (e.key === 'Tab' && isEditing && navigation.canNavigateNext) {
-      e.preventDefault();
-      handleFinishEditing();
-      onNavigate('next');
+    if (key === 'Tab' && isEditing && navigation.canNavigateNext) {
+      handleFinishEditingAndNavigate(e, 'next');
       return;
     }
 
     // Navigate between paragraphs with ArrowUp and ArrowDown
-    if(['ArrowUp', 'ArrowDown'].includes(e.key)) {
+    if(['ArrowUp', 'ArrowDown'].includes(key)) {
       
-      if(e.key === 'ArrowUp' && isCursorAtFirstPosition && navigation.canNavigatePrevious) {
-        e.preventDefault();
-        handleFinishEditing();
-        onNavigate('previous');
-        return;
+      if(key === 'ArrowUp' && isCursorAtFirstPosition && navigation.canNavigatePrevious) {
+        handleFinishEditingAndNavigate(e, 'previous');
       }
 
-      if(e.key === 'ArrowDown' && isCursorAtLastPosition && navigation.canNavigateNext) {
-        e.preventDefault();
-        handleFinishEditing();
-        onNavigate('next');
-        return;
+      else if(isCursorAtLastPosition && navigation.canNavigateNext) {
+        handleFinishEditingAndNavigate(e, 'next');
       }
+
+      return;
     }
 
     // Finish editing on Enter or Escape
-    if (!['Enter', 'Escape'].includes(e.key)) return
-
-    e.preventDefault();
-    handleFinishEditing();
+    if (['Enter', 'Escape'].includes(key)) {
+      e.preventDefault();
+      handleFinishEditing();
+    }
   }, [
     handleFinishEditing, 
     isCursorAtFirstPosition, 
