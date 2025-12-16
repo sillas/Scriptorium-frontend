@@ -136,25 +136,15 @@ export function Paragraph({
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
 
+    // Go to next paragraph on Tab
     if (e.key === 'Tab' && isEditing && navigation.canNavigateNext) {
       e.preventDefault();
       handleFinishEditing();
       onNavigate('next');
-      // const selection = window.getSelection();
-      // const range = selection?.getRangeAt(0);
-      // if (range) {
-      //   range.deleteContents();
-      //   const tabNode = document.createTextNode('');
-      //   range.insertNode(tabNode);
-        
-      //   // Move o cursor após o tab
-      //   range.setStartAfter(tabNode);
-      //   range.setEndAfter(tabNode);
-      //   selection?.removeAllRanges();
-      //   selection?.addRange(range);
       return;
     }
 
+    // Navigate between paragraphs with ArrowUp and ArrowDown
     if(['ArrowUp', 'ArrowDown'].includes(e.key)) {
       
       if(e.key === 'ArrowUp' && isCursorAtFirstPosition && navigation.canNavigatePrevious) {
@@ -172,6 +162,7 @@ export function Paragraph({
       }
     }
 
+    // Finish editing on Enter or Escape
     if (!['Enter', 'Escape'].includes(e.key)) return
 
     e.preventDefault();
