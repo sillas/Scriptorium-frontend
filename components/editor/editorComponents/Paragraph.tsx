@@ -13,9 +13,11 @@ interface ParagraphProps {
   paragraph: ParagraphInterface;
   onChange: (updatedText: ParagraphDataInterface) => void;
   onRemoteSync: () => void;
-  setActiveParagraph: (CurrentParagraphId: string, toUp: boolean) => void;
+  setActiveParagraph: (toUp: boolean | null) => void;
   isTheFirstParagraph: boolean;
   isTheLastParagraph: boolean;
+  isActive: boolean;
+  activeFrom: boolean | null | undefined;
   isOnline?: boolean;
 }
 
@@ -23,6 +25,8 @@ export function Paragraph({
   paragraph,
   isTheFirstParagraph,
   isTheLastParagraph,
+  activeFrom,
+  isActive = false,
   isOnline = true,
   onChange,
   onRemoteSync,
@@ -56,20 +60,42 @@ export function Paragraph({
     setIsCursorAtLastPosition(cursorPosition === totalLength);
   };
 
+  const setCursorAt = (position: 'START' | 'END') => {
+    setTimeout(() => {
+      const range = document.createRange();
+      range.selectNodeContents(paragraphRef.current!);
+      range.collapse(position === 'START');
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    }, 0);
+  }
+
+  useEffect(() => {
+    if (isActive && (typeof activeFrom === 'boolean')) {
+      setIsEditing(true);
+      paragraphRef.current?.focus();
+
+      if (activeFrom) setCursorAt('END');
+      else setCursorAt('START');
+    }
+  }, [isActive, activeFrom]);
+
   useEffect(() => {
     if (!isEditing) return;
 
     const element = paragraphRef.current;
+    if( !element ) return;
     
     // Eventos que indicam mudança de posição do cursor
-    element?.addEventListener('keyup', updateCursorPosition);
-    element?.addEventListener('mouseup', updateCursorPosition);
-    element?.addEventListener('focus', updateCursorPosition);
+    element.addEventListener('keyup', updateCursorPosition);
+    element.addEventListener('mouseup', updateCursorPosition);
+    element.addEventListener('focus', updateCursorPosition);
 
     return () => {
-      element?.removeEventListener('keyup', updateCursorPosition);
-      element?.removeEventListener('mouseup', updateCursorPosition);
-      element?.removeEventListener('focus', updateCursorPosition);
+      element.removeEventListener('keyup', updateCursorPosition);
+      element.removeEventListener('mouseup', updateCursorPosition);
+      element.removeEventListener('focus', updateCursorPosition);
     };
   }, [isEditing]);
 
@@ -122,14 +148,14 @@ export function Paragraph({
       if( e.key === 'ArrowUp' && !isTheFirstParagraph && isCursorAtFirstPosition ) {
         e.preventDefault();
         handleFinishEditing();
-        setActiveParagraph(paragraph.id, true);
+        setActiveParagraph(true);
         return;
       }
 
       if( e.key === 'ArrowDown' && !isTheLastParagraph && isCursorAtLastPosition ) {
         e.preventDefault();
         handleFinishEditing();
-        setActiveParagraph(paragraph.id, false);
+        setActiveParagraph(false);
         return;
       }
     }
@@ -140,17 +166,24 @@ export function Paragraph({
 
   }, [handleFinishEditing, isCursorAtFirstPosition, isCursorAtLastPosition, paragraph.id, setActiveParagraph]);
 
+  const handleOnBlur = useCallback(() => {
+    handleFinishEditing();
+    setActiveParagraph(null);
+  }, [handleFinishEditing]);
+
   return (
     <div className={`${isEditing ? 'shadow-sm':''} rounded-md p-3 mb-2 text-slate-800 relative group`}>
       
-      {!isTheFirstParagraph && isCursorAtFirstPosition && <span className="text-gray-400">▲</span>}
+      {!isTheFirstParagraph && isCursorAtFirstPosition && (
+        <span className="absolute left-0 top-0 text-gray-400 -translate-y-1/2">▲</span>
+      )}
 
       <div
         ref={paragraphRef}
         contentEditable={isEditing}
         suppressContentEditableWarning
         onClick={(e) => handleClick(e, paragraphRef, isEditing, setIsEditing)}
-        onBlur={handleFinishEditing}
+        onBlur={handleOnBlur}
         onInput={debouncedInput}
         onKeyDown={handleKeyDown}
         className={`${isEditing ? 'rounded':''} pr-2 cursor-text min-h-[1.5rem] outline-none text-justify`}
@@ -158,7 +191,9 @@ export function Paragraph({
         {paragraph.text}
       </div>
 
-      {!isTheLastParagraph &&isCursorAtLastPosition && <span className="text-gray-400">▼</span>}
+      {!isTheLastParagraph && isCursorAtLastPosition && (
+        <span className="absolute left-0 bottom-0 text-gray-400 translate-y-1/2">▼</span>
+      )}
     
       <div className="absolute top-0 right-0">
         <SyncIndicator isSynced={paragraph.sync} isOnline={isOnline} />

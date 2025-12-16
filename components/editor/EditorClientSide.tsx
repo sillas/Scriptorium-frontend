@@ -26,6 +26,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(theDocument);
   const [newChapter, setNewChapter] = useState(false);
   const [newParagraph, setNewParagraph] = useState<ChapterInterface | null>(null);
+  const [activeParagraph, setactiveParagraph] = useState<{ id: string; toUp: boolean | null } | null>(null);
   
   // Sync hook
   const { saveLocal } = useLocalStorage();
@@ -106,22 +107,24 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
     saveLocal('paragraph', localParagraph);    
   }, [saveLocal]);
 
-  const setActiveParagraph = useCallback((
-    CurrentParagraphId: string,
-    toUp: boolean
+  const setNextParagraph = useCallback((
+    chapterIndex: number,
+    paragraphIndex: number,
+    toUp: boolean | null
   ) => {
-
-    console.log(CurrentParagraphId);
-
-    if( toUp ) {
-      console.log('goto up');  
-      
-      return
+    if( toUp === null ) {
+      setactiveParagraph(null);
+      return;
     }
 
-    console.log('goto down');
+    if( toUp ) paragraphIndex -= 1;
+    else paragraphIndex += 1;
     
-  }, []);
+    setactiveParagraph({
+      id: localDocument.chapters![chapterIndex].paragraphs![paragraphIndex].id,
+      toUp
+    });
+  }, [localDocument.chapters]);
 
   // Add new chapter when newChapter is set
   useEffect(() => {
@@ -236,7 +239,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
             version={localDocument.version}
             updatedAt={localDocument.updatedAt}
             createdAt={localDocument.createdAt}
-            onRemoteSync={() => console.log('onRemoteSync Doc title')}
+            onRemoteSync={() => {}}
             onChange={handleDocumentLocalSave}
             isOnline={isOnline}
             isSynced={localDocument.sync}
@@ -244,12 +247,12 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
           />
           
           {/* Chapters with Titles and Paragraphs */}
-          {localDocument.chapters!.map((chapter) => (
+          {localDocument.chapters!.map((chapter, cIndex) => (
             <Chapter key={chapter.id} id={chapter.id}>
               <Title
                 title={chapter.title === '' ? 'Insert a Title' : chapter.title}
                 subtitle={chapter.subtitle === '' ? 'Add a subtitle' : chapter.subtitle}
-                onRemoteSync={() => console.log('onRemoteSync chapter title')}
+                onRemoteSync={() => {}}
                 onChange={ data => handleChapterLocalSave(chapter, data) }
                 isSynced={chapter.sync}
                 isOnline={isOnline}
@@ -258,7 +261,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
                 createdAt={chapter.createdAt}
                 updatedAt={chapter.updatedAt}
               />
-              {chapter.paragraphs!.map((paragraph) => (
+              {chapter.paragraphs!.map((paragraph, pIndex) => (
                   <Paragraph
                     key={paragraph.id}
                     paragraph={paragraph}
@@ -266,8 +269,10 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
                     isTheFirstParagraph={paragraph.index === chapter.paragraphs![0]?.index}
                     isTheLastParagraph={paragraph.index === chapter.paragraphs!.at(-1)?.index}
                     onChange={(updatedText) => handleParagraphLocalSave(paragraph, updatedText) }
-                    onRemoteSync={() => console.log('onRemoteSync paragraph')}
-                    setActiveParagraph={setActiveParagraph}
+                    onRemoteSync={() => {}}
+                    isActive={paragraph.id === activeParagraph?.id}
+                    activeFrom={activeParagraph?.toUp}
+                    setActiveParagraph={(toUp) => setNextParagraph(cIndex, pIndex, toUp)}
                   />
                 ))}
               {/* Add Paragraph Button */}
