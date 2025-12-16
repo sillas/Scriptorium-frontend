@@ -86,12 +86,12 @@ export  const setCursorAt = (
     position: 'START' | 'END'
 ) => {
     setTimeout(() => {
-    const range = document.createRange();
-    range.selectNodeContents(elementRef.current!);
-    range.collapse(position === 'START');
-    
-    const sel = window.getSelection();
-    sel?.removeAllRanges();
-    sel?.addRange(range);
-    }, 0);
+        const range = document.createRange();
+        range.selectNodeContents(elementRef.current!);
+        range.collapse(position === 'START');
+        
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+    }, 20);
 }

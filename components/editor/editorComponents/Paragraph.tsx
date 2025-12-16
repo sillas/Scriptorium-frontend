@@ -66,7 +66,7 @@ export function Paragraph({
    * Handles paragraph activation when navigating from other paragraphs
    * Sets editing mode, scrolls element into view, and positions cursor based on navigation direction
    */
-  useEffect(() => {
+  useEffect(() => {    
     if (focusActivation) {
       setIsEditing(true);
       paragraphRef.current?.focus();
@@ -206,13 +206,14 @@ export function Paragraph({
         handleFinishEditingAndNavigate(event, 'previous');
       }
 
-      else if(isCursorAtLastPosition && navigation.canNavigateNext) {
+      else if(pressedKey === 'ArrowDown' && isCursorAtLastPosition && navigation.canNavigateNext) {
         handleFinishEditingAndNavigate(event, 'next');
       }
 
       return;
     }
 
+    // Create new paragraph on Enter if it's the last in chapter
     if(pressedKey === 'Enter' && navigation.isTheLastParagraphInChapter) {
       event.preventDefault();
       handleFinishEditing();

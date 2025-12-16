@@ -47,7 +47,6 @@ const processParagraph = (unsyncedParagraph: ParagraphInterface, updatedParagrap
     
     if (unsyncedParagraph.id.startsWith('temp-')) {
         // New paragraph - add it in the correct position by index within its chapter
-        console.log(`Adding new paragraph (temp): ${unsyncedParagraph.id}`);
         // const chapterParagraphs = updatedParagraphs.filter(p => p.chapterId === unsyncedParagraph.chapterId);
         const insertIndex = updatedParagraphs.findIndex(p =>
             p.chapterId === unsyncedParagraph.chapterId && p.index > unsyncedParagraph.index
@@ -84,6 +83,8 @@ const processParagraphs = (
     chapter: ChapterInterface,
     unsyncedParagraph: ParagraphInterface[]) => {
 
+    console.log(`Adding ${unsyncedParagraph.length} paragraphs to chapter ${chapter.id}.`);
+    
     const updatedParagraphs = [...chapter.paragraphs ?? []];
 
     if( unsyncedParagraph.length > 0 ) {
@@ -131,7 +132,7 @@ export const loadUnsyncedData = async (
         }
         
         setLocalDocument(updatedDocument);
-        console.log('=====================================');
+        console.log('=== end of unsynced data processing ===');
         
     } catch (error) {
         console.error('Error loading unsynced data from IndexedDB:', error);
