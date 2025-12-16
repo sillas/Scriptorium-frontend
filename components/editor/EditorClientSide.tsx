@@ -147,7 +147,6 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
     
     if(currentChapter.paragraphs!.length === 0) {
       setActiveParagraph(null)
-
       return
     }
 
