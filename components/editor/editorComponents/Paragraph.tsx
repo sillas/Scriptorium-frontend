@@ -57,8 +57,6 @@ export function Paragraph({
     handleWordCount(paragraph.text)
   );
 
-  // TODO: Implement "isQuote"
-
   /**
    * Updates the cursor position state to track whether the cursor is at the first or last position
    * Used for navigation hints display
@@ -139,20 +137,20 @@ export function Paragraph({
    * Triggers a local save of the paragraph text if it has changed
    * Compares current text with previous text to avoid unnecessary updates
    */
-  const triggerLocalSave = useCallback(() => {
+  const triggerLocalSave = useCallback((forceUpdate = false) => {
     const newText = paragraphRef.current?.textContent.trim() || '';
-    if (newText === previousTextRef.current) return;
 
+    if (!forceUpdate && newText === previousTextRef.current) return;
     previousTextRef.current = newText;
 
     onTextChange(paragraph,{
       text: newText,
       characterCount: newText.length,
       wordCount: handleWordCount(newText),
-      isQuote: paragraph.isQuote || false,
+      isQuote: isQuote || false,
       updatedAt: new Date(),
     });
-  }, [onTextChange]);
+  }, [onTextChange, isQuote]);
 
 
   /**
@@ -295,6 +293,21 @@ export function Paragraph({
     handleClick(event, paragraphRef, isEditing, setIsEditing);
   }, [isEditing]);
 
+  const handleDelete = useCallback(() => {
+    if(!confirm('Tem certeza que deseja deletar este parágrafo?')) return;
+    onDelete();
+  }, [onDelete]);
+
+  useEffect(() => {
+    triggerLocalSave(true);
+  }, [isQuote]);
+
+  const buttons_actions = useCallback(() => [
+    { label: '“', action: () => {setIsQuote(!isQuote);}, style: 'text-5xl text-gray-500' },
+    { label: '2', action: () => {console.log('Button 2');}, style: 'text-xs text-gray-500' },
+    { label: 'X', action: handleDelete, style: 'text-2xs text-red-400 font-bold' },
+  ], [isQuote, triggerLocalSave, handleDelete]);
+
   return (
     <div className="relative flex flex-row items-stretch">
       {/* Botões laterais à esquerda, fora do fluxo do texto */}
@@ -306,23 +319,31 @@ export function Paragraph({
         }
         style={{ minWidth: '2rem' }}
       >
-        {[1,2,3,4].map((n) => (
+        {buttons_actions().map(({ label, action, style }) => (
           <button
-            key={n}
+            key={label}
             tabIndex={-1}
-            className="my-0.5 w-6 h-6 text-xs rounded bg-slate-100 text-gray-500 border border-slate-200 shadow-sm hover:bg-slate-200 focus:outline-none cursor-pointer"
+            className={`my-0.5 w-6 h-6 ${style} rounded bg-slate-100 border border-slate-200 shadow-sm hover:bg-slate-200 focus:outline-none cursor-pointer`}
             style={{ pointerEvents: isEditing ? 'auto' : 'auto' }}
             type="button"
+            onClick={action}
           >
-            {n}
+            {label}
           </button>
         ))}
       </div>
 
       {/* Parágrafo editável */}
       <div className={`${isEditing ? 'bg-slate-200 shadow-sm':''} rounded-md p-3 mb-2 text-slate-800 relative flex-1`}>  
+        
         {isCursorAtFirstPosition && navigation.canNavigatePrevious && (
           <span className="absolute left-0 top-0 text-gray-400 -translate-y-1/2">▲</span>
+        )}
+
+        {isQuote && (
+          <div className="absolute pl-[3.5rem] left-0 top-0 text-gray-400 text-5xl select-none pointer-events-none" aria-hidden="true">
+            “
+          </div>
         )}
 
         <div
@@ -333,7 +354,7 @@ export function Paragraph({
           onBlur={handleOnBlur}
           onInput={scheduleAutoSave}
           onKeyDown={handleKeyDown}
-          className={`${isEditing ? 'rounded':''} ${isQuote ? 'pl-[5rem] italic text-gray-600' : ''} pr-2 cursor-text min-h-[1.5rem] outline-none text-justify`}
+          className={`${isEditing ? 'rounded':''} ${isQuote ? 'pl-[4rem] italic text-gray-600' : ''} pr-2 cursor-text min-h-[1.5rem] outline-none text-justify`}
         >
           {paragraph.text}
         </div>

@@ -79,7 +79,6 @@ export function useLocalStorage() {
         const { chapters, ...toSaveLocal } = toSave;
     
         try {
-          saveLocal('document', toSaveLocal);
           return true;
         } catch (error) {
           console.error('Error saving document locally:', error);
