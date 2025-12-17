@@ -22,6 +22,16 @@ interface EditorClientSideProps {
   theDocument: DocumentInterface;
 }
 
+/**
+ * Client-side editor for a single document.
+ *
+ * Handles local state for the document, optimistic UI updates, and
+ * saving unsynced changes to local storage / IndexedDB via helper hooks.
+ *
+ * Props:
+ * @param slug - document slug (used in header routing)
+ * @param theDocument - initial document data fetched from the server
+ */
 export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(theDocument);
   const [newChapter, setNewChapter] = useState(false);
@@ -54,6 +64,13 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   // }, [manualSync]);
 
   // handlers
+  /**
+   * Save partial document data locally (does not include chapters).
+   * Marks the document as unsynced and updates the `updatedAt` timestamp.
+   * The saved object excludes nested `chapters` to keep local storage compact.
+   *
+   * @param data - partial document fields to update locally (e.g. title, subtitle)
+   */
   const handleDocumentLocalSave = useCallback((
     data: TitleUpdateData
   ) => {
@@ -69,6 +86,14 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
     saveLocal('document', toSaveLocal);
   }, [saveLocal]);
 
+  /**
+   * Save a chapter locally. Marks the chapter as unsynced and updates
+   * `updatedAt` unless it was provided in `data`.
+   * The saved object excludes `paragraphs` to keep local storage compact.
+   *
+   * @param chapter - the chapter object to save
+   * @param data - optional partial updates to the chapter (e.g. title)
+   */
   const handleChapterLocalSave = useCallback((
     chapter: ChapterInterface,
     data: TitleUpdateData | {} = {},
@@ -89,6 +114,14 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
 
   }, [saveLocal]);
 
+  /**
+   * Save a paragraph locally. If `textData` is provided, updates the
+   * paragraph's text, word/character counts and `updatedAt` from it.
+   * Marks the paragraph as unsynced.
+   *
+   * @param paragraph - the paragraph to save
+   * @param textData - optional text update information (text, counts, updatedAt)
+   */
   const handleParagraphLocalSave = useCallback((
     paragraph: ParagraphInterface,
     textData: ParagraphUpdate | null = null,
@@ -110,6 +143,15 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
     saveLocal('paragraph', localParagraph);    
   }, [saveLocal]);
 
+  /**
+   * Activate the next or previous paragraph for focus/navigation.
+   * Calculates boundaries across chapters and sets `activeParagraph` accordingly.
+   * If navigation reaches outside the document bounds, clears the active paragraph.
+   *
+   * @param chapterIndex - index of the current chapter
+   * @param paragraphIndex - index of the current paragraph within the chapter
+   * @param direction - 'previous' or 'next' to indicate navigation direction
+   */
   const setNextParagraph = useCallback((
     chapterIndex: number,
     paragraphIndex: number,
@@ -158,6 +200,12 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   }, [localDocument.chapters]);
 
 
+  /**
+   * Delete a paragraph locally: removes it from the local document state
+   * and deletes the unsynced entry from local storage / IndexedDB.
+   *
+   * @param paragraphId - id of the paragraph to delete
+   */
   const handleDeleteParagraph = useCallback(async (paragraphId: string) => {
     const documentUpdated = { ...localDocument };
     
@@ -248,6 +296,22 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
     }
   }, [newParagraph, localDocument.id]);
 
+  const handleOnSubtitleTab = useCallback((chIndex: number, paragraphs: ParagraphInterface[]) => {
+    if (paragraphs.length === 0) {
+      return false;
+    }
+    setNextParagraph(chIndex, -1, 'next');
+    return true;
+  }, [setNextParagraph]);
+
+  const returnNavigation = useCallback((chIndex: number, pIndex: number, paragraphs: ParagraphInterface[]) => {
+    return {
+      canNavigatePrevious: !(chIndex === 0 && pIndex === 0),
+      canNavigateNext: !(chIndex === localDocument.chapters!.length -1 && pIndex === paragraphs.length -1),
+      isTheLastParagraphInChapter: pIndex === paragraphs.length -1,
+    }
+  }, [localDocument.chapters]);
+
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
       {/* Barra Superior */}
@@ -301,30 +365,20 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
               key={chapter.id} 
               chapter={chapter}
               onChange={handleChapterLocalSave}
-              onSubtitleTab={() => {
-                if (!chapter.paragraphs || chapter.paragraphs.length === 0) {
-                  return false;
-                }
-                setNextParagraph(chIndex, -1, 'next');
-                return true;
-              }}
+              onSubtitleTab={() => handleOnSubtitleTab(chIndex, chapter.paragraphs ?? [])}
             >
               {chapter.paragraphs!.map((paragraph, pIndex) => (
                   <Paragraph
                     key={paragraph.id}
                     paragraph={paragraph}
                     isOnline={isOnline}
-                    navigation={{
-                      canNavigatePrevious: !(chIndex === 0 && pIndex === 0),
-                      canNavigateNext: !(chIndex === localDocument.chapters!.length -1 && pIndex === chapter.paragraphs!.length -1),
-                      isTheLastParagraphInChapter: pIndex === chapter.paragraphs!.length -1,
-                    }}
-                    onTextChange={(updatedText) => handleParagraphLocalSave(paragraph, updatedText) }
-                    onRemoteSync={() => {}}
                     focusActivation={paragraph.id === activeParagraph?.id ? {direction: activeParagraph.direction} : null}
+                    navigation={returnNavigation(chIndex, pIndex, chapter.paragraphs ?? [])}
+                    onTextChange={handleParagraphLocalSave}
+                    onDelete={handleDeleteParagraph}
                     onNavigate={(direction) => setNextParagraph(chIndex, pIndex, direction)}
                     createNewParagraphInChapter={() => setNewParagraph(chapter)}
-                    onDelete={() => handleDeleteParagraph(paragraph.id)}
+                    onRemoteSync={() => {}}
                   />
                 ))}
               {/* Add Paragraph Button */}

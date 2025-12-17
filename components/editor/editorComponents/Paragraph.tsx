@@ -32,11 +32,11 @@ interface ParagraphProps {
     canNavigateNext: boolean;
     isTheLastParagraphInChapter: boolean;
   };
-  onTextChange: (updatedText: ParagraphUpdate) => void;
+  onTextChange: (paragraph: ParagraphInterface, updatedText: ParagraphUpdate) => void;
   onNavigate: (direction: NavigationDirection) => void;
   onRemoteSync: () => void;
   createNewParagraphInChapter: () => void;
-  onDelete: () => void;
+  onDelete: (id: string) => void;
 }
 
 export function Paragraph({
@@ -150,7 +150,7 @@ export function Paragraph({
 
     previousTextRef.current = newText;
 
-    onTextChange({
+    onTextChange(paragraph,{
       text: newText,
       characterCount: newText.length,
       wordCount: handleWordCount(newText),
@@ -262,7 +262,7 @@ export function Paragraph({
         handleFinishEditingAndNavigate(event, 'previous');
       }
 
-      onDelete();
+      onDelete(paragraph.id);
       return;
     }
 
