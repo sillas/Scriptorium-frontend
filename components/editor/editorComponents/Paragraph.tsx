@@ -23,10 +23,8 @@ export interface ParagraphUpdate {
 }
 interface ParagraphProps {
   paragraph: ParagraphInterface;
-  focusActivation?: {
-    direction: NavigationDirection;
-  } | null;
   isOnline: boolean;
+  focusActivation?: { direction: NavigationDirection } | null;
   navigation: {
     canNavigatePrevious: boolean;
     canNavigateNext: boolean;
@@ -34,9 +32,9 @@ interface ParagraphProps {
   };
   onTextChange: (paragraph: ParagraphInterface, updatedText: ParagraphUpdate) => void;
   onNavigate: (direction: NavigationDirection) => void;
+  onDelete: (id: string) => void;
   onRemoteSync: () => void;
   createNewParagraphInChapter: () => void;
-  onDelete: (id: string) => void;
 }
 
 export function Paragraph({
