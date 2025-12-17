@@ -49,6 +49,7 @@ export function Paragraph({
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
   const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
   const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
   const [characterCount, setCharacterCount] = useState(paragraph.text.length);
@@ -162,12 +163,13 @@ export function Paragraph({
   const scheduleAutoSave = useCallback(() => {    
     clearDebounceTimer();
     debounceTimerRef.current = setTimeout(triggerLocalSave, DEBOUNCE_DELAY_MS);
-    const text = paragraphRef.current?.textContent.trim() || '';
+    let text = paragraphRef.current?.textContent.trim() || '';
     setCharacterCount(text.length);
     setWordCount(
       handleWordCount(text)
     );
   }, [
+    isQuote,
     triggerLocalSave,
     clearDebounceTimer,
     setCharacterCount,
@@ -308,7 +310,7 @@ export function Paragraph({
         onBlur={handleOnBlur}
         onInput={scheduleAutoSave}
         onKeyDown={handleKeyDown}
-        className={`${isEditing ? 'rounded':''} ${paragraph.isQuote ? 'pl-4 italic text-gray-600' : ''} pr-2 cursor-text min-h-[1.5rem] outline-none text-justify`}
+        className={`${isEditing ? 'rounded':''} ${isQuote ? 'pl-[5rem] italic text-gray-600' : ''} pr-2 cursor-text min-h-[1.5rem] outline-none text-justify`}
       >
         {paragraph.text}
       </div>

@@ -10,7 +10,7 @@ import { Paragraph } from '@/components/editor/editorComponents/Paragraph';
 import { Title } from '@/components/editor/editorComponents/Title';
 import { useIsOnline } from '@/components/OnlineStatusProvider';
 import {
-  DocumentInterface, 
+  DocumentInterface,
   ChapterInterface,
   ParagraphInterface,
   ActiveParagraphInterface,
