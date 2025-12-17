@@ -296,37 +296,61 @@ export function Paragraph({
   }, [isEditing]);
 
   return (
-    <div className={`${isEditing ? 'bg-slate-200 shadow-sm':''} rounded-md p-3 mb-2 text-slate-800 relative group`}>
-      
-      {isCursorAtFirstPosition && navigation.canNavigatePrevious && (
-        <span className="absolute left-0 top-0 text-gray-400 -translate-y-1/2">▲</span>
-      )}
-
+    <div className="relative flex flex-row items-stretch">
+      {/* Botões laterais à esquerda, fora do fluxo do texto */}
       <div
-        ref={paragraphRef}
-        contentEditable={isEditing}
-        suppressContentEditableWarning
-        onClick={handleParagraphClick}
-        onBlur={handleOnBlur}
-        onInput={scheduleAutoSave}
-        onKeyDown={handleKeyDown}
-        className={`${isEditing ? 'rounded':''} ${isQuote ? 'pl-[5rem] italic text-gray-600' : ''} pr-2 cursor-text min-h-[1.5rem] outline-none text-justify`}
+        className={
+          `flex flex-col items-center justify-center z-10 select-none transition-opacity duration-200 ` +
+          `absolute -left-[2rem] top-0 h-full ` +
+          `${isEditing ? 'opacity-100 pointer-events-auto' : 'opacity-0 hover:opacity-80 pointer-events-auto'}`
+        }
+        style={{ minWidth: '2rem' }}
       >
-        {paragraph.text}
+        {[1,2,3,4].map((n) => (
+          <button
+            key={n}
+            tabIndex={-1}
+            className="my-0.5 w-6 h-6 text-xs rounded bg-slate-100 text-gray-500 border border-slate-200 shadow-sm hover:bg-slate-200 focus:outline-none cursor-pointer"
+            style={{ pointerEvents: isEditing ? 'auto' : 'auto' }}
+            type="button"
+          >
+            {n}
+          </button>
+        ))}
       </div>
 
-      { isEditing && (
-        <span className="absolute right-0 bottom-0 text-gray-400 bg-slate-100 rounded px-2 translate-y-1/2">
-          {characterCount} chars • {wordCount} words
-        </span>
-      )}
+      {/* Parágrafo editável */}
+      <div className={`${isEditing ? 'bg-slate-200 shadow-sm':''} rounded-md p-3 mb-2 text-slate-800 relative flex-1`}>  
+        {isCursorAtFirstPosition && navigation.canNavigatePrevious && (
+          <span className="absolute left-0 top-0 text-gray-400 -translate-y-1/2">▲</span>
+        )}
 
-      {isCursorAtLastPosition && navigation.canNavigateNext && (
-        <span className="absolute left-0 bottom-0 text-gray-400 translate-y-1/2">▼</span>
-      )}
-    
-      <div className="absolute top-0 right-0">
-        <SyncIndicator isSynced={paragraph.sync} />
+        <div
+          ref={paragraphRef}
+          contentEditable={isEditing}
+          suppressContentEditableWarning
+          onClick={handleParagraphClick}
+          onBlur={handleOnBlur}
+          onInput={scheduleAutoSave}
+          onKeyDown={handleKeyDown}
+          className={`${isEditing ? 'rounded':''} ${isQuote ? 'pl-[5rem] italic text-gray-600' : ''} pr-2 cursor-text min-h-[1.5rem] outline-none text-justify`}
+        >
+          {paragraph.text}
+        </div>
+
+        { isEditing && (
+          <span className="absolute right-0 bottom-0 text-gray-400 bg-slate-100 rounded px-2 translate-y-1/2">
+            {characterCount} chars • {wordCount} words
+          </span>
+        )}
+
+        {isCursorAtLastPosition && navigation.canNavigateNext && (
+          <span className="absolute left-0 bottom-0 text-gray-400 translate-y-1/2">▼</span>
+        )}
+      
+        <div className="absolute top-0 right-0">
+          <SyncIndicator isSynced={paragraph.sync} />
+        </div>
       </div>
     </div>
   );
