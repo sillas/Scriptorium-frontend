@@ -23,7 +23,6 @@ interface TitleProps {
   onRemoteSync: () => void;
   onChange: (data: TitleUpdateData, isNew?: boolean) => void;
   onSubtitleTab?: () => boolean;
-  isOnline?: boolean;
 }
 
 interface TitleMetadataProps {
@@ -65,7 +64,6 @@ export function Title({
   onRemoteSync,
   onChange,
   onSubtitleTab,
-  isOnline = true,
 }: TitleProps) {
   const DEBOUNCE_DELAY_MS = 700;
   
@@ -219,7 +217,7 @@ export function Title({
       } bg-slate-100 relative`}
     >
       <div className={`absolute top-0 right-0 ${isDocumentLevel ? 'mr-3' : ''}`}>
-        <SyncIndicator isSynced={isSynced} isOnline={isOnline} />
+        <SyncIndicator isSynced={isSynced} />
       </div>
 
       <div className="flex items-center gap-2">

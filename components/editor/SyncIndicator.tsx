@@ -1,19 +1,23 @@
-import React from 'react';
+import { useIsOnline } from '@/components/OnlineStatusProvider';
 
 interface SyncIndicatorProps {
   isSynced: boolean;
-  isOnline: boolean;
   className?: string;
 }
 
 /**
- * Discrete sync indicator component
+ * Discrete sync indicator component (reads global online status)
+ * Doesn't render until online status is known (avoids hydration mismatch)
  */
 export default function SyncIndicator({
   isSynced,
-  isOnline,
   className = '',
 }: SyncIndicatorProps) {
+  const isOnline = useIsOnline();
+
+  // Don't render anything during SSR / before we know the real status
+  if (typeof isOnline === 'undefined') return null;
+
   if (isSynced && isOnline) {
     return null; // Don't show anything when synced and online
   }
@@ -32,9 +36,6 @@ export default function SyncIndicator({
           isOnline ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'
         }`}
       />
-      <span className="text-gray-500">
-        {!isOnline ? 'Offline' : ''}
-      </span>
     </div>
   );
 }

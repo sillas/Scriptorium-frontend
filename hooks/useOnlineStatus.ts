@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 
 /**
  * Hook to detect online/offline status
+ * Returns `boolean | undefined` — `undefined` indicates we don't know the status during SSR
  */
-export function useOnlineStatus() {
-  const [isOnline, setIsOnline] = useState(
-    typeof navigator !== 'undefined' ? navigator.onLine : true
+export function useOnlineStatus(): boolean | undefined {
+  const [isOnline, setIsOnline] = useState<boolean | undefined>(
+    typeof navigator !== 'undefined' ? navigator.onLine : undefined
   );
 
   useEffect(() => {

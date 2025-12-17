@@ -11,6 +11,7 @@ import { Paragraph, ParagraphUpdate, NavigationDirection } from '@/components/ed
 import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useSync } from '@/hooks/useSync';
+import { useIsOnline } from '@/components/OnlineStatusProvider';
 import {
   DocumentInterface, 
   ChapterInterface,
@@ -40,7 +41,8 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   
   // Sync hook
   const { saveLocal, deleteLocal } = useLocalStorage();
-  const { manualSync, isOnline, syncStatus } = useSync();
+  const { manualSync, syncStatus } = useSync();
+  const isOnline = useIsOnline();
 
   // Load unsynced data from IndexedDB on mount
   useEffect(() => {
@@ -371,7 +373,6 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
                   <Paragraph
                     key={paragraph.id}
                     paragraph={paragraph}
-                    isOnline={isOnline}
                     focusActivation={paragraph.id === activeParagraph?.id ? {direction: activeParagraph.direction} : null}
                     navigation={returnNavigation(chIndex, pIndex, chapter.paragraphs ?? [])}
                     onTextChange={handleParagraphLocalSave}

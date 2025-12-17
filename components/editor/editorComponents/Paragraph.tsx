@@ -23,7 +23,6 @@ export interface ParagraphUpdate {
 }
 interface ParagraphProps {
   paragraph: ParagraphInterface;
-  isOnline: boolean;
   focusActivation?: { direction: NavigationDirection } | null;
   navigation: {
     canNavigatePrevious: boolean;
@@ -41,7 +40,6 @@ export function Paragraph({
   paragraph,
   focusActivation,
   navigation,
-  isOnline = true,
   onTextChange,
   onRemoteSync,
   onNavigate,
@@ -328,7 +326,7 @@ export function Paragraph({
       )}
     
       <div className="absolute top-0 right-0">
-        <SyncIndicator isSynced={paragraph.sync} isOnline={isOnline} />
+        <SyncIndicator isSynced={paragraph.sync} />
       </div>
     </div>
   );

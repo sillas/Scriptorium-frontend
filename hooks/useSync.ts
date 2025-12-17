@@ -8,7 +8,7 @@ import {
   updateSyncQueueRetry,
   SyncQueueItem,
 } from '@/lib/indexedDB';
-import { useOnlineStatus } from './useOnlineStatus';
+import { useIsOnline } from '@/components/OnlineStatusProvider';
 
 const MAX_RETRY_COUNT = 3;
 
@@ -30,7 +30,7 @@ export function useSync() {
     error: null,
   });
   
-  const isOnline = useOnlineStatus();
+  const isOnline = useIsOnline();
   const syncInProgress = useRef(false);
   const previousOnlineStatus = useRef(isOnline);
 
