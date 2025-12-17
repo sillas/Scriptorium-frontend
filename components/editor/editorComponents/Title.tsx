@@ -156,7 +156,7 @@ export function Title({
 
   /**
    * Handles keyboard events for the title heading element.
-   * @param e - The keyboard event from the title heading element
+   * @param event - The keyboard event from the title heading element
    * @returns `true` if the event should stop editing (Tab with subtitle, Enter, or Escape), `false` otherwise
    * 
    * @remarks
@@ -164,14 +164,14 @@ export function Title({
    * - Enter and Escape keys stop editing mode
    * - Prevents default Tab behavior when subtitle is present
    */
-  const handleTitleKeyDown = useCallback((e: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
+  const handleTitleKeyDown = useCallback((event: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
     
     // Only handle Tab, Enter and Escape keys
-    if (!KEYS_TAB_ENTER_ESCAPE.includes(e.key)) return false;
+    if (!KEYS_TAB_ENTER_ESCAPE.includes(event.key)) return false;
     
     // Handle Tab key to move focus to subtitle if it exists
-    if (e.key === 'Tab' && subtitle) {
-      e.preventDefault();
+    if (event.key === 'Tab' && subtitle) {
+      event.preventDefault();
       subtitleRef.current?.focus();
       return true;
     }
@@ -182,7 +182,7 @@ export function Title({
 
   /**
    * Handles keyboard events for the subtitle heading element.
-   * @param e - The keyboard event from the subtitle heading element
+   * @param event - The keyboard event from the subtitle heading element
    * @returns `true` if the event should stop editing (Tab, Enter, or Escape pressed), `false` otherwise
    * 
    * @remarks
@@ -190,18 +190,18 @@ export function Title({
    * - Prevents default Tab behavior if the callback successfully handles the event
    * - Automatically stops editing mode on Tab, Enter, or Escape key press
    */
-  const handleSubtitleKeyDown = useCallback((e: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
+  const handleSubtitleKeyDown = useCallback((event: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
     // Handle Tab key to move focus to first paragraph if callback is provided
-    if (e.key === 'Tab' && onSubtitleTab) {
+    if (event.key === 'Tab' && onSubtitleTab) {
       const handled = onSubtitleTab();
       if (handled) {
-        e.preventDefault();
+        event.preventDefault();
         return true;
       }
     }
     
     // Tab, Enter and Escape should stop editing
-    if (KEYS_TAB_ENTER_ESCAPE.includes(e.key)) {
+    if (KEYS_TAB_ENTER_ESCAPE.includes(event.key)) {
       return true;
     }
     

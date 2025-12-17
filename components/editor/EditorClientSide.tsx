@@ -6,12 +6,16 @@ import EditorHeader from '@/components/editor/Header';
 import SideColumn from '@/components/editor/columns/SideColumn';
 import AddButton from '@/components/editor/editorComponents/AddButton';
 import Chapter from '@/components/editor/editorComponents/Chapter';
-import { Title, TitleUpdateData } from '@/components/editor/editorComponents/Title';
-import { Paragraph, ParagraphUpdate, NavigationDirection } from '@/components/editor/editorComponents/Paragraph';
 import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useSync } from '@/hooks/useSync';
 import { useIsOnline } from '@/components/OnlineStatusProvider';
+import { Title, TitleUpdateData } from '@/components/editor/editorComponents/Title';
+import { 
+  Paragraph, 
+  ParagraphUpdate, 
+  NavigationDirection
+} from '@/components/editor/editorComponents/Paragraph';
 import {
   DocumentInterface, 
   ChapterInterface,
@@ -41,7 +45,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   
   // Sync hook
   const { saveLocal, deleteLocal } = useLocalStorage();
-  const { manualSync, syncStatus } = useSync();
+  const { syncStatus } = useSync();
   const isOnline = useIsOnline();
 
   // Load unsynced data from IndexedDB on mount
@@ -52,20 +56,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
     );
   }, [theDocument]);
 
-  // Handle Ctrl+S for manual sync
-  // useEffect(() => {
-  //   const handleKeyDown = (e: KeyboardEvent) => {
-  //     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-  //       e.preventDefault();
-  //       manualSync();
-  //     }
-  //   };
 
-  //   window.addEventListener('keydown', handleKeyDown);
-  //   return () => window.removeEventListener('keydown', handleKeyDown);
-  // }, [manualSync]);
-
-  // handlers
   /**
    * Save partial document data locally (does not include chapters).
    * Marks the document as unsynced and updates the `updatedAt` timestamp.
