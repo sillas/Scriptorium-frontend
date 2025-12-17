@@ -1,24 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Contents from '@/components/editor/editorComponents/Contents';
 import EditorHeader from '@/components/editor/Header';
 import SideColumn from '@/components/editor/columns/SideColumn';
+import Contents from '@/components/editor/editorComponents/Contents';
 import AddButton from '@/components/editor/editorComponents/AddButton';
 import Chapter from '@/components/editor/editorComponents/Chapter';
-import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useSync } from '@/hooks/useSync';
-import { useIsOnline } from '@/components/OnlineStatusProvider';
-import { Title } from '@/components/editor/editorComponents/Title';
 import { Paragraph } from '@/components/editor/editorComponents/Paragraph';
+import { Title } from '@/components/editor/editorComponents/Title';
+import { useIsOnline } from '@/components/OnlineStatusProvider';
 import {
   DocumentInterface, 
   ChapterInterface,
   ParagraphInterface,
   ActiveParagraphInterface,
 } from '@/components/editor/utils/interfaces';
+import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useNavigation } from '@/hooks/useNavigation';
+import { useSync } from '@/hooks/useSync';
 
 interface EditorClientSideProps {
   slug: string;
