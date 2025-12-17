@@ -39,8 +39,8 @@ interface EditorClientSideProps {
  */
 export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(theDocument);
-  const [newChapter, setNewChapter] = useState(false);
-  const [newParagraph, setNewParagraph] = useState<ChapterInterface | null>(null);
+  const [shouldAddNewChapter, setShouldAddNewChapter] = useState(false);
+  const [shouldAddNewParagraph, setShouldAddNewParagraph] = useState<ChapterInterface | null>(null);
   const [activeParagraph, setActiveParagraph] = useState<{ id: string; direction: NavigationDirection } | null>(null);
   
   // Sync hook
@@ -66,7 +66,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
    */
   const handleDocumentLocalSave = useCallback((
     data: TitleUpdateData
-  ) => {
+  ):boolean => {
 
     const toSave: DocumentInterface = {
       ...localDocument,
@@ -76,8 +76,17 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
     }
 
     const { chapters, ...toSaveLocal } = toSave;
-    saveLocal('document', toSaveLocal);
-  }, [saveLocal]);
+
+    try {
+      saveLocal('document', toSaveLocal);
+      return true;
+    } catch (error) {
+      console.error('Error saving document locally:', error);
+      alert('Erro ao salvar o documento localmente.');
+      return false;
+    }
+
+  }, [saveLocal, localDocument]);
 
   /**
    * Save a chapter locally. Marks the chapter as unsynced and updates
@@ -90,20 +99,30 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const handleChapterLocalSave = useCallback((
     chapter: ChapterInterface,
     data: TitleUpdateData | {} = {},
-  ) => {
+  ): boolean => {
 
     const toSave: ChapterInterface = {
       ...chapter,
       ...data,
       sync: false,
     }
+
+    // TODO: Add text validation.
     
     if( !(data as TitleUpdateData).updatedAt ) {
       toSave.updatedAt = new Date();
     }
     
     const { paragraphs, ...toSaveLocal } = toSave;
-    saveLocal('chapter', toSaveLocal);
+
+    try {
+      saveLocal('chapter', toSaveLocal);
+      return true;
+    } catch (error) {
+      console.error('Error saving chapter locally:', error);
+      alert('Erro ao salvar o capítulo localmente.');
+      return false;
+    }
 
   }, [saveLocal]);
 
@@ -118,12 +137,14 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const handleParagraphLocalSave = useCallback((
     paragraph: ParagraphInterface,
     textData: ParagraphUpdate | null = null,
-  ) => {
+  ): boolean => {
 
     const localParagraph: ParagraphInterface = {
       ...paragraph,
       sync: false,
     }
+
+    // TODO: Add text validation.
 
     if( textData !== null) {
       localParagraph.updatedAt = textData.updatedAt;
@@ -133,7 +154,15 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
       localParagraph.isQuote = textData.isQuote ?? false;
     }
 
-    saveLocal('paragraph', localParagraph);    
+    try {
+      saveLocal('paragraph', localParagraph);
+      return true
+    } catch (error) {
+      console.error('Error saving paragraph locally:', error);
+      alert('Erro ao salvar o parágrafo localmente.');
+      return false;
+    }
+
   }, [saveLocal]);
 
   /**
@@ -145,48 +174,57 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
    * @param paragraphIndex - index of the current paragraph within the chapter
    * @param direction - 'previous' or 'next' to indicate navigation direction
    */
-  const setNextParagraph = useCallback((
+  const navigateToAdjacentParagraph = useCallback((
     chapterIndex: number,
     paragraphIndex: number,
     direction: NavigationDirection
   ) => {
 
-    if( direction === null ) {
+    const chapters = localDocument.chapters;
+
+    if (!chapters || chapters.length === 0 || direction === null) {
       setActiveParagraph(null);
       return;
     }
 
-    if( direction === 'previous' ) {
-      paragraphIndex -= 1;
+    let newChapterIndex = chapterIndex;
+    let newParagraphIndex = paragraphIndex;
 
-      if( paragraphIndex < 0 && chapterIndex === 0 ) {
-        setActiveParagraph(null);
-        return;
+    if( direction === 'previous' ) {
+      newParagraphIndex--;
+
+      if(newParagraphIndex < 0) {
+        newChapterIndex--;        
+        if( newChapterIndex < 0 || chapters[newChapterIndex].paragraphs!.length === 0 ) {
+          setActiveParagraph(null);
+          return;
+        }
+        newParagraphIndex = chapters[newChapterIndex].paragraphs!.length - 1;
+      }
+    } else if (direction === 'next') {
+      newParagraphIndex++;
+
+      const paragraphLength = chapters[newChapterIndex].paragraphs?.length ?? 0;
+      if(newParagraphIndex >= paragraphLength) {
+        newChapterIndex++;
+        if( newChapterIndex >= chapters.length || chapters[newChapterIndex].paragraphs!.length === 0 ) {
+          setActiveParagraph(null);
+          return;
+        }
+        newParagraphIndex = 0;
       }
     }
-    else paragraphIndex += 1;
-    const paragraphLength = localDocument.chapters![chapterIndex].paragraphs!.length;
 
-    if(paragraphIndex >= paragraphLength) {
-      chapterIndex++;
-      paragraphIndex = 0;
-    }
+    const targetChapter = chapters[newChapterIndex];
+    const targetParagraph = targetChapter?.paragraphs?.[newParagraphIndex];
 
-    if(paragraphIndex < 0) {
-      chapterIndex--;
-      const previousChapter = localDocument.chapters![chapterIndex];
-      paragraphIndex = previousChapter.paragraphs!.length -1;
-    }
-
-    const currentChapter = localDocument.chapters![chapterIndex];
-    
-    if(currentChapter.paragraphs!.length === 0) {
-      setActiveParagraph(null)
-      return
+    if (!targetParagraph) {
+      setActiveParagraph(null);
+      return;
     }
 
     setActiveParagraph({
-      id: currentChapter.paragraphs![paragraphIndex].id,
+      id: targetParagraph.id,
       direction
     });
 
@@ -207,15 +245,14 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
       paragraphs: chapter.paragraphs!.filter(p => p.id !== paragraphId)
     }));
 
-    setLocalDocument(documentUpdated);
-    // setActiveParagraph(null);
-    
     await deleteLocal('paragraph', paragraphId);
+    setLocalDocument(documentUpdated);
+
   }, [localDocument, deleteLocal]);
 
-  // Add new chapter when newChapter is set
+  // Add new chapter when shouldAddNewChapter is set
   useEffect(() => {
-    if (newChapter) {
+    if (shouldAddNewChapter) {
 
       const documentUpdated = { ...localDocument };
       const now = new Date();
@@ -223,8 +260,8 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
         ? Math.max(...documentUpdated.chapters!.map(ch => ch.index))
         : 0;
       
-      const newChapterData: ChapterInterface = {
-        id: `temp-${Date.now()}`,
+      const shouldAddNewChapterData: ChapterInterface = {
+        id: `temp-${crypto.randomUUID()}`,
         documentId: documentUpdated.id,
         index: lastIndex + 1,
         title: "",
@@ -237,65 +274,77 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
         wordCount: 0
       };
 
-      documentUpdated.chapters!.push(newChapterData);
+      documentUpdated.chapters!.push(shouldAddNewChapterData);
+      const result = handleChapterLocalSave(shouldAddNewChapterData);
+      if(!result) return;
+
       setLocalDocument(documentUpdated);
-      handleChapterLocalSave(newChapterData);
-
-      setNewChapter(false);
+      setShouldAddNewChapter(false);
     }
-  }, [newChapter, localDocument.id]);
+  }, [
+    shouldAddNewChapter, 
+    localDocument.id, 
+    handleChapterLocalSave
+  ]);
 
-  // Add new paragraph when newParagraph is set with a chapter
+  // Add new paragraph when shouldAddNewParagraph is set with a chapter
   useEffect(() => {
-    if (newParagraph) {
-
-      const documentUpdated = { ...localDocument };
-      const thisChapter = {...newParagraph}
-      const chapterParagraphs = thisChapter.paragraphs ?? [];
-      
-      const lastIndex = chapterParagraphs.length > 0
-        ? Math.max(...chapterParagraphs.map(p => p.index))
-        : 0;
-      
-      const now = new Date();
-      const newParagraphData: ParagraphInterface = {
-        id: `temp-${Date.now()}`,
-        documentId: localDocument.id,
-        chapterId: thisChapter.id,
-        index: lastIndex + 1,
-        text: '',
-        createdAt: now,
-        updatedAt: now,
-        version: 1,
-        characterCount: 0,
-        wordCount: 0,
-        sync: false,
-      };
-
-      thisChapter.paragraphs = [...chapterParagraphs, newParagraphData];
-  
-      handleParagraphLocalSave(newParagraphData);
-
-      documentUpdated.chapters = documentUpdated.chapters!.map(ch => 
-        ch.id === thisChapter.id ? thisChapter : ch
-      );
-
-      setLocalDocument(documentUpdated);
-      setNewParagraph(null);
-      setActiveParagraph({
-        id: newParagraphData.id,
-        direction: 'previous'
-      });
+    if (!shouldAddNewParagraph) {
+      return;
     }
-  }, [newParagraph, localDocument.id]);
+
+    const documentUpdated = { ...localDocument };
+    const thisChapter = {...shouldAddNewParagraph}
+    const chapterParagraphs = thisChapter.paragraphs ?? [];
+    
+    const lastIndex = chapterParagraphs.length > 0
+      ? Math.max(...chapterParagraphs.map(p => p.index))
+      : 0;
+    
+    const now = new Date();
+    const shouldAddNewParagraphData: ParagraphInterface = {
+      id: `temp-${crypto.randomUUID()}`,
+      documentId: localDocument.id,
+      chapterId: thisChapter.id,
+      index: lastIndex + 1,
+      text: '',
+      createdAt: now,
+      updatedAt: now,
+      version: 1,
+      characterCount: 0,
+      wordCount: 0,
+      sync: false,
+    };
+
+    thisChapter.paragraphs = [...chapterParagraphs, shouldAddNewParagraphData];
+
+    const result = handleParagraphLocalSave(shouldAddNewParagraphData);
+    if(!result) return;
+
+    documentUpdated.chapters = documentUpdated.chapters!.map(ch => 
+      ch.id === thisChapter.id ? thisChapter : ch
+    );
+
+    setLocalDocument(documentUpdated);
+    setShouldAddNewParagraph(null);
+    setActiveParagraph({
+      id: shouldAddNewParagraphData.id,
+      direction: 'previous'
+    });
+
+  }, [
+    shouldAddNewParagraph, 
+    localDocument.id,
+    handleParagraphLocalSave
+  ]);
 
   const handleOnSubtitleTab = useCallback((chIndex: number, paragraphs: ParagraphInterface[]) => {
     if (paragraphs.length === 0) {
       return false;
     }
-    setNextParagraph(chIndex, -1, 'next');
+    navigateToAdjacentParagraph(chIndex, -1, 'next');
     return true;
-  }, [setNextParagraph]);
+  }, [navigateToAdjacentParagraph]);
 
   const returnNavigation = useCallback((chIndex: number, pIndex: number, paragraphs: ParagraphInterface[]) => {
     return {
@@ -368,18 +417,18 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
                     navigation={returnNavigation(chIndex, pIndex, chapter.paragraphs ?? [])}
                     onTextChange={handleParagraphLocalSave}
                     onDelete={handleDeleteParagraph}
-                    onNavigate={(direction) => setNextParagraph(chIndex, pIndex, direction)}
-                    createNewParagraphInChapter={() => setNewParagraph(chapter)}
+                    onNavigate={(direction) => navigateToAdjacentParagraph(chIndex, pIndex, direction)}
+                    createNewParagraphInChapter={() => setShouldAddNewParagraph(chapter)}
                     onRemoteSync={() => {}}
                   />
                 ))}
               {/* Add Paragraph Button */}
-              <AddButton type="paragraph" onClick={() => setNewParagraph(chapter)} />
+              <AddButton type="paragraph" onClick={() => setShouldAddNewParagraph(chapter)} />
             </Chapter>
           ))}
           
           {/* Add Chapter Button */}
-          <AddButton type="chapter" onClick={() => setNewChapter(true)} />
+          <AddButton type="chapter" onClick={() => setShouldAddNewChapter(true)} />
         </main>
 
         {/* Coluna Lateral Direita */}

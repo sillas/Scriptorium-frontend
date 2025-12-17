@@ -5,7 +5,7 @@ import { Title, TitleUpdateData } from '@/components/editor/editorComponents/Tit
 interface ChapterProps {
   chapter: ChapterInterface;
   children?: ReactNode;
-  onChange: (chapter: ChapterInterface, data: TitleUpdateData) => void;
+  onChange: (chapter: ChapterInterface, data: TitleUpdateData) => boolean;
   onSubtitleTab?: () => boolean;
 }
 

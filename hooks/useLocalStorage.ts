@@ -45,7 +45,7 @@ export function useLocalStorage() {
             await saveToIndexedDB(storeName, deletedData);
         
           } catch (error) {
-            console.error('Error in deleteLocal:', error);
+            console.error('Error in deleteLocal:', id, error);
             throw error;
           }
         },

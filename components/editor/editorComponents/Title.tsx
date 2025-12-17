@@ -21,7 +21,7 @@ interface TitleProps {
   isSynced: boolean;
   isDocumentLevel: boolean;
   onRemoteSync: () => void;
-  onChange: (data: TitleUpdateData, isNew?: boolean) => void;
+  onChange: (data: TitleUpdateData, isNew?: boolean) => boolean;
   onSubtitleTab?: () => boolean;
 }
 
@@ -120,8 +120,9 @@ export function Title({
     };
     
     previousContentSnapshot.current = newTitle + newSubtitle;
+    if(!onChange(data)) return;
+    
     setLocalUpdatedAt(data.updatedAt);
-    onChange(data);
   }, [onChange]);
 
   /**
