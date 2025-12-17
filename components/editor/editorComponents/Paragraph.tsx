@@ -31,7 +31,7 @@ interface ParagraphProps {
   };
   onTextChange: (paragraph: ParagraphInterface, updatedText: ParagraphUpdate) => void;
   onNavigate: (direction: NavigationDirection) => void;
-  onDelete: (id: string) => void;
+  onDelete: () => void;
   onRemoteSync: () => void;
   createNewParagraphInChapter: () => void;
 }
@@ -258,7 +258,7 @@ export function Paragraph({
         handleFinishEditingAndNavigate(event, 'previous');
       }
 
-      onDelete(paragraph.id);
+      onDelete();
       return;
     }
 

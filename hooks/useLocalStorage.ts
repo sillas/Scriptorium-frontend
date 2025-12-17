@@ -5,55 +5,196 @@ import {
   saveToIndexedDB
 } from '@/lib/indexedDB';
 
-export function useLocalStorage() {
+import {
+  DocumentInterface, 
+  ChapterInterface,
+  ParagraphInterface,
+} from '@/components/editor/utils/interfaces';
+import {
+  ParagraphUpdate,
+} from '@/components/editor/editorComponents/Paragraph';
+import { TitleUpdateData } from '@/components/editor/editorComponents/Title';
 
+
+export function useLocalStorage() {
     const saveLocal = useCallback(
         async <T extends { id: string }>(
-          type: 'document' | 'chapter' | 'paragraph',
-          data: T
+            type: 'document' | 'chapter' | 'paragraph',
+            data: T
         ) => {
-          try {
-    
-            await initDB();
-            const storeName = `${type}s`;
-    
-            await saveToIndexedDB(storeName, data);
-        
-          } catch (error) {
-            console.error('Error in saveAndSync:', error);
-            throw error;
-          }
+            try {
+                await initDB();
+                const storeName = `${type}s`;
+                await saveToIndexedDB(storeName, data);
+            } catch (error) {
+                console.error('Error in saveAndSync:', error);
+                throw error;
+            }
         },
         []
-      );
+    );
 
     const deleteLocal = useCallback(
         async (
-          type: 'document' | 'chapter' | 'paragraph',
-          id: string
-        ) => {
-          try {
-            await initDB();
-            const storeName = `${type}s`;
-    
-            const deletedData = {
-              id,
-              deleted: true,
-              sync: false
-            };
-    
-            await saveToIndexedDB(storeName, deletedData);
+            type: 'document' | 'chapter' | 'paragraph',
+            id: string
+          ) => {
+            try {
+                await initDB();
+                const storeName = `${type}s`;
+                const deletedData = {
+                    id,
+                    deleted: true,
+                    sync: false
+                };
+               await saveToIndexedDB(storeName, deletedData);
         
-          } catch (error) {
-            console.error('Error in deleteLocal:', id, error);
-            throw error;
-          }
-        },
-        []
-      );
+            } catch (error) {
+                console.error('Error in deleteLocal:', id, error);
+                throw error;
+            }
+        }, []
+    );
     
+    /**
+     * Save partial document data locally (does not include chapters).
+     * Marks the document as unsynced and updates the `updatedAt` timestamp.
+     * The saved object excludes nested `chapters` to keep local storage compact.
+     *
+     * @param localDocument - the current document object
+     * @param data - partial document fields to update locally (e.g. title, subtitle)
+     */
+    const documentLocalSave = useCallback((
+        localDocument: DocumentInterface,
+        data: TitleUpdateData
+      ):boolean => {
+    
+        const toSave: DocumentInterface = {
+          ...localDocument,
+          ...data,
+          updatedAt: new Date(),
+          sync: false
+        }
+    
+        const { chapters, ...toSaveLocal } = toSave;
+    
+        try {
+          saveLocal('document', toSaveLocal);
+          return true;
+        } catch (error) {
+          console.error('Error saving document locally:', error);
+          alert('Erro ao salvar o documento localmente.');
+          return false;
+        }
+    
+      }, [saveLocal]);
+    
+    /**
+       * Save a chapter locally. Marks the chapter as unsynced and updates
+       * `updatedAt` unless it was provided in `data`.
+       * The saved object excludes `paragraphs` to keep local storage compact.
+       *
+       * @param chapter - the chapter object to save
+       * @param data - optional partial updates to the chapter (e.g. title)
+       */
+      const chapterLocalSave = useCallback((
+        chapter: ChapterInterface,
+        data: TitleUpdateData | {} = {},
+      ): boolean => {
+    
+        const toSave: ChapterInterface = {
+          ...chapter,
+          ...data,
+          sync: false,
+        }
+    
+        // TODO: Add text validation.
+        
+        if( !(data as TitleUpdateData).updatedAt ) {
+          toSave.updatedAt = new Date();
+        }
+        
+        const { paragraphs, ...toSaveLocal } = toSave;
+    
+        try {
+          saveLocal('chapter', toSaveLocal);
+          return true;
+        } catch (error) {
+          console.error('Error saving chapter locally:', error);
+          alert('Erro ao salvar o capítulo localmente.');
+          return false;
+        }
+    
+      }, [saveLocal]);
+    
+    /**
+       * Save a paragraph locally. If `textData` is provided, updates the
+       * paragraph's text, word/character counts and `updatedAt` from it.
+       * Marks the paragraph as unsynced.
+       *
+       * @param paragraph - the paragraph to save
+       * @param textData - optional text update information (text, counts, updatedAt)
+       */
+      const paragraphLocalSave = useCallback((
+        paragraph: ParagraphInterface,
+        textData: ParagraphUpdate | null = null,
+      ): boolean => {
+    
+        const localParagraph: ParagraphInterface = {
+          ...paragraph,
+          sync: false,
+        }
+    
+        // TODO: Add text validation.
+    
+        if( textData !== null) {
+          localParagraph.updatedAt = textData.updatedAt;
+          localParagraph.text = textData.text;
+          localParagraph.wordCount = textData.wordCount ?? 0;
+          localParagraph.characterCount = textData.characterCount ?? 0;
+          localParagraph.isQuote = textData.isQuote ?? false;
+        }
+    
+        try {
+          saveLocal('paragraph', localParagraph);
+          return true
+        } catch (error) {
+          console.error('Error saving paragraph locally:', error);
+          alert('Erro ao salvar o parágrafo localmente.');
+          return false;
+        }
+    
+      }, [saveLocal]);
+
+    /**
+       * Delete a paragraph locally: removes it from the local document state
+       * and deletes the unsynced entry from local storage / IndexedDB.
+       *
+       * @param localDocument - the current document object
+       * @param paragraphId - id of the paragraph to delete
+       * @param setLocalDocument - function to update the local document state
+       */
+      const deleteParagraph = useCallback(
+        async (
+          localDocument: DocumentInterface,
+          paragraphId: string,
+          setLocalDocument: (doc: DocumentInterface) => void
+        ) => {
+        const documentUpdated = { ...localDocument };
+        
+        documentUpdated.chapters = documentUpdated.chapters!.map(chapter => ({
+          ...chapter,
+          paragraphs: chapter.paragraphs!.filter(p => p.id !== paragraphId)
+        }));
+    
+        await deleteLocal('paragraph', paragraphId);
+        setLocalDocument(documentUpdated);
+      }, [deleteLocal]);
+
     return {
-        saveLocal,
-        deleteLocal
+        documentLocalSave,
+        chapterLocalSave,
+        paragraphLocalSave,
+        deleteParagraph
     };
 }

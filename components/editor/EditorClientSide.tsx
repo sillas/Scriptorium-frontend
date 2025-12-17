@@ -10,10 +10,9 @@ import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useSync } from '@/hooks/useSync';
 import { useIsOnline } from '@/components/OnlineStatusProvider';
-import { Title, TitleUpdateData } from '@/components/editor/editorComponents/Title';
+import { Title } from '@/components/editor/editorComponents/Title';
 import { 
-  Paragraph, 
-  ParagraphUpdate, 
+  Paragraph,
   NavigationDirection
 } from '@/components/editor/editorComponents/Paragraph';
 import {
@@ -21,6 +20,7 @@ import {
   ChapterInterface,
   ParagraphInterface,
 } from '@/components/editor/utils/interfaces';
+import { useNavigation } from '@/hooks/useNavigation';
 
 interface EditorClientSideProps {
   slug: string;
@@ -43,8 +43,18 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const [shouldAddNewParagraph, setShouldAddNewParagraph] = useState<ChapterInterface | null>(null);
   const [activeParagraph, setActiveParagraph] = useState<{ id: string; direction: NavigationDirection } | null>(null);
   
-  // Sync hook
-  const { saveLocal, deleteLocal } = useLocalStorage();
+  // custom hooks
+  const { 
+    documentLocalSave, 
+    chapterLocalSave, 
+    paragraphLocalSave, 
+    deleteParagraph, 
+  } = useLocalStorage();
+  const { 
+    navigateToAdjacentParagraph,
+    returnNavigation,
+    onSubtitleTab
+  } = useNavigation();
   const { syncStatus } = useSync();
   const isOnline = useIsOnline();
 
@@ -55,200 +65,6 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
       setLocalDocument
     );
   }, [theDocument]);
-
-
-  /**
-   * Save partial document data locally (does not include chapters).
-   * Marks the document as unsynced and updates the `updatedAt` timestamp.
-   * The saved object excludes nested `chapters` to keep local storage compact.
-   *
-   * @param data - partial document fields to update locally (e.g. title, subtitle)
-   */
-  const handleDocumentLocalSave = useCallback((
-    data: TitleUpdateData
-  ):boolean => {
-
-    const toSave: DocumentInterface = {
-      ...localDocument,
-      ...data,
-      updatedAt: new Date(),
-      sync: false
-    }
-
-    const { chapters, ...toSaveLocal } = toSave;
-
-    try {
-      saveLocal('document', toSaveLocal);
-      return true;
-    } catch (error) {
-      console.error('Error saving document locally:', error);
-      alert('Erro ao salvar o documento localmente.');
-      return false;
-    }
-
-  }, [saveLocal, localDocument]);
-
-  /**
-   * Save a chapter locally. Marks the chapter as unsynced and updates
-   * `updatedAt` unless it was provided in `data`.
-   * The saved object excludes `paragraphs` to keep local storage compact.
-   *
-   * @param chapter - the chapter object to save
-   * @param data - optional partial updates to the chapter (e.g. title)
-   */
-  const handleChapterLocalSave = useCallback((
-    chapter: ChapterInterface,
-    data: TitleUpdateData | {} = {},
-  ): boolean => {
-
-    const toSave: ChapterInterface = {
-      ...chapter,
-      ...data,
-      sync: false,
-    }
-
-    // TODO: Add text validation.
-    
-    if( !(data as TitleUpdateData).updatedAt ) {
-      toSave.updatedAt = new Date();
-    }
-    
-    const { paragraphs, ...toSaveLocal } = toSave;
-
-    try {
-      saveLocal('chapter', toSaveLocal);
-      return true;
-    } catch (error) {
-      console.error('Error saving chapter locally:', error);
-      alert('Erro ao salvar o capítulo localmente.');
-      return false;
-    }
-
-  }, [saveLocal]);
-
-  /**
-   * Save a paragraph locally. If `textData` is provided, updates the
-   * paragraph's text, word/character counts and `updatedAt` from it.
-   * Marks the paragraph as unsynced.
-   *
-   * @param paragraph - the paragraph to save
-   * @param textData - optional text update information (text, counts, updatedAt)
-   */
-  const handleParagraphLocalSave = useCallback((
-    paragraph: ParagraphInterface,
-    textData: ParagraphUpdate | null = null,
-  ): boolean => {
-
-    const localParagraph: ParagraphInterface = {
-      ...paragraph,
-      sync: false,
-    }
-
-    // TODO: Add text validation.
-
-    if( textData !== null) {
-      localParagraph.updatedAt = textData.updatedAt;
-      localParagraph.text = textData.text;
-      localParagraph.wordCount = textData.wordCount ?? 0;
-      localParagraph.characterCount = textData.characterCount ?? 0;
-      localParagraph.isQuote = textData.isQuote ?? false;
-    }
-
-    try {
-      saveLocal('paragraph', localParagraph);
-      return true
-    } catch (error) {
-      console.error('Error saving paragraph locally:', error);
-      alert('Erro ao salvar o parágrafo localmente.');
-      return false;
-    }
-
-  }, [saveLocal]);
-
-  /**
-   * Activate the next or previous paragraph for focus/navigation.
-   * Calculates boundaries across chapters and sets `activeParagraph` accordingly.
-   * If navigation reaches outside the document bounds, clears the active paragraph.
-   *
-   * @param chapterIndex - index of the current chapter
-   * @param paragraphIndex - index of the current paragraph within the chapter
-   * @param direction - 'previous' or 'next' to indicate navigation direction
-   */
-  const navigateToAdjacentParagraph = useCallback((
-    chapterIndex: number,
-    paragraphIndex: number,
-    direction: NavigationDirection
-  ) => {
-
-    const chapters = localDocument.chapters;
-
-    if (!chapters || chapters.length === 0 || direction === null) {
-      setActiveParagraph(null);
-      return;
-    }
-
-    let newChapterIndex = chapterIndex;
-    let newParagraphIndex = paragraphIndex;
-
-    if( direction === 'previous' ) {
-      newParagraphIndex--;
-
-      if(newParagraphIndex < 0) {
-        newChapterIndex--;        
-        if( newChapterIndex < 0 || chapters[newChapterIndex].paragraphs!.length === 0 ) {
-          setActiveParagraph(null);
-          return;
-        }
-        newParagraphIndex = chapters[newChapterIndex].paragraphs!.length - 1;
-      }
-    } else if (direction === 'next') {
-      newParagraphIndex++;
-
-      const paragraphLength = chapters[newChapterIndex].paragraphs?.length ?? 0;
-      if(newParagraphIndex >= paragraphLength) {
-        newChapterIndex++;
-        if( newChapterIndex >= chapters.length || chapters[newChapterIndex].paragraphs!.length === 0 ) {
-          setActiveParagraph(null);
-          return;
-        }
-        newParagraphIndex = 0;
-      }
-    }
-
-    const targetChapter = chapters[newChapterIndex];
-    const targetParagraph = targetChapter?.paragraphs?.[newParagraphIndex];
-
-    if (!targetParagraph) {
-      setActiveParagraph(null);
-      return;
-    }
-
-    setActiveParagraph({
-      id: targetParagraph.id,
-      direction
-    });
-
-  }, [localDocument.chapters]);
-
-
-  /**
-   * Delete a paragraph locally: removes it from the local document state
-   * and deletes the unsynced entry from local storage / IndexedDB.
-   *
-   * @param paragraphId - id of the paragraph to delete
-   */
-  const handleDeleteParagraph = useCallback(async (paragraphId: string) => {
-    const documentUpdated = { ...localDocument };
-    
-    documentUpdated.chapters = documentUpdated.chapters!.map(chapter => ({
-      ...chapter,
-      paragraphs: chapter.paragraphs!.filter(p => p.id !== paragraphId)
-    }));
-
-    await deleteLocal('paragraph', paragraphId);
-    setLocalDocument(documentUpdated);
-
-  }, [localDocument, deleteLocal]);
 
   // Add new chapter when shouldAddNewChapter is set
   useEffect(() => {
@@ -275,7 +91,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
       };
 
       documentUpdated.chapters!.push(shouldAddNewChapterData);
-      const result = handleChapterLocalSave(shouldAddNewChapterData);
+      const result = chapterLocalSave(shouldAddNewChapterData);
       if(!result) return;
 
       setLocalDocument(documentUpdated);
@@ -284,8 +100,9 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   }, [
     shouldAddNewChapter, 
     localDocument.id, 
-    handleChapterLocalSave
+    chapterLocalSave
   ]);
+
 
   // Add new paragraph when shouldAddNewParagraph is set with a chapter
   useEffect(() => {
@@ -318,7 +135,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
 
     thisChapter.paragraphs = [...chapterParagraphs, shouldAddNewParagraphData];
 
-    const result = handleParagraphLocalSave(shouldAddNewParagraphData);
+    const result = paragraphLocalSave(shouldAddNewParagraphData);
     if(!result) return;
 
     documentUpdated.chapters = documentUpdated.chapters!.map(ch => 
@@ -335,24 +152,9 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   }, [
     shouldAddNewParagraph, 
     localDocument.id,
-    handleParagraphLocalSave
+    paragraphLocalSave
   ]);
 
-  const handleOnSubtitleTab = useCallback((chIndex: number, paragraphs: ParagraphInterface[]) => {
-    if (paragraphs.length === 0) {
-      return false;
-    }
-    navigateToAdjacentParagraph(chIndex, -1, 'next');
-    return true;
-  }, [navigateToAdjacentParagraph]);
-
-  const returnNavigation = useCallback((chIndex: number, pIndex: number, paragraphs: ParagraphInterface[]) => {
-    return {
-      canNavigatePrevious: !(chIndex === 0 && pIndex === 0),
-      canNavigateNext: !(chIndex === localDocument.chapters!.length -1 && pIndex === paragraphs.length -1),
-      isTheLastParagraphInChapter: pIndex === paragraphs.length -1,
-    }
-  }, [localDocument.chapters]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
@@ -398,7 +200,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
             createdAt={localDocument.createdAt}
             isSynced={localDocument.sync}
             onRemoteSync={() => {}}
-            onChange={handleDocumentLocalSave}
+            onChange={(data) => documentLocalSave(localDocument, data)}
           />
           
           {/* Chapters with Titles and Paragraphs */}
@@ -406,18 +208,18 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
             <Chapter
               key={chapter.id} 
               chapter={chapter}
-              onChange={handleChapterLocalSave}
-              onSubtitleTab={() => handleOnSubtitleTab(chIndex, chapter.paragraphs ?? [])}
+              onChange={chapterLocalSave}
+              onSubtitleTab={() => onSubtitleTab(localDocument.chapters ?? [], chIndex, chapter.paragraphs ?? [], setActiveParagraph)}
             >
               {chapter.paragraphs!.map((paragraph, pIndex) => (
                   <Paragraph
                     key={paragraph.id}
                     paragraph={paragraph}
                     focusActivation={paragraph.id === activeParagraph?.id ? {direction: activeParagraph.direction} : null}
-                    navigation={returnNavigation(chIndex, pIndex, chapter.paragraphs ?? [])}
-                    onTextChange={handleParagraphLocalSave}
-                    onDelete={handleDeleteParagraph}
-                    onNavigate={(direction) => navigateToAdjacentParagraph(chIndex, pIndex, direction)}
+                    navigation={returnNavigation(chIndex, pIndex, localDocument.chapters?.length ?? 0, chapter.paragraphs ?? [])}
+                    onTextChange={paragraphLocalSave}
+                    onDelete={() => deleteParagraph(localDocument, paragraph.id, setLocalDocument)}
+                    onNavigate={(direction) => navigateToAdjacentParagraph(localDocument.chapters, chIndex, pIndex, direction, setActiveParagraph)}
                     createNewParagraphInChapter={() => setShouldAddNewParagraph(chapter)}
                     onRemoteSync={() => {}}
                   />
