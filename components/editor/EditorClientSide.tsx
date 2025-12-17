@@ -327,7 +327,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
                 chapters={localDocument.chapters!.map((ch) => ({
                   id: ch.id,
                   index: ch.index,
-                  title: ch.title === '' ? 'Insert a Title' : ch.title,
+                  title: ch.title === '' ? '#Empty' : ch.title,
                 }))}
               />
           </div>
