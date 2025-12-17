@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { ParagraphInterface } from '@/components/editor/utils/interfaces';
+import { NavigationDirection, ParagraphInterface } from '@/components/editor/utils/interfaces';
 import SyncIndicator from '@/components/editor/SyncIndicator';
 import { 
   handleClick, 
@@ -11,8 +11,6 @@ import {
 } from '@/components/editor/utils/utils';
 
 const DEBOUNCE_DELAY_MS = 700;
-
-export type NavigationDirection = 'previous' | 'next' | null;
 
 export interface ParagraphUpdate {
   text: string;

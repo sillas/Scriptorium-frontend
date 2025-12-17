@@ -1,6 +1,10 @@
 import { useCallback } from "react";
-import { NavigationDirection } from "@/components/editor/editorComponents/Paragraph";
-import { ChapterInterface, ParagraphInterface } from "@/components/editor/utils/interfaces";
+import { ActiveParagraphInterface, ChapterInterface, NavigationDirection, ParagraphInterface } from "@/components/editor/utils/interfaces";
+
+const calcParagraphLength = (chapters: ChapterInterface[] | undefined, index: number): number => {
+    if (!chapters) return 0;
+    return chapters[index]?.paragraphs?.length ?? 0
+}
 
 export function useNavigation() {
 
@@ -18,7 +22,7 @@ export function useNavigation() {
         chapterIndex: number,
         paragraphIndex: number,
         direction: NavigationDirection,
-        setActiveParagraph: (value: { id: string; direction: NavigationDirection } | null) => void
+        setActiveParagraph: (value: ActiveParagraphInterface | null) => void
       ) => {
     
         if (!chapters || chapters.length === 0 || direction === null) {
@@ -34,19 +38,19 @@ export function useNavigation() {
     
           if(newParagraphIndex < 0) {
             newChapterIndex--;        
-            if( newChapterIndex < 0 || chapters[newChapterIndex].paragraphs!.length === 0 ) {
+            if( newChapterIndex < 0 || calcParagraphLength(chapters, newChapterIndex) === 0 ) {
               setActiveParagraph(null);
               return;
             }
-            newParagraphIndex = chapters[newChapterIndex].paragraphs!.length - 1;
+            newParagraphIndex = calcParagraphLength(chapters, newChapterIndex) - 1;
           }
         } else if (direction === 'next') {
           newParagraphIndex++;
     
-          const paragraphLength = chapters[newChapterIndex].paragraphs?.length ?? 0;
+          const paragraphLength = calcParagraphLength(chapters, newChapterIndex);
           if(newParagraphIndex >= paragraphLength) {
             newChapterIndex++;
-            if( newChapterIndex >= chapters.length || chapters[newChapterIndex].paragraphs!.length === 0 ) {
+            if( newChapterIndex >= chapters.length || calcParagraphLength(chapters, newChapterIndex) === 0 ) {
               setActiveParagraph(null);
               return;
             }
@@ -68,7 +72,7 @@ export function useNavigation() {
         });
       }, []);
 
-    const returnNavigation = useCallback((chapterIndex: number, paragraphIndex: number, chaptersLength: number, paragraphs: ParagraphInterface[]) => {
+    const getNavigationAvailability = useCallback((chapterIndex: number, paragraphIndex: number, chaptersLength: number, paragraphs: ParagraphInterface[]) => {
         return {
           canNavigatePrevious: !(chapterIndex === 0 && paragraphIndex === 0),
           canNavigateNext: !(chapterIndex === chaptersLength -1 && paragraphIndex === paragraphs.length -1),
@@ -101,7 +105,7 @@ export function useNavigation() {
 
     return {
         navigateToAdjacentParagraph,
-        returnNavigation,
+        getNavigationAvailability,
         onSubtitleTab
     };
 }

@@ -82,3 +82,10 @@ export interface MongoParagraphInterface {
   characterCount: number;
   wordCount: number;
 }
+
+export interface ActiveParagraphInterface {
+  id: string;
+  direction: NavigationDirection;
+}
+
+export type NavigationDirection = 'previous' | 'next' | null;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import Contents from '@/components/editor/editorComponents/Contents';
 import EditorHeader from '@/components/editor/Header';
 import SideColumn from '@/components/editor/columns/SideColumn';
@@ -11,14 +11,12 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useSync } from '@/hooks/useSync';
 import { useIsOnline } from '@/components/OnlineStatusProvider';
 import { Title } from '@/components/editor/editorComponents/Title';
-import { 
-  Paragraph,
-  NavigationDirection
-} from '@/components/editor/editorComponents/Paragraph';
+import { Paragraph } from '@/components/editor/editorComponents/Paragraph';
 import {
   DocumentInterface, 
   ChapterInterface,
   ParagraphInterface,
+  ActiveParagraphInterface,
 } from '@/components/editor/utils/interfaces';
 import { useNavigation } from '@/hooks/useNavigation';
 
@@ -41,7 +39,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(theDocument);
   const [shouldAddNewChapter, setShouldAddNewChapter] = useState(false);
   const [shouldAddNewParagraph, setShouldAddNewParagraph] = useState<ChapterInterface | null>(null);
-  const [activeParagraph, setActiveParagraph] = useState<{ id: string; direction: NavigationDirection } | null>(null);
+  const [activeParagraph, setActiveParagraph] = useState<ActiveParagraphInterface | null>(null);
   
   // custom hooks
   const { 
@@ -52,7 +50,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   } = useLocalStorage();
   const { 
     navigateToAdjacentParagraph,
-    returnNavigation,
+    getNavigationAvailability,
     onSubtitleTab
   } = useNavigation();
   const { syncStatus } = useSync();
@@ -102,7 +100,6 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
     localDocument.id, 
     chapterLocalSave
   ]);
-
 
   // Add new paragraph when shouldAddNewParagraph is set with a chapter
   useEffect(() => {
@@ -154,7 +151,6 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
     localDocument.id,
     paragraphLocalSave
   ]);
-
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
@@ -216,7 +212,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
                     key={paragraph.id}
                     paragraph={paragraph}
                     focusActivation={paragraph.id === activeParagraph?.id ? {direction: activeParagraph.direction} : null}
-                    navigation={returnNavigation(chIndex, pIndex, localDocument.chapters?.length ?? 0, chapter.paragraphs ?? [])}
+                    navigation={getNavigationAvailability(chIndex, pIndex, localDocument.chapters?.length ?? 0, chapter.paragraphs ?? [])}
                     onTextChange={paragraphLocalSave}
                     onDelete={() => deleteParagraph(localDocument, paragraph.id, setLocalDocument)}
                     onNavigate={(direction) => navigateToAdjacentParagraph(localDocument.chapters, chIndex, pIndex, direction, setActiveParagraph)}
