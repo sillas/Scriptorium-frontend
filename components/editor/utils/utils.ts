@@ -89,11 +89,11 @@ export const updateCursorPosition = (
     setIsCursorAtLastPosition(cursorPosition === totalLength);
   };
 
-  /**
-   * Sets the cursor at the start or end of a contentEditable element.
-   * @param elementRef Reference to the editable element
-   * @param position 'START' to set cursor at start, 'END' to set at end
-   */
+/**
+ * Sets the cursor at the start or end of a contentEditable element.
+ * @param elementRef Reference to the editable element
+ * @param position 'START' to set cursor at start, 'END' to set at end
+ */
 export const setCursorAt = (
     elementRef: React.RefObject<HTMLElement | null>, 
     position: 'START' | 'END'
