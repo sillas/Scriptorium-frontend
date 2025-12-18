@@ -11,6 +11,7 @@ export interface ParagraphInterface {
   characterCount: number;
   wordCount: number;
   isQuote?: boolean;
+  isHighlighted?: boolean;
 }
 export interface ChapterInterface {
   id: string;

@@ -152,6 +152,7 @@ export function useLocalStorage() {
           localParagraph.wordCount = textData.wordCount ?? 0;
           localParagraph.characterCount = textData.characterCount ?? 0;
           localParagraph.isQuote = textData.isQuote ?? false;
+          localParagraph.isHighlighted = textData.isHighlighted ?? false;
         }
     
         try {

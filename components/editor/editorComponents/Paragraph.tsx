@@ -17,6 +17,7 @@ export interface ParagraphUpdate {
   characterCount: number;
   wordCount: number;
   isQuote: boolean;
+  isHighlighted: boolean;
   updatedAt: Date;
 }
 interface ParagraphProps {
@@ -50,6 +51,7 @@ export function Paragraph({
 
   const [isEditing, setIsEditing] = useState(false);
   const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
+  const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);
   const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
   const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
   const [characterCount, setCharacterCount] = useState(paragraph.text.length);
@@ -148,9 +150,10 @@ export function Paragraph({
       characterCount: newText.length,
       wordCount: handleWordCount(newText),
       isQuote: isQuote || false,
+      isHighlighted: isHighlighted || false,
       updatedAt: new Date(),
     });
-  }, [onTextChange, isQuote]);
+  }, [onTextChange, isQuote, isHighlighted]);
 
 
   /**
@@ -300,13 +303,14 @@ export function Paragraph({
 
   useEffect(() => {
     triggerLocalSave(true);
-  }, [isQuote]);
+  }, [isQuote, isHighlighted, triggerLocalSave]);
+
 
   const buttons_actions = useCallback(() => [
     { label: '“', action: () => {setIsQuote(!isQuote);}, style: 'text-5xl text-gray-500' },
-    { label: '2', action: () => {console.log('Button 2');}, style: 'text-xs text-gray-500' },
+    { label: '★', action: () => {setIsHighlighted(!isHighlighted);}, style: 'text-lg text-yellow-500' },
     { label: 'X', action: handleDelete, style: 'text-2xs text-red-400 font-bold' },
-  ], [isQuote, triggerLocalSave, handleDelete]);
+  ], [isQuote, isHighlighted, triggerLocalSave, handleDelete]);
 
   return (
     <div className="relative flex flex-row items-stretch">
@@ -334,7 +338,7 @@ export function Paragraph({
       </div>
 
       {/* Parágrafo editável */}
-      <div className={`${isEditing ? 'bg-slate-200 shadow-sm':''} rounded-md p-3 mb-2 text-slate-800 relative flex-1`}>  
+      <div className={`${isEditing ? (isHighlighted ? 'border-4 border-yellow-200 shadow-sm' : 'bg-slate-200 shadow-sm'): (isHighlighted? 'bg-yellow-100 shadow-sm' : '')} rounded-md p-3 mb-2 text-slate-800 relative flex-1`}>  
         
         {isCursorAtFirstPosition && navigation.canNavigatePrevious && (
           <span className="absolute left-0 top-0 text-gray-400 -translate-y-1/2">▲</span>
