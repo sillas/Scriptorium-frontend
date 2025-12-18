@@ -113,6 +113,9 @@ const processParagraphs = (
         });
     }
 
+    // Sort paragraphs by index to ensure correct order
+    updatedParagraphs.sort((a, b) => a.index - b.index);
+
     chapter.paragraphs = updatedParagraphs;
 }
 

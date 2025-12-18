@@ -21,7 +21,7 @@ interface TitleProps {
   isSynced: boolean;
   isDocumentLevel: boolean;
   onRemoteSync: () => void;
-  onChange: (data: TitleUpdateData, isNew?: boolean) => boolean;
+  onChange: (data: TitleUpdateData, isNew?: boolean) => Promise<boolean> | boolean;
   onSubtitleTab?: () => boolean;
 }
 
@@ -107,7 +107,7 @@ export function Title({
    * Saves the current title and subtitle changes locally if they differ from the previous values.
    * Updates the local timestamp and invokes the onChange callback with the new data.
    */
-  const persistLocalChanges = useCallback((): void => {
+  const persistLocalChanges = useCallback(async (): Promise<void> => {
     if (previousContentSnapshot.current === null) return;
 
     const [newTitle, newSubtitle] = getTitleAndSubtitleContent();
@@ -120,10 +120,11 @@ export function Title({
     };
     
     previousContentSnapshot.current = newTitle + newSubtitle;
-    if(!onChange(data)) return;
+    const result = await onChange(data);
+    if(!result) return;
     
     setLocalUpdatedAt(data.updatedAt);
-  }, [onChange]);
+  }, [onChange, getTitleAndSubtitleContent]);
 
   /**
    * Triggers a local save and initiates remote synchronization if the document is not already synced.

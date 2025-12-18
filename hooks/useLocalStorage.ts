@@ -64,10 +64,10 @@ export function useLocalStorage() {
      * @param localDocument - the current document object
      * @param data - partial document fields to update locally (e.g. title, subtitle)
      */
-    const documentLocalSave = useCallback((
+    const documentLocalSave = useCallback(async (
         localDocument: DocumentInterface,
         data: TitleUpdateData
-      ):boolean => {
+      ): Promise<boolean> => {
     
         const toSave: DocumentInterface = {
           ...localDocument,
@@ -79,6 +79,7 @@ export function useLocalStorage() {
         const { chapters, ...toSaveLocal } = toSave;
     
         try {
+          await saveLocal('document', toSaveLocal);
           return true;
         } catch (error) {
           console.error('Error saving document locally:', error);
@@ -96,10 +97,10 @@ export function useLocalStorage() {
        * @param chapter - the chapter object to save
        * @param data - optional partial updates to the chapter (e.g. title)
        */
-      const chapterLocalSave = useCallback((
+      const chapterLocalSave = useCallback(async (
         chapter: ChapterInterface,
         data: TitleUpdateData | {} = {},
-      ): boolean => {
+      ): Promise<boolean> => {
     
         const toSave: ChapterInterface = {
           ...chapter,
@@ -116,7 +117,7 @@ export function useLocalStorage() {
         const { paragraphs, ...toSaveLocal } = toSave;
     
         try {
-          saveLocal('chapter', toSaveLocal);
+          await saveLocal('chapter', toSaveLocal);
           return true;
         } catch (error) {
           console.error('Error saving chapter locally:', error);
@@ -134,10 +135,10 @@ export function useLocalStorage() {
        * @param paragraph - the paragraph to save
        * @param textData - optional text update information (text, counts, updatedAt)
        */
-      const paragraphLocalSave = useCallback((
+      const paragraphLocalSave = useCallback(async (
         paragraph: ParagraphInterface,
         textData: ParagraphUpdate | null = null,
-      ): boolean => {
+      ): Promise<boolean> => {
     
         const localParagraph: ParagraphInterface = {
           ...paragraph,
@@ -156,7 +157,7 @@ export function useLocalStorage() {
         }
     
         try {
-          saveLocal('paragraph', localParagraph);
+          await saveLocal('paragraph', localParagraph);
           return true
         } catch (error) {
           console.error('Error saving paragraph locally:', error);

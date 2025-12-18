@@ -31,6 +31,7 @@ interface ParagraphProps {
   onTextChange: (paragraph: ParagraphInterface, updatedText: ParagraphUpdate) => void;
   onNavigate: (direction: NavigationDirection) => void;
   onDelete: () => void;
+  onReorder: (direction: 'up' | 'down') => void;
   onRemoteSync: () => void;
   createNewParagraphInChapter: () => void;
   createNewParagraphAbove: () => void;
@@ -43,6 +44,7 @@ export function Paragraph({
   onTextChange,
   onNavigate,
   onDelete,
+  onReorder,
   onRemoteSync,
   createNewParagraphInChapter,
   createNewParagraphAbove,
@@ -155,7 +157,7 @@ export function Paragraph({
       isHighlighted: isHighlighted || false,
       updatedAt: new Date(),
     });
-  }, [onTextChange, isQuote, isHighlighted]);
+  }, [paragraph, onTextChange, isQuote, isHighlighted]);
 
 
   /**
@@ -229,6 +231,12 @@ export function Paragraph({
 
     // Navigate between paragraphs with ArrowUp and ArrowDown
     if(['ArrowUp', 'ArrowDown'].includes(pressedKey)) {
+
+      if(event.ctrlKey) {
+        event.preventDefault();
+        onReorder(pressedKey === 'ArrowUp' ? 'up' : 'down');
+        return;
+      }
       
       if(pressedKey === 'ArrowUp' && isCursorAtFirstPosition && navigation.canNavigatePrevious) {
         handleFinishEditingAndNavigate(event, 'previous');
@@ -383,6 +391,9 @@ export function Paragraph({
           </div>
         </div>
       </div>
+      <button onClick={createNewParagraphAbove} className='relative flex items-center justify-center box-border w-full cursor-pointer border-2 border-transparent border-dashed border-slate-400/30 rounded-t-md text-gray-400'>
+      {paragraph.index}
+      </button>
     </>
   );
 }
