@@ -77,6 +77,13 @@ export function Paragraph({
     handleClick(event, paragraphRef, isEditing, setIsEditing);
   };
 
+  const handleParagraphRightClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    if( event.button !== 2 ) return;
+    console.log(event);
+    // TODO: Handle right-click context menu
+  }
+
   const buttons_actions = [
     { label: '"',description: 'Toggle Quote', action: toggleQuote, style: 'text-5xl text-gray-500' },
     { label: '★',description: 'Toggle Highlight', action: toggleHighlight, style: 'text-lg text-yellow-500' },
@@ -133,10 +140,11 @@ export function Paragraph({
             contentEditable={isEditing}
             suppressContentEditableWarning
             onClick={handleParagraphClick}
+            onContextMenu={handleParagraphRightClick}
             onBlur={handleFinishEditing}
             onInput={scheduleAutoSave}
             onKeyDown={handleKeyDown}
-            className={`${isEditing ? 'rounded':( paragraph.text.length === 0 ? 'bg-slate-200' : '')} ${isQuote ? 'pl-[4rem] italic text-gray-600' : ''} pr-2 cursor-text min-h-[1.5rem] outline-none text-justify`}
+            className={`${isEditing ? 'rounded':( characterCount === 0 ? 'bg-slate-200' : '')} ${isQuote ? 'pl-[4rem] italic text-gray-600' : ''} pr-2 cursor-text min-h-[1.5rem] outline-none text-justify`}
           >
             {paragraph.text}
           </div>

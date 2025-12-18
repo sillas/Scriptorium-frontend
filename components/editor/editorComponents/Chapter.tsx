@@ -19,7 +19,6 @@ export default function Chapter({ chapter, children, onChange, onSubtitleTab }: 
         onChange={ data => onChange(chapter, data) }
         onSubtitleTab={onSubtitleTab}
         isSynced={chapter.sync}
-        // isOnline={isOnline}
         isDocumentLevel={false}
         version={chapter.version}
         createdAt={chapter.createdAt}
