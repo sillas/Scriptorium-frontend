@@ -9,7 +9,6 @@ const proccessChapter = (unsyncedChapter: ChapterInterface, updatedChapters: Cha
 
     // Skip deleted chapters
     if ((unsyncedChapter as any).deleted) {
-        console.log(`Removing deleted chapter: ${unsyncedChapter.id}`);
         const chapterIndex = updatedChapters.findIndex(ch => ch.id === unsyncedChapter.id);
         if (chapterIndex !== -1) {
             updatedChapters.splice(chapterIndex, 1);
@@ -19,7 +18,6 @@ const proccessChapter = (unsyncedChapter: ChapterInterface, updatedChapters: Cha
 
     if (unsyncedChapter.id.startsWith('temp-')) {
         // New chapter - add it in the correct position by index
-        console.log(`Adding new chapter (temp): ${unsyncedChapter.id}`);
         const insertIndex = updatedChapters.findIndex(ch => ch.index > unsyncedChapter.index);
 
         if (insertIndex === -1) {
@@ -32,7 +30,6 @@ const proccessChapter = (unsyncedChapter: ChapterInterface, updatedChapters: Cha
     }
 
     // Existing chapter - replace with unsynced version
-    console.log(`Replacing chapter with local unsynced version: ${unsyncedChapter.id}`);
     const chapterIndex = updatedChapters.findIndex(ch => ch.id === unsyncedChapter.id);
 
     if (chapterIndex !== -1) {
@@ -57,7 +54,6 @@ const processParagraph = (unsyncedParagraph: ParagraphInterface, updatedParagrap
     
     // Skip deleted paragraphs
     if ((unsyncedParagraph as any).deleted) {
-        console.log(`Removing deleted paragraph: ${unsyncedParagraph.id}`);
         const paragraphIndex = updatedParagraphs.findIndex(p => p.id === unsyncedParagraph.id);
         if (paragraphIndex !== -1) {
             updatedParagraphs.splice(paragraphIndex, 1);
@@ -92,7 +88,6 @@ const processParagraph = (unsyncedParagraph: ParagraphInterface, updatedParagrap
     }
 
     // Existing paragraph - replace with unsynced version
-    console.log(`Replacing paragraph with local unsynced version: ${unsyncedParagraph.id}`);
     const paragraphIndex = updatedParagraphs.findIndex(p => p.id === unsyncedParagraph.id);
     if (paragraphIndex !== -1) {
         updatedParagraphs[paragraphIndex] = unsyncedParagraph;
@@ -102,8 +97,6 @@ const processParagraph = (unsyncedParagraph: ParagraphInterface, updatedParagrap
 const processParagraphs = (
     chapter: ChapterInterface,
     unsyncedParagraph: ParagraphInterface[]) => {
-
-    console.log(`Adding ${unsyncedParagraph.length} paragraphs to chapter ${chapter.id}.`);
     
     const updatedParagraphs = [...chapter.paragraphs ?? []];
 
