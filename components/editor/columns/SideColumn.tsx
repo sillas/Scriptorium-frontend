@@ -20,8 +20,8 @@ function ArrowButton({ side, isOpen, setOpen }: ArrowButtonProps) {
       aria-label={`${isOpen ? 'Fechar' : 'Abrir'} painel ${side === 'left' ? 'esquerdo' : 'direito'}`}
       aria-expanded={isOpen}
       onClick={() => setOpen(!isOpen)}
-      className={`absolute ${buttonPosition} top-0 z-20 w-8 h-8 flex items-center justify-center text-xs hover:opacity-100 transition-all translate-x-0 ${
-      isOpen ? 'text-white opacity-100' : 'text-black opacity-50'
+      className={`absolute cursor-pointer ${buttonPosition} top-0 z-20 w-8 h-8 flex items-center justify-center text-xs rounded-full hover:opacity-100 hover:p-3 transition-all translate-x-0 ${
+        isOpen ? 'text-white hover:text-black hover:bg-white opacity-100' : 'text-black hover:text-white hover:bg-slate-500 opacity-50'
       }`}
       style={{ [side]: buttonOffset }}
   >
