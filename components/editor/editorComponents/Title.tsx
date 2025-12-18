@@ -246,10 +246,10 @@ export function Title({
           />
         </div>
       )}
-      <TitleMetadata 
+      { isDocumentLevel && <TitleMetadata 
         version={version}
         createdAt={createdAt}
-        localUpdatedAt={localUpdatedAt} />
+        localUpdatedAt={localUpdatedAt} />}
     </div>
   );
 }
