@@ -315,7 +315,7 @@ export function Paragraph({
         className={
           `flex flex-col items-center justify-center z-10 select-none transition-opacity duration-200 ` +
           `absolute -left-[2rem] top-0 h-full ` +
-          `${isEditing ? 'opacity-100 pointer-events-auto' : 'opacity-0 hover:opacity-80 pointer-events-auto'}`
+          `${isEditing ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`
         }
         style={{ minWidth: '2rem' }}
       >
@@ -323,9 +323,9 @@ export function Paragraph({
           <button
             key={label}
             tabIndex={-1}
-            className={`my-0.5 w-6 h-6 ${style} rounded bg-slate-100 border border-slate-200 shadow-sm hover:bg-slate-200 focus:outline-none cursor-pointer`}
-            style={{ pointerEvents: isEditing ? 'auto' : 'auto' }}
+            className={`${isEditing ? 'pointer-events-auto' : 'pointer-events-none'} my-0.5 w-6 h-6 ${style} rounded bg-slate-100 border border-slate-200 shadow-sm hover:bg-slate-200 focus:outline-none cursor-pointer`}
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={action}
           >
             {label}
