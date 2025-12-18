@@ -39,6 +39,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(theDocument);
   const [shouldAddNewChapter, setShouldAddNewChapter] = useState(false);
   const [shouldAddNewParagraph, setShouldAddNewParagraph] = useState<ChapterInterface | null>(null);
+  const [shouldAddNewParagraphAbove, setShouldAddNewParagraphAbove] = useState<{chapter: ChapterInterface, paragraphIndex: number} | null>(null);
   const [activeParagraph, setActiveParagraph] = useState<ActiveParagraphInterface | null>(null);
   
   // custom hooks
@@ -55,6 +56,49 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   } = useNavigation();
   const { syncStatus } = useSync();
   const isOnline = useIsOnline();
+
+  // Helper function to create a new paragraph object
+  const createParagraphObject = (
+    chapterId: string,
+    index: number
+  ): ParagraphInterface => {
+    const now = new Date();
+    return {
+      id: `temp-${crypto.randomUUID()}`,
+      documentId: localDocument.id,
+      chapterId,
+      index,
+      text: '',
+      createdAt: now,
+      updatedAt: now,
+      version: 1,
+      characterCount: 0,
+      wordCount: 0,
+      sync: false,
+    };
+  };
+
+  // Helper function to update document with modified chapter
+  const updateDocumentWithChapter = (
+    chapter: ChapterInterface,
+    newParagraph: ParagraphInterface
+  ): boolean => {
+    const result = paragraphLocalSave(newParagraph);
+    if (!result) return false;
+
+    const documentUpdated = { ...localDocument };
+    documentUpdated.chapters = documentUpdated.chapters!.map(ch => 
+      ch.id === chapter.id ? chapter : ch
+    );
+
+    setLocalDocument(documentUpdated);
+    setActiveParagraph({
+      id: newParagraph.id,
+      direction: 'previous'
+    });
+
+    return true;
+  };
 
   // Load unsynced data from IndexedDB on mount
   useEffect(() => {
@@ -101,56 +145,51 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
     chapterLocalSave
   ]);
 
-  // Add new paragraph when shouldAddNewParagraph is set with a chapter
+  // Add new paragraph at the end of chapter
   useEffect(() => {
-    if (!shouldAddNewParagraph) {
-      return;
-    }
+    if (!shouldAddNewParagraph) return;
 
-    const documentUpdated = { ...localDocument };
-    const thisChapter = {...shouldAddNewParagraph}
+    const thisChapter = { ...shouldAddNewParagraph };
     const chapterParagraphs = thisChapter.paragraphs ?? [];
     
     const lastIndex = chapterParagraphs.length > 0
       ? Math.max(...chapterParagraphs.map(p => p.index))
       : 0;
     
-    const now = new Date();
-    const shouldAddNewParagraphData: ParagraphInterface = {
-      id: `temp-${crypto.randomUUID()}`,
-      documentId: localDocument.id,
-      chapterId: thisChapter.id,
-      index: lastIndex + 1,
-      text: '',
-      createdAt: now,
-      updatedAt: now,
-      version: 1,
-      characterCount: 0,
-      wordCount: 0,
-      sync: false,
-    };
+    const newParagraph = createParagraphObject(thisChapter.id, lastIndex + 1);
+    thisChapter.paragraphs = [...chapterParagraphs, newParagraph];
 
-    thisChapter.paragraphs = [...chapterParagraphs, shouldAddNewParagraphData];
+    if (updateDocumentWithChapter(thisChapter, newParagraph)) {
+      setShouldAddNewParagraph(null);
+    }
+  }, [shouldAddNewParagraph, localDocument.id, paragraphLocalSave]);
 
-    const result = paragraphLocalSave(shouldAddNewParagraphData);
-    if(!result) return;
+  // Add new paragraph at specific position (above existing paragraph)
+  useEffect(() => {
+    if (!shouldAddNewParagraphAbove) return;
 
-    documentUpdated.chapters = documentUpdated.chapters!.map(ch => 
-      ch.id === thisChapter.id ? thisChapter : ch
-    );
+    const { chapter: thisChapter, paragraphIndex } = { ...shouldAddNewParagraphAbove };
+    const chapterParagraphs = thisChapter.paragraphs ?? [];
+    
+    const newParagraph = createParagraphObject(thisChapter.id, paragraphIndex);
+    
+    // Insert at specific position
+    thisChapter.paragraphs = [
+      ...chapterParagraphs.slice(0, paragraphIndex),
+      newParagraph,
+      ...chapterParagraphs.slice(paragraphIndex)
+    ];
+    
+    // Re-index all paragraphs
+    thisChapter.paragraphs = thisChapter.paragraphs.map((p, idx) => ({
+      ...p,
+      index: idx
+    }));
 
-    setLocalDocument(documentUpdated);
-    setShouldAddNewParagraph(null);
-    setActiveParagraph({
-      id: shouldAddNewParagraphData.id,
-      direction: 'previous'
-    });
-
-  }, [
-    shouldAddNewParagraph, 
-    localDocument.id,
-    paragraphLocalSave
-  ]);
+    if (updateDocumentWithChapter(thisChapter, newParagraph)) {
+      setShouldAddNewParagraphAbove(null);
+    }
+  }, [shouldAddNewParagraphAbove, localDocument.id, paragraphLocalSave]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
@@ -218,6 +257,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
                     onNavigate={(direction) => navigateToAdjacentParagraph(localDocument.chapters, chIndex, pIndex, direction, setActiveParagraph)}
                     createNewParagraphInChapter={() => setShouldAddNewParagraph(chapter)}
                     onRemoteSync={() => {}}
+                    createNewParagraphAbove={() => setShouldAddNewParagraphAbove({chapter, paragraphIndex: pIndex})}
                   />
                 ))}
               {/* Add Paragraph Button */}
