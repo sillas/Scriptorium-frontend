@@ -3,12 +3,14 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { NavigationDirection, ParagraphInterface } from '@/components/editor/utils/interfaces';
 import SyncIndicator from '@/components/editor/SyncIndicator';
+import { countWords } from '@/components/editor/utils/helpers';
 import { 
   handleClick, 
   updateCursorPosition, 
-  setCursorAt, 
-  handleWordCount
+  setCursorAt,
+  handleDelete
 } from '@/components/editor/utils/utils';
+import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 
 const DEBOUNCE_DELAY_MS = 700;
 
@@ -33,8 +35,8 @@ interface ParagraphProps {
   onDelete: () => void;
   onReorder: (direction: 'up' | 'down') => void;
   onRemoteSync: () => void;
-  createNewParagraphInChapter: () => void;
   createNewParagraphAbove: () => void;
+  createNewParagraphInChapter: () => void;
 }
 
 export function Paragraph({
@@ -46,23 +48,22 @@ export function Paragraph({
   onDelete,
   onReorder,
   onRemoteSync,
-  createNewParagraphInChapter,
   createNewParagraphAbove,
+  createNewParagraphInChapter,
 }: ParagraphProps) {
   const previousTextRef = useRef(paragraph.text);
   const paragraphRef = useRef<HTMLDivElement>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
   const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);
+
   const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
   const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
+  
   const [characterCount, setCharacterCount] = useState(paragraph.text.length);
-  const [wordCount, setWordCount] = useState(
-    handleWordCount(paragraph.text)
-  );
-
+  const [wordCount, setWordCount] = useState(countWords(paragraph.text));
+  const [setDebounce, clearDebounceTimer] = useDebounceTimer();
   /**
    * Updates the cursor position state to track whether the cursor is at the first or last position
    * Used for navigation hints display
@@ -122,22 +123,6 @@ export function Paragraph({
     };
   }, [isEditing]);
 
-  /**
-   * Clears the active debounce timer if one exists
-   * Used to cancel pending auto-save operations
-   */
-  const clearDebounceTimer = useCallback(() => {
-    if (!debounceTimerRef.current) return;
-    clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = null;
-  }, []);
-
-  /**
-   * Cleanup effect to clear debounce timer when component unmounts
-   */
-  useEffect(() => {
-    return () => clearDebounceTimer();
-  }, [clearDebounceTimer]);
 
   /**
    * Triggers a local save of the paragraph text if it has changed
@@ -152,7 +137,7 @@ export function Paragraph({
     onTextChange(paragraph,{
       text: newText,
       characterCount: newText.length,
-      wordCount: handleWordCount(newText),
+      wordCount: countWords(newText),
       isQuote: isQuote || false,
       isHighlighted: isHighlighted || false,
       updatedAt: new Date(),
@@ -167,20 +152,18 @@ export function Paragraph({
    */
   const scheduleAutoSave = useCallback(() => {    
     clearDebounceTimer();
-    debounceTimerRef.current = setTimeout(triggerLocalSave, DEBOUNCE_DELAY_MS);
+    setDebounce(triggerLocalSave, DEBOUNCE_DELAY_MS);
     let text = paragraphRef.current?.textContent.trim() || '';
     setCharacterCount(text.length);
     setWordCount(
-      handleWordCount(text)
+      countWords(text)
     );
   }, [
     isQuote,
     triggerLocalSave,
-    clearDebounceTimer,
     setCharacterCount,
     setWordCount
   ]);
-
 
   /**
    * Completes the editing session
@@ -288,13 +271,6 @@ export function Paragraph({
     handleFinishEditing, 
   ]);
 
-  /**
-   * Handles the blur event when the paragraph loses focus
-   * Triggers the finish editing flow to save changes
-   */
-  const handleOnBlur = useCallback(() => {
-    handleFinishEditing();
-  }, [handleFinishEditing, onNavigate]);
 
   /**
    * Handles click events on the paragraph element.
@@ -304,11 +280,6 @@ export function Paragraph({
     handleClick(event, paragraphRef, isEditing, setIsEditing);
   }, [isEditing]);
 
-  const handleDelete = useCallback(() => {
-    let textLength = paragraphRef.current?.textContent.trim().length || 0;
-    if(textLength && !confirm('Tem certeza que deseja deletar este parágrafo?')) return;
-    onDelete();
-  }, [onDelete]);
 
   useEffect(() => {
     triggerLocalSave(true);
@@ -316,9 +287,9 @@ export function Paragraph({
 
 
   const buttons_actions = useCallback(() => [
-    { label: '“', action: () => {setIsQuote(!isQuote);}, style: 'text-5xl text-gray-500' },
-    { label: '★', action: () => {setIsHighlighted(!isHighlighted);}, style: 'text-lg text-yellow-500' },
-    { label: 'X', action: handleDelete, style: 'text-2xs text-red-400 font-bold' },
+    { label: '“', action: () => setIsQuote(!isQuote), style: 'text-5xl text-gray-500' },
+    { label: '★', action: () => setIsHighlighted(!isHighlighted), style: 'text-lg text-yellow-500' },
+    { label: 'X', action: () => handleDelete(paragraphRef.current?.textContent, onDelete), style: 'text-2xs text-red-400 font-bold' },
   ], [isQuote, isHighlighted, triggerLocalSave, handleDelete]);
 
   return (
@@ -368,7 +339,7 @@ export function Paragraph({
             contentEditable={isEditing}
             suppressContentEditableWarning
             onClick={handleParagraphClick}
-            onBlur={handleOnBlur}
+            onBlur={handleFinishEditing}
             onInput={scheduleAutoSave}
             onKeyDown={handleKeyDown}
             className={`${isEditing ? 'rounded':( paragraph.text.length === 0 ? 'bg-slate-200' : '')} ${isQuote ? 'pl-[4rem] italic text-gray-600' : ''} pr-2 cursor-text min-h-[1.5rem] outline-none text-justify`}

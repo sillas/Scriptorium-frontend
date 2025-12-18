@@ -3,6 +3,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import SyncIndicator from '@/components/editor/SyncIndicator';
 import { EditableHeading, EditableHeadingHandle } from './EditableHeading';
+import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 
 export interface TitleUpdateData {
   title: string;
@@ -76,22 +77,8 @@ export function Title({
   const titleRef = useRef<EditableHeadingHandle>(null);
   const subtitleRef = useRef<EditableHeadingHandle>(null);
   // Use browser-compatible timeout return type to avoid NodeJS vs browser type conflicts
-  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [setDebounce, clearDebounceTimer] = useDebounceTimer();
 
-  /**
-   * Clears the active debounce timer if one exists.
-   * Resets the debounce timer reference to null after clearing.
-   */
-  const clearDebounceTimer = useCallback(() => {
-    if (!debounceTimeoutRef.current) return;
-    clearTimeout(debounceTimeoutRef.current);
-    debounceTimeoutRef.current = null;
-  }, []);
-
-
-  useEffect(() => {
-    return () => clearDebounceTimer()
-  }, [clearDebounceTimer]);
 
   /**
    * Retrieves the current text content from both title and subtitle elements.
@@ -144,7 +131,7 @@ export function Title({
    */
   const handleInputWithDebounce = useCallback(() => {
     clearDebounceTimer();
-    debounceTimeoutRef.current = setTimeout(persistLocalChanges, DEBOUNCE_DELAY_MS);
+    setDebounce(persistLocalChanges, DEBOUNCE_DELAY_MS);
   }, [ persistLocalChanges ]);
 
   /**

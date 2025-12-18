@@ -81,7 +81,7 @@ export const updateCursorPosition = (
     setIsCursorAtLastPosition(cursorPosition === totalLength);
   };
 
-export  const setCursorAt = (
+export const setCursorAt = (
     elementRef: React.RefObject<HTMLElement | null>, 
     position: 'START' | 'END'
 ) => {
@@ -96,6 +96,8 @@ export  const setCursorAt = (
     }, 20);
 }
 
-export const handleWordCount = (text: string) => {
-  return text === '' ? 0 : text.split(/\s+/).length;
+export const handleDelete = (text: string | undefined, onDelete: () => void) => {
+    let textLength = text?.trim().length || 0;
+    if(textLength && !confirm('Tem certeza que deseja remover este parágrafo?')) return;
+    onDelete();
 }
