@@ -15,10 +15,10 @@ With chapter and paragraph management and AI integration for:
 ### Title/Subtitle
 The main title with an optional subtitle.
 Commands:
-    1a - Insert the main title -> [TAB] insert the subtitle -> [ENTER]
-    1b - Insert the main title -> [ENTER]
+    1a - Insert the main title -> [TAB] insert the subtitle -> [TAB]
+    1b - Insert the main title -> [TAB][TAB]
     3 - Create the first chapter and the first paragraph (if they do not exist)
-    4 - [Right-click] -> Edit content -> click outside the component or press [ENTER] to finish editing.
+    4 - [Left-click] -> Edit content -> click outside the component or press [ENTER] to finish editing.
 
 ### Chapter
 The chapter.
