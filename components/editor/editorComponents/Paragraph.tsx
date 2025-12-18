@@ -2,7 +2,7 @@
 
 import { NavigationDirection, ParagraphInterface } from '@/components/editor/utils/interfaces';
 import SyncIndicator from '@/components/editor/SyncIndicator';
-import { handleClick } from '@/components/editor/utils/utils';
+import { handleClick, handleRightClick } from '@/components/editor/utils/utils';
 import { useParagraph } from '@/hooks/useParagraph';
 
 export interface ParagraphUpdate {
@@ -77,13 +77,6 @@ export function Paragraph({
     handleClick(event, paragraphRef, isEditing, setIsEditing);
   };
 
-  const handleParagraphRightClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    if( event.button !== 2 ) return;
-    console.log(event);
-    // TODO: Handle right-click context menu
-  }
-
   const buttons_actions = [
     { label: '"',description: 'Toggle Quote', action: toggleQuote, style: 'text-5xl text-gray-500' },
     { label: '★',description: 'Toggle Highlight', action: toggleHighlight, style: 'text-lg text-yellow-500' },
@@ -140,7 +133,7 @@ export function Paragraph({
             contentEditable={isEditing}
             suppressContentEditableWarning
             onClick={handleParagraphClick}
-            onContextMenu={handleParagraphRightClick}
+            onContextMenu={handleRightClick}
             onBlur={handleFinishEditing}
             onInput={scheduleAutoSave}
             onKeyDown={handleKeyDown}

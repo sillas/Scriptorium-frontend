@@ -40,6 +40,14 @@ export function handleContentEditableClick(
     setTimeout(() => setCursorPositionAtClick(event.clientX, event.clientY), 20);
 }
 
+/**
+ * 1Handles click on an editable item, setting it to editing mode and focusing it.
+ * @param event The mouse click event
+ * @param itemRef Reference to the editable item
+ * @param isEditing Whether the item is currently in editing mode
+ * @param setEditing Function to update the editing state
+ * @returns 
+ */
 export function handleClick(
     event: React.MouseEvent<HTMLHeadingElement>, 
     itemRef: React.RefObject<HTMLHeadingElement | null>, 
@@ -51,11 +59,11 @@ export function handleClick(
 }
 
 /**
- * 
- * @param elementRef 
- * @param isEditing 
- * @param setIsCursorAtFirstPosition 
- * @param setIsCursorAtLastPosition 
+ * Updates cursor position state based on current selection within a contentEditable element.
+ * @param elementRef Reference to the editable element
+ * @param isEditing Whether the element is currently in editing mode
+ * @param setIsCursorAtFirstPosition Function to update state indicating if cursor is at the first position
+ * @param setIsCursorAtLastPosition Function to update state indicating if cursor is at the last position
  * @returns 
  */
 export const updateCursorPosition = (
@@ -81,6 +89,11 @@ export const updateCursorPosition = (
     setIsCursorAtLastPosition(cursorPosition === totalLength);
   };
 
+  /**
+   * Sets the cursor at the start or end of a contentEditable element.
+   * @param elementRef Reference to the editable element
+   * @param position 'START' to set cursor at start, 'END' to set at end
+   */
 export const setCursorAt = (
     elementRef: React.RefObject<HTMLElement | null>, 
     position: 'START' | 'END'
@@ -96,8 +109,26 @@ export const setCursorAt = (
     }, 20);
 }
 
+/**
+ * Handles delete action for a paragraph, prompting for confirmation if it contains text.
+ * @param text The text content of the paragraph
+ * @param onDelete Callback function to execute the delete action
+ * @returns 
+ */
 export const handleDelete = (text: string | undefined, onDelete: () => void) => {
     let textLength = text?.trim().length || 0;
     if(textLength && !confirm('Tem certeza que deseja remover este parágrafo?')) return;
     onDelete();
+}
+
+/**
+ * Handles right-click event on a div element, preventing the default context menu.
+ * @param event The mouse event triggered by right-click
+ * @returns 
+ */
+export const handleRightClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    if( event.button !== 2 ) return;
+    console.log(event);
+    // TODO: Handle right-click context menu
 }
