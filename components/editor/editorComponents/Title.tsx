@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import SyncIndicator from '@/components/editor/SyncIndicator';
 import { EditableHeading, EditableHeadingHandle } from './EditableHeading';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
