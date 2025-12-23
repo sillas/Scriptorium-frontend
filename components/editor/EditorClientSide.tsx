@@ -42,6 +42,7 @@ interface EditorClientSideProps {
  */
 export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(theDocument);
+  const [chaptersSideMenu, setChaptersSideMenu] = useState<{id: string, index: number, title: string}[]>([]);
   const [shouldAddNewChapter, setShouldAddNewChapter] = useState(false);
   const [shouldAddNewParagraph, setShouldAddNewParagraph] = useState<ChapterInterface | null>(null);
   const [shouldAddNewParagraphAbove, setShouldAddNewParagraphAbove] = useState<{chapter: ChapterInterface, paragraphIndex: number} | null>(null);
@@ -82,11 +83,16 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
 
   // Load unsynced data from IndexedDB on mount
   useEffect(() => {
-    loadUnsyncedData(
-      theDocument,
-      setLocalDocument
-    );
+    loadUnsyncedData(theDocument, setLocalDocument);
   }, [theDocument]);
+
+  useEffect(() => {
+    setChaptersSideMenu(localDocument.chapters!.map((ch) => ({
+      id: ch.id,
+      index: ch.index,
+      title: ch.title === '' ? '#Empty' : ch.title,
+    })));
+  }, [localDocument]);
 
   // Add new chapter when shouldAddNewChapter is set
   useEffect(() => {
@@ -206,11 +212,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
         <SideColumn side="left">
           <div className="text-sm text-slate-200">
             <Contents
-                chapters={localDocument.chapters!.map((ch) => ({
-                  id: ch.id,
-                  index: ch.index,
-                  title: ch.title === '' ? '#Empty' : ch.title,
-                }))}
+                chapters={chaptersSideMenu}
               />
           </div>
         </SideColumn>
@@ -247,6 +249,7 @@ export function EditorClientSide({ slug, theDocument }: EditorClientSideProps) {
               key={chapter.id} 
               chapter={chapter}
               onChange={chapterLocalSave}
+              setUpdate={setChaptersSideMenu}
               onSubtitleTab={() => onSubtitleTab(localDocument.chapters ?? [], chIndex, chapter.paragraphs ?? [], setActiveParagraph)}
             >
               {chapter.paragraphs!.map((paragraph, pIndex) => (
