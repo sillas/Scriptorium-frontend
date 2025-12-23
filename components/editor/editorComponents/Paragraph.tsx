@@ -137,7 +137,7 @@ export function Paragraph({
             onBlur={handleFinishEditing}
             onInput={scheduleAutoSave}
             onKeyDown={handleKeyDown}
-            className={`${isEditing ? 'rounded':( characterCount === 0 ? 'bg-slate-200' : '')} ${isQuote ? 'pl-[4rem] italic text-gray-600' : ''} pr-2 cursor-text min-h-[1.5rem] outline-none text-justify`}
+            className={`${isEditing ? 'rounded':( characterCount === 0 ? 'bg-slate-200' : '')} ${isQuote ? 'pl-[4rem] italic text-gray-600' : ''} pr-2 pb-4 cursor-text min-h-[1.5rem] outline-none text-justify`}
           >
             {paragraph.text}
           </div>
