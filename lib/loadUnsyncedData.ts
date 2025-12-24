@@ -38,16 +38,16 @@ const proccessChapter = (unsyncedChapter: ChapterInterface, updatedChapters: Cha
 }
 
 const proccessChapters = (
-    textDocument: DocumentInterface,
+    chapters: ChapterInterface[],
     unsyncedChapters: ChapterInterface[]
 ) => {
-    const updatedChapters = [...textDocument.chapters!];
+    const updatedChapters = [...chapters];
 
     unsyncedChapters.forEach((unsyncedChapter: ChapterInterface) => {
         proccessChapter(unsyncedChapter, updatedChapters)
     })
     
-    textDocument.chapters = updatedChapters;
+    return updatedChapters;
 }
 
 const processParagraph = (unsyncedParagraph: ParagraphInterface, updatedParagraphs: ParagraphInterface[]) => {
@@ -63,7 +63,6 @@ const processParagraph = (unsyncedParagraph: ParagraphInterface, updatedParagrap
 
     if (unsyncedParagraph.id.startsWith('temp-')) {
         // New paragraph - add it in the correct position by index within its chapter
-        // const chapterParagraphs = updatedParagraphs.filter(p => p.chapterId === unsyncedParagraph.chapterId);
         const insertIndex = updatedParagraphs.findIndex(p =>
             p.chapterId === unsyncedParagraph.chapterId && p.index > unsyncedParagraph.index
         );
@@ -95,29 +94,36 @@ const processParagraph = (unsyncedParagraph: ParagraphInterface, updatedParagrap
 }
 
 const processParagraphs = (
-    chapter: ChapterInterface,
-    unsyncedParagraph: ParagraphInterface[]) => {
-    
-    const updatedParagraphs = [...chapter.paragraphs ?? []];
+    paragraphs: ParagraphInterface[],
+    unsyncedParagraphs: ParagraphInterface[]
+) => {
+    const updatedParagraphs = [...paragraphs];
 
-    if( unsyncedParagraph.length > 0 ) {
-        unsyncedParagraph.forEach((unsyncedParagraph: ParagraphInterface) => {
+    if( unsyncedParagraphs.length > 0 ) {
+        unsyncedParagraphs.forEach((unsyncedParagraph: ParagraphInterface) => {
             processParagraph(unsyncedParagraph, updatedParagraphs)
         });
     }
 
-    // Sort paragraphs by index to ensure correct order
-    updatedParagraphs.sort((a, b) => a.index - b.index);
+    // Sort paragraphs by chapterId and index to ensure correct order
+    updatedParagraphs.sort((a, b) => {
+        if (a.chapterId !== b.chapterId) return a.chapterId.localeCompare(b.chapterId);
+        return a.index - b.index;
+    });
 
-    chapter.paragraphs = updatedParagraphs;
+    return updatedParagraphs;
 }
 
 export const loadUnsyncedData = async (
-    textDocument: DocumentInterface,
-    setLocalDocument: (document: DocumentInterface) => void
+    document: DocumentInterface,
+    chapters: ChapterInterface[],
+    paragraphs: ParagraphInterface[],
+    setDocument: (document: DocumentInterface) => void,
+    setChapters: (chapters: ChapterInterface[]) => void,
+    setParagraphs: (paragraphs: ParagraphInterface[]) => void
 ) => {
     try {
-        const unsyncedData = await getUnsyncedItemsForDocument(textDocument.id.toString());
+        const unsyncedData = await getUnsyncedItemsForDocument(document.id.toString());
 
         const unsyncedDocument = unsyncedData.document
         const unsyncedChapters = unsyncedData.chapters
@@ -125,29 +131,25 @@ export const loadUnsyncedData = async (
 
         console.log('=== Unsynced data found in IndexedDB ===');
         
-        // Create a working copy of the document
-        let updatedDocument = { ...textDocument };
-    
         if (unsyncedChapters.length > 0) {
-            proccessChapters(updatedDocument, unsyncedChapters)
+            const updatedChapters = proccessChapters(chapters, unsyncedChapters);
+            setChapters(updatedChapters);
         }
                 
-        updatedDocument.chapters!.forEach(chapter => {
-            processParagraphs(
-                chapter,
-                unsyncedParagraphs.filter(p => p.chapterId === chapter.id)
-            )
-        })
+        if (unsyncedParagraphs.length > 0) {
+            const updatedParagraphs = processParagraphs(paragraphs, unsyncedParagraphs);
+            setParagraphs(updatedParagraphs);
+        }
         
         if (unsyncedDocument) {
             // Merge document properties with unsynced version from IndexedDB
-            updatedDocument = {
-                ...updatedDocument, 
+            const updatedDocument = {
+                ...document, 
                 ...unsyncedDocument
             };
+            setDocument(updatedDocument);
         }
         
-        setLocalDocument(updatedDocument);
         console.log('=== end of unsynced data processing ===');
         
     } catch (error) {

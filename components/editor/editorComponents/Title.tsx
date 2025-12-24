@@ -19,10 +19,10 @@ interface TitleProps {
   version?: number;
   updatedAt?: Date;
   createdAt?: Date;
-  isSynced: boolean;
-  isDocumentLevel: boolean;
-  onRemoteSync: () => void;
-  onChange: (data: TitleUpdateData, isNew?: boolean) => Promise<boolean> | boolean;
+  isSynced?: boolean;
+  isDocumentLevel?: boolean;
+  onRemoteSync?: (title: string) => void;
+  onChange?: (data: TitleUpdateData, isNew?: boolean) => Promise<boolean> | boolean;
   onSubtitleTab?: () => boolean;
 }
 
@@ -107,7 +107,7 @@ export function Title({
     };
     
     previousContentSnapshot.current = newTitle + newSubtitle;
-    const result = await onChange(data);
+    const result = await onChange?.(data);
     if(!result) return;
     
     setLocalUpdatedAt(data.updatedAt);
@@ -122,7 +122,8 @@ export function Title({
 
     if( isSynced ) return;
 
-    onRemoteSync();
+    const newTitle = titleRef.current?.getTextContent() || '';
+    onRemoteSync?.(newTitle);
   }, [isSynced, onRemoteSync, persistLocalChanges]);
 
   /**
@@ -206,7 +207,7 @@ export function Title({
       } bg-slate-100 relative`}
     >
       <div className={`absolute top-0 right-0 ${isDocumentLevel ? 'mr-3' : ''}`}>
-        <SyncIndicator isSynced={isSynced} />
+        <SyncIndicator isSynced={isSynced ?? false} />
       </div>
 
       <div className="flex items-center gap-2">
@@ -214,7 +215,7 @@ export function Title({
           ref={titleRef}
           content={title}
           level="title"
-          isDocumentLevel={isDocumentLevel}
+          isDocumentLevel={isDocumentLevel ?? false}
           onInput={handleInputWithDebounce}
           onFinishEditing={handleEditingComplete}
           onKeyDown={handleTitleKeyDown}
@@ -227,7 +228,7 @@ export function Title({
             ref={subtitleRef}
             content={subtitle}
             level="subtitle"
-            isDocumentLevel={isDocumentLevel}
+            isDocumentLevel={isDocumentLevel ?? false}
             onInput={handleInputWithDebounce}
             onFinishEditing={handleEditingComplete}
             onKeyDown={handleSubtitleKeyDown}

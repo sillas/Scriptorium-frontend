@@ -21,7 +21,7 @@ export default async function Editor() {
                 <h2 className="font-semibold">{doc.title}</h2>
                 <p className="text-gray-600 text-sm">{doc.subtitle}</p>
                 <a 
-                  href={`/editor/${doc.slug}`}
+                  href={`/editor/${doc._id.toString()}`}
                   className="text-blue-500 hover:underline text-sm mt-2 inline-block"
                 >
                   Editar →

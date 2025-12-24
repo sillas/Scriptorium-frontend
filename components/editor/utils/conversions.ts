@@ -18,7 +18,6 @@ export function convertMongoDocument(
         slug: mongoDoc.slug,
         subtitle: mongoDoc.subtitle || '',
         author: mongoDoc.author || '',
-        chapters: [],
         sync: true,
         createdAt: new Date(mongoDoc.createdAt),
         updatedAt: new Date(mongoDoc.updatedAt),
@@ -32,8 +31,7 @@ export function convertMongoDocument(
 
 
 export function convertMongoChapters(
-  mongoChapters: MongoChapterInterface[],
-  mongoParagraphs: ParagraphInterface[]
+  mongoChapters: MongoChapterInterface[]
 ): ChapterInterface[] {
 
   return mongoChapters.map((chapter) => ({
@@ -42,7 +40,6 @@ export function convertMongoChapters(
     documentId: chapter.documentId.toString(),
     title: chapter.title,
     subtitle: chapter.subtitle || '',
-    paragraphs: mongoParagraphs.filter(p => p.chapterId === chapter._id.toString()),
     sync: true,
     createdAt: new Date(chapter.createdAt),
     updatedAt: new Date(chapter.updatedAt),

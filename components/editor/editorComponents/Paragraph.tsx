@@ -4,6 +4,7 @@ import { NavigationDirection, ParagraphInterface } from '@/components/editor/uti
 import SyncIndicator from '@/components/editor/SyncIndicator';
 import { handleClick, handleRightClick } from '@/components/editor/utils/utils';
 import { useParagraph } from '@/hooks/useParagraph';
+import { useCallback, useReducer, useRef, useState } from 'react';
 
 export interface ParagraphUpdate {
   text: string;
@@ -21,58 +22,79 @@ interface ParagraphProps {
     canNavigateNext: boolean;
     isTheLastParagraphInChapter: boolean;
   };
-  onTextChange: (paragraph: ParagraphInterface, updatedText: ParagraphUpdate) => void;
-  onNavigate: (direction: NavigationDirection) => void;
-  onDelete: () => void;
-  onReorder: (direction: 'up' | 'down') => void;
-  onRemoteSync: () => void;
-  createNewParagraphAbove: () => void;
-  createNewParagraphInChapter: () => void;
+  // onTextChange?: (paragraph: ParagraphInterface, updatedText: ParagraphUpdate) => void;
+  // onNavigate?: (direction: NavigationDirection) => void;
+  // onDelete?: () => void;
+  // onReorder?: (direction: 'up' | 'down') => void;
+  // onRemoteSync?: () => void;
+  // createNewParagraphAbove?: () => void;
+  // createNewParagraphInChapter?: () => void;
 }
 
 export function Paragraph({
-  paragraph,
-  focusActivation,
-  navigation,
-  onTextChange,
-  onNavigate,
-  onDelete,
-  onReorder,
-  onRemoteSync,
-  createNewParagraphAbove,
-  createNewParagraphInChapter,
+  paragraph, navigation
 }: ParagraphProps) {
-  const {
-    paragraphRef,
-    isEditing,
-    setIsEditing,
-    isQuote,
-    isHighlighted,
-    isCursorAtFirstPosition,
-    isCursorAtLastPosition,
-    characterCount,
-    wordCount,
-    handleKeyDown,
-    handleFinishEditing,
-    scheduleAutoSave,
-    handleDeleteAction,
-    toggleQuote,
-    toggleHighlight,
-  } = useParagraph({
-    paragraph,
-    focusActivation,
-    navigation,
-    onTextChange,
-    onNavigate,
-    onDelete,
-    onReorder,
-    onRemoteSync,
-    createNewParagraphInChapter,
-  });
+  // const {
+  //   paragraphRef,
+  //   isEditing,
+  //   setIsEditing,
+  //   isQuote,
+  //   isHighlighted,
+  //   isCursorAtFirstPosition,
+  //   isCursorAtLastPosition,
+  //   characterCount,
+  //   wordCount,
+  //   handleKeyDown,
+  //   handleFinishEditing,
+  //   scheduleAutoSave,
+  //   handleDeleteAction,
+  //   toggleQuote,
+  //   toggleHighlight,
+  // } = useParagraph({
+  //   paragraph,
+  //   focusActivation,
+  //   navigation,
+  //   onTextChange,
+  //   onNavigate,
+  //   onDelete,
+  //   onReorder,
+  //   onRemoteSync,
+  //   createNewParagraphInChapter,
+  // });
 
-  /**
-   * Handles click events on the paragraph element.
-   */
+  
+  const isCursorAtFirstPosition = false;
+  const isCursorAtLastPosition = false;
+  const characterCount = paragraph.characterCount;
+  const wordCount = paragraph.wordCount;
+  
+  const paragraphRef = useRef<HTMLDivElement>(null);
+
+  const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
+  const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);    
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Toggles ------------------------------
+  const toggleQuote = useCallback(() => {
+      setIsQuote(prev => !prev);
+  }, []);
+  
+  const toggleHighlight = useCallback(() => {
+    setIsHighlighted(prev => !prev);
+  }, []);
+  // --------------------------------------
+    
+
+  const createNewParagraphAbove = () => {}
+  const handleDeleteAction = () => {}
+
+  const handleFinishEditing = useCallback(() => {
+    setIsEditing(false);
+  }, []);
+
+  const scheduleAutoSave = () => {}
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {}
   const handleParagraphClick = (event: React.MouseEvent<HTMLDivElement>) => {
     handleClick(event, paragraphRef, isEditing, setIsEditing);
   };
