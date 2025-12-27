@@ -186,6 +186,12 @@ export function Paragraph({
       }
     }
 
+    if (pressedKey === 'Escape' && paragraphRef.current?.textContent?.trim() !== '') {
+      event.preventDefault();
+      handleFinishEditing();
+      return;
+    }
+
     // Delete paragraph on Escape if it's the last in chapter and empty
     if (['Backspace', 'Escape'].includes(pressedKey) &&
       paragraphRef.current?.textContent?.trim() === ''
