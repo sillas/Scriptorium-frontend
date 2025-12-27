@@ -6,7 +6,6 @@ import SideColumn from '@/components/editor/columns/SideColumn';
 import Contents from '@/components/editor/editorComponents/Contents';
 import AddButton from '@/components/editor/editorComponents/AddButton';
 import Chapter from '@/components/editor/editorComponents/Chapter';
-// import { Paragraph } from '@/components/editor/editorComponents/Paragraph';
 import { Title } from '@/components/editor/editorComponents/Title';
 // import { useIsOnline } from '@/components/OnlineStatusProvider';
 import {
@@ -14,12 +13,12 @@ import {
   ChapterInterface,
   ParagraphInterface,
   ActiveParagraphInterface,
+  NavigationDirection,
 } from '@/components/editor/utils/interfaces';
 import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
-import { Paragraph } from './editorComponents/Paragraph';
+import { Paragraph } from '@/components/editor/editorComponents/Paragraph';
 import { 
-  // updateDocumentWithChapter, 
-  // reorderParagraphs,
+  // updateDocumentWithChapter,
   createParagraphObject
 } from '@/components/editor/utils/helpers';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -65,7 +64,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     // paragraphLocalSave, 
   //   deleteParagraph, 
   // } = useLocalStorage();
-  const { 
+  const {
     navigateToAdjacentParagraph,
     getNavigationAvailability,
     // onSubtitleTab
@@ -98,22 +97,11 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
   }, []);
 
   const handleReorderParagraphs = useCallback((
-    paragraphs: ParagraphInterface[] | undefined,
-    chIndex: number,
-    pIndex: number,
-    direction: 'up' | 'down'
+    direction: NavigationDirection,
+    paragraphIndex: number
   ) => {
-    // reorderParagraphs(
-    //   paragraphs ?? [],
-    //   chIndex,
-    //   pIndex,
-    //   direction,
-    //   localDocument,
-    //   setLocalDocument,
-    //   paragraphLocalSave
-    // )
 
-    console.log('Reorder...');
+    console.log('Reorder...', direction, paragraphIndex);
   }, []);
 
   /**
@@ -338,7 +326,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
           {/* Chapters with Titles and Paragraphs */}
           {localChapters.map((chapter) => (
             <Chapter
-              key={chapter.id} 
+              key={chapter.id}
               chapter={chapter}
             >
               {localParagraphs.filter(p => p.chapterId === chapter.id).map((paragraph) => (
@@ -348,6 +336,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
                     focusActivation={activeParagraph?.id === paragraph.id ? { direction: activeParagraph.direction } : null}
                     navigation={getNavigationAvailability(paragraph.index, localParagraphs)}
                     onNavigate={(direction) => navigateToAdjacentParagraph(direction, paragraph.index, localParagraphs, setActiveParagraph)}
+                    onReorder={(direction) => handleReorderParagraphs(direction, paragraph.index)}
                     onDelete={() => handleDeleteParagraph(paragraph.index)}
                     onCreateNewParagraph={(paragraphIndex) => createParagraph(chapter.id, paragraphIndex)}
                   />

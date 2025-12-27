@@ -89,4 +89,4 @@ export interface ActiveParagraphInterface {
   direction: NavigationDirection;
 }
 
-export type NavigationDirection = 'previous' | 'next' | null;
+export type NavigationDirection = 'Up' | 'Down' | null;

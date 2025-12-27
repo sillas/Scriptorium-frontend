@@ -19,6 +19,7 @@ import {
 
 const DEBOUNCE_DELAY_MS = 700;
 const EMPTY_TEXT_PLACEHOLDER = 'Clique para editar este parágrafo...';
+
 export interface ParagraphUpdate {
   text: string;
   characterCount: number;
@@ -38,12 +39,12 @@ interface ParagraphProps {
   onDelete?: () => void;
   onNavigate?: (direction: NavigationDirection) => void;
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
-  // onReorder?: (direction: 'Up' | 'Down') => void;
+  onReorder?: (direction: NavigationDirection) => void;
   // onRemoteSync?: () => void;
 }
 
 export function Paragraph({
-  paragraph, focusActivation, navigation, onNavigate, onDelete, onCreateNewParagraph
+  paragraph, focusActivation, navigation, onNavigate, onDelete, onCreateNewParagraph, onReorder
 }: ParagraphProps) {
  
   const paragraphRef = useRef<HTMLDivElement>(null);
@@ -142,24 +143,38 @@ export function Paragraph({
 
     // Go to previous or next paragraph on Arrow Up/Down
     if(['ArrowUp', 'ArrowDown'].includes(pressedKey)) {
-      const direction = pressedKey === 'ArrowUp'? 'previous' : 'next';
-      const shouldNavigate = 
-        (direction === 'previous' && isCursorAtFirstPosition && navigation.canNavigatePrevious) ||
-        (direction === 'next' && isCursorAtLastPosition && navigation.canNavigateNext);
-      
-      if(shouldNavigate) {
+      const direction = pressedKey === 'ArrowUp'? 'Up' : 'Down';
+      const canNavigate = direction === 'Down' 
+        ? navigation.canNavigateNext 
+        : navigation.canNavigatePrevious;
+
+      if (!canNavigate) return;
+
+      if (event.ctrlKey) {
+        event.preventDefault();
+        onReorder?.(direction);
+        return;
+      }
+
+      // Navegar apenas se o cursor estiver na extremidade
+      const isAtEdge = direction === 'Up' 
+        ? isCursorAtFirstPosition 
+        : isCursorAtLastPosition;
+
+      if (isAtEdge) {
         handleFinishEditingAndNavigate(event, direction);
       }
+
       return;
     }
 
     // Go to previous or next paragraph on Tab
     if (pressedKey === 'Tab' && isEditing) {
 
-      const direction = event.shiftKey ? 'previous':'next';
+      const direction: NavigationDirection = event.shiftKey ? 'Up' : 'Down';
       const shouldNavigate = 
-        (direction === 'next' && navigation.canNavigateNext) ||
-        (direction === 'previous' && navigation.canNavigatePrevious)
+        (direction === 'Down' && navigation.canNavigateNext) ||
+        (direction === 'Up' && navigation.canNavigatePrevious)
 
       if( shouldNavigate ) {
         handleFinishEditingAndNavigate(event, direction);
@@ -187,7 +202,7 @@ export function Paragraph({
         return;
       }
 
-      handleFinishEditingAndNavigate(event, 'next');
+      handleFinishEditingAndNavigate(event, 'Down');
     }
 
     const currentText = paragraphRef.current?.textContent?.trim() || '';
@@ -204,7 +219,7 @@ export function Paragraph({
       event.preventDefault();
 
       if( pressedKey === 'Backspace' ) {
-        const direction = navigation.canNavigatePrevious ? 'previous' : null;
+        const direction: NavigationDirection = navigation.canNavigatePrevious ? 'Up' : null;
         handleFinishEditingAndNavigate(event, direction);
       }
 
@@ -264,7 +279,7 @@ export function Paragraph({
       paragraphRef.current.textContent = '';
     }
 
-    if (focusActivation.direction === 'previous') {
+    if (focusActivation.direction === 'Up') {
       setCursorAt(paragraphRef, 'END');
     } else {
       setCursorAt(paragraphRef, 'START');

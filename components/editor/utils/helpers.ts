@@ -45,61 +45,11 @@ export const updateDocumentWithChapter = async (
   setLocalDocument(documentUpdated);
   setActiveParagraph({
     id: newParagraph.id,
-    direction: 'previous'
+    direction: 'Up'
   });
 
   return true;
 };
-
-
-/**
- * Reordena parágrafos em um capítulo e atualiza o documento local.
- *
- * @param paragraphs Lista de parágrafos do capítulo
- * @param cIndex Índice do capítulo no documento
- * @param pIndex Índice do parágrafo a ser movido
- * @param direction Direção do movimento ('up' | 'down')
- * @param localDocument Documento atual
- * @param setLocalDocument Função para atualizar o estado do documento
- * @param paragraphLocalSave Função para salvar o parágrafo localmente
- */
-export const reorderParagraphs = async (
-  paragraphs: ParagraphInterface[],
-  chapterId: string,
-  paragraphId: number,
-  direction: 'up' | 'down',
-  setLocalParagraphs: (paragraphs: ParagraphInterface[]) => void,
-  paragraphLocalSave: (paragraph: ParagraphInterface) => Promise<boolean>
-) => {
-  // const chapterParagraphs = paragraphs.filter(p => p.chapterId === paragraphs[paragraphIndex].chapterId);
-  // const targetIndex = direction === 'up' ? paragraphIndex - 1 : paragraphIndex + 1;
-
-  // // Check bounds
-  // if (targetIndex < 0 || targetIndex >= chapterParagraphs.length) return;
-
-  // // Swap indices
-  // const tempIndex = localParagraphs[paragraphIndex].index;
-  // localParagraphs[paragraphIndex].index = localParagraphs[targetIndex].index;
-  // localParagraphs[targetIndex].index = tempIndex;
-
-  // // Save changes locally
-  // const result1 = await paragraphLocalSave({ ...localParagraphs[paragraphIndex] });
-  // const result2 = await paragraphLocalSave({ ...localParagraphs[targetIndex] });
-
-  // if (result1 && result2) {
-  //   // Reorder for visualization
-  //   const reorderedParagraphs = localParagraphs.sort((a, b) => a.index - b.index);
-
-  //   const documentUpdated = { ...localDocument };
-  //   documentUpdated.chapters![chapterIndex]!.paragraphs = reorderedParagraphs;
-
-  //   setLocalDocument(documentUpdated);
-  //   return;
-  // }
-
-  // console.error('Error saving reordered paragraphs');
-};
-
 
 // Helper function to create a new paragraph object
 export const createParagraphObject = (
