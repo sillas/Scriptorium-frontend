@@ -160,7 +160,7 @@ export function Title({
     if (!KEYS_TAB_ENTER_ESCAPE.includes(event.key)) return false;
     
     // Handle Tab key to move focus to subtitle if it exists
-    if (event.key === 'Tab' && subtitle) {
+    if (event.key === 'Tab' && subtitle && !event.shiftKey) {
       event.preventDefault();
       subtitleRef.current?.focus();
       return true;
