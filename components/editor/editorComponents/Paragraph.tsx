@@ -3,12 +3,16 @@
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { NavigationDirection, ParagraphInterface } from '@/components/editor/utils/interfaces';
 import SyncIndicator from '@/components/editor/SyncIndicator';
-import { handleClick, handleRightClick } from '@/components/editor/utils/utils';
 import { countWords } from '@/components/editor/utils/helpers';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { handleDeleteQuestion } from '@/components/editor/utils/utils';
 import { paragraphStyles as pStyle } from '@/components/editor/utils/paragraphStyles';
+import { 
+  handleClick,
+  handleRightClick,
+  handleDeleteQuestion,
+  updateCursorPosition
+} from '@/components/editor/utils/utils';
 
 // import { useParagraph } from '@/hooks/useParagraph';
 
@@ -42,8 +46,7 @@ export function Paragraph({
   paragraph, navigation, onDelete
 }: ParagraphProps) {
 
-  const { paragraphLocalSave, deleteParagraph } = useLocalStorage();
-
+  
   // const {
   //   paragraphRef,
   //   isEditing,
@@ -71,20 +74,20 @@ export function Paragraph({
   //   onRemoteSync,
   //   createNewParagraphInChapter,
   // });
-
-  
-  const isCursorAtFirstPosition = false;
-  const isCursorAtLastPosition = false;
-  
+ 
   const paragraphRef = useRef<HTMLDivElement>(null);
   const previousTextRef = useRef(paragraph.text);
-
+  
   const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
   const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);    
   const [isEditing, setIsEditing] = useState(false);
   const [characterCount, setCharacterCount] = useState(paragraph.text?.trim().length || 0);
   const [wordCount, setWordCount] = useState(countWords(paragraph.text));
+  const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
+  const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
 
+  const { paragraphLocalSave, deleteParagraph } = useLocalStorage();
+  
   // Custom hooks
   const [setDebounce, clearDebounceTimer] = useDebounceTimer();
 
@@ -134,7 +137,9 @@ export function Paragraph({
   // Handle functions ----------------------
   const handleFinishEditing = useCallback(async () => {
     setIsEditing(false);
-  
+    setIsCursorAtFirstPosition(false);
+    setIsCursorAtLastPosition(false);
+
     const text = paragraphRef.current!.textContent.trim() || '';    
     if(text.length === 0) paragraphRef.current!.textContent = EMPTY_TEXT_PLACEHOLDER;
 
@@ -152,6 +157,34 @@ export function Paragraph({
     handleClick(event, paragraphRef, isEditing, setIsEditing);
   }, [isEditing]);
 
+  // Navigation Indicators ------------------------
+
+  const handleCursorPositionUpdate = useCallback(() => {
+    updateCursorPosition(
+      paragraphRef,
+      isEditing,
+      setIsCursorAtFirstPosition,
+      setIsCursorAtLastPosition
+    );
+  }, [isEditing]);
+
+  useEffect(() => {
+    if (!isEditing) return;
+
+    const element = paragraphRef.current;
+    if( !element ) return;
+    
+    // Events that indicate cursor position change
+    element.addEventListener('keyup', handleCursorPositionUpdate);
+    element.addEventListener('mouseup', handleCursorPositionUpdate);
+    element.addEventListener('focus', handleCursorPositionUpdate);
+
+    return () => {
+      element.removeEventListener('keyup', handleCursorPositionUpdate);
+      element.removeEventListener('mouseup', handleCursorPositionUpdate);
+      element.removeEventListener('focus', handleCursorPositionUpdate);
+    };
+  }, [isEditing, handleCursorPositionUpdate]);
 
   // Toggles Buttons ------------------------------
   useEffect(  () => {
