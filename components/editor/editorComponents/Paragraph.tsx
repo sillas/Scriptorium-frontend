@@ -162,7 +162,6 @@ export function Paragraph({
         (direction === 'previous' && navigation.canNavigatePrevious)
 
       if( shouldNavigate ) {
-        console.log(direction);
         handleFinishEditingAndNavigate(event, direction);
       }
       return;
