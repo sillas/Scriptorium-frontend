@@ -67,13 +67,13 @@ export function Paragraph({
     if (paragraph.text.length === 0) {
       content = EMPTY_TEXT_PLACEHOLDER;
     }
-    paragraphRef.current.textContent = content
+    paragraphRef.current.innerText = content
   }, [paragraph.text]);
   
   // Local Storage Functions --------------
 
   const triggerLocalSave = useCallback(async (forceUpdate = false) => {
-      let newText = paragraphRef.current?.textContent?.trim() || '';
+      let newText = paragraphRef.current?.innerText?.trim() || '';
       if(newText === EMPTY_TEXT_PLACEHOLDER) newText = ''
 
       if (!forceUpdate && newText === previousTextRef.current) return;
@@ -93,7 +93,7 @@ export function Paragraph({
     clearDebounceTimer();
     setDebounce(triggerLocalSave, DEBOUNCE_DELAY_MS);
 
-    const text = paragraphRef.current?.textContent?.trim() || '';
+    const text = paragraphRef.current?.innerText?.trim() || '';
     setCharacterCount(text.length);
     setWordCount(countWords(text));
   }, [clearDebounceTimer, setDebounce, triggerLocalSave]);
@@ -111,7 +111,6 @@ export function Paragraph({
     
     const text = paragraphRef.current!.textContent.trim() || '';    
     if(text.length === 0) paragraphRef.current!.textContent = EMPTY_TEXT_PLACEHOLDER;
-
     await triggerLocalSave();
     paragraphRef.current?.blur();
   }, [triggerLocalSave, isEditing]);
@@ -178,11 +177,18 @@ export function Paragraph({
       return;
     }
 
-    if (pressedKey === 'Enter' && isEditing && navigation.isTheLastParagraphInChapter) {
-      event.preventDefault();
-      handleFinishEditing();
-      onCreateNewParagraph && onCreateNewParagraph(null);
-      return;
+    if (pressedKey === 'Enter' && isEditing) {
+      // Allow line break with Shift+Enter
+      if (event.shiftKey) return;
+      
+      if (navigation.isTheLastParagraphInChapter) {
+        event.preventDefault();
+        handleFinishEditing();
+        onCreateNewParagraph && onCreateNewParagraph(null);
+        return;
+      }
+
+      handleFinishEditingAndNavigate(event, 'next');
     }
   }, [
     isCursorAtFirstPosition, 
