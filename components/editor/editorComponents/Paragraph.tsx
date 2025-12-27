@@ -37,14 +37,14 @@ interface ParagraphProps {
   };
   onDelete?: () => void;
   onNavigate?: (direction: NavigationDirection) => void;
+  onCreateNewParagraphAbove?: () => void;
   // onReorder?: (direction: 'up' | 'down') => void;
   // onRemoteSync?: () => void;
-  // createNewParagraphAbove?: () => void;
   // createNewParagraphInChapter?: () => void;
 }
 
 export function Paragraph({
-  paragraph, focusActivation, navigation, onNavigate, onDelete
+  paragraph, focusActivation, navigation, onNavigate, onDelete, onCreateNewParagraphAbove
 }: ParagraphProps) {
 
   
@@ -101,12 +101,9 @@ export function Paragraph({
     }
     paragraphRef.current.textContent = content
   }, [paragraph.text]);
-
-  // Placeholder functions -----------------
-  const createNewParagraphAbove = () => {}
-  // --------------------------------------
   
   // Local Storage Functions --------------
+
   const triggerLocalSave = useCallback(async (forceUpdate = false) => {
       let newText = paragraphRef.current?.textContent?.trim() || '';
       if(newText === EMPTY_TEXT_PLACEHOLDER) newText = ''
@@ -135,6 +132,7 @@ export function Paragraph({
   
   
   // Handle functions ----------------------
+
   const handleFinishEditing = useCallback(async () => {
     setIsEditing(false);
     setIsCursorAtFirstPosition(false);
@@ -157,13 +155,14 @@ export function Paragraph({
     handleClick(event, paragraphRef, isEditing, setIsEditing);
   }, [isEditing]);
 
+
   // Navigation ------------------------
+
+
   const handleFinishEditingAndNavigate = useCallback((
     event: React.KeyboardEvent<HTMLDivElement>,
     direction: NavigationDirection
   ) => {
-    console.log(direction);
-    
     event.preventDefault();
     handleFinishEditing();
     onNavigate && onNavigate(direction);
@@ -171,6 +170,12 @@ export function Paragraph({
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     const pressedKey = event.key;
+
+    // Go to next paragraph on Tab
+    if (pressedKey === 'Tab' && isEditing && navigation.canNavigateNext) {
+      handleFinishEditingAndNavigate(event, 'next');
+      return;
+    }
 
     if(['ArrowUp', 'ArrowDown'].includes(pressedKey)) {
       if(pressedKey === 'ArrowUp' && isCursorAtFirstPosition && navigation.canNavigatePrevious) {
@@ -234,7 +239,10 @@ export function Paragraph({
     }
   }, [focusActivation]);
 
+
   // Toggles Buttons ------------------------------
+
+
   useEffect(  () => {
     triggerLocalSave(true);
   }, [isQuote, isHighlighted]);
@@ -260,10 +268,11 @@ export function Paragraph({
     { label: 'X',description: 'Delete Paragraph', action: handleDeleteAction, style: 'text-2xs text-red-400 font-bold' },
   ];
   // --------------------------------------
+
   return (
     <>
       <button 
-        onClick={createNewParagraphAbove}
+        onClick={onCreateNewParagraphAbove}
         aria-label="Add Paragraph Here" 
         className={pStyle.createNewParagraphAboveStyle}>
       +

@@ -22,7 +22,7 @@ import {
   // reorderParagraphs,
   createParagraphObject
 } from '@/components/editor/utils/helpers';
-// import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useNavigation } from '@/hooks/useNavigation';
 // import { useSync } from '@/hooks/useSync';
 
@@ -53,7 +53,8 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
   // const [shouldAddNewParagraph, setShouldAddNewParagraph] = useState<ChapterInterface | null>(null);
   // const [shouldAddNewParagraphAbove, setShouldAddNewParagraphAbove] = useState<{chapter: ChapterInterface, paragraphIndex: number} | null>(null);
   const [activeParagraph, setActiveParagraph] = useState<ActiveParagraphInterface | null>(null);
-  
+  const { paragraphLocalSave } = useLocalStorage();
+
   // custom hooks
   // const { 
     // documentLocalSave, 
@@ -186,12 +187,40 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
   //   })();
   // }, [shouldAddNewParagraphAbove, localDocument.id, paragraphLocalSave]);
 
-  const createParagraph = useCallback(async (chapterId: string) => {
+  const createParagraph = useCallback((chapterId: string, paragraphIndex: number | null = null) => {
     const newParagraph = createParagraphObject(
-      localDocument.id, chapterId, localParagraphs.length
+      localDocument.id,
+      chapterId,
+      paragraphIndex !== null ? paragraphIndex : localParagraphs.length,
     );
-    setLocalParagraphs(prev => [...prev, newParagraph]);
-  }, [localDocument.id, localParagraphs]);
+
+    // Simple case: append to end
+    if(paragraphIndex === null) {
+      setLocalParagraphs(prev => [...prev, newParagraph]);
+      paragraphLocalSave(newParagraph); // Fire-and-forget: save in background
+      return;
+    }
+
+    // Insert at specific position and re-index only affected paragraphs
+    const updatedParagraphs = [...localParagraphs];
+    updatedParagraphs.splice(paragraphIndex, 0, newParagraph);
+    
+    // Only re-index paragraphs from insertion point onwards
+    const paragraphsToUpdate: ParagraphInterface[] = [];
+    
+    for (let i = paragraphIndex; i < updatedParagraphs.length; i++) {
+      const updated = { ...updatedParagraphs[i], index: i };
+      updatedParagraphs[i] = updated;
+      paragraphsToUpdate.push(updated);
+    }
+
+    // Update UI immediately (optimistic update)
+    setLocalParagraphs(updatedParagraphs);
+    setActiveParagraph({ id: updatedParagraphs[paragraphIndex].id, direction: null});
+
+    // Parallelize all save operations in background
+    Promise.all(paragraphsToUpdate.map(p => paragraphLocalSave(p)));
+  }, [localDocument.id, localParagraphs, paragraphLocalSave]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
@@ -250,6 +279,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
                     navigation={getNavigationAvailability(paragraph.index, localParagraphs)}
                     onNavigate={(direction) => navigateToAdjacentParagraph(direction, paragraph.index, localParagraphs, setActiveParagraph)}
                     onDelete={() => setLocalParagraphs(prev => prev.filter(p => p.id !== paragraph.id))}
+                    onCreateNewParagraphAbove={() => createParagraph(chapter.id, paragraph.index)}
                   />
                 ))}
               {/* Add Paragraph Button */}

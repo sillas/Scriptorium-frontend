@@ -10,6 +10,7 @@ import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 import { ParagraphUpdate } from '@/components/editor/editorComponents/Paragraph';
 
 const DEBOUNCE_DELAY_MS = 700;
+type Direction = 'Up' | 'Down';
 
 interface UseParagraphProps {
   paragraph: ParagraphInterface;
@@ -22,7 +23,7 @@ interface UseParagraphProps {
   onTextChange: (paragraph: ParagraphInterface, updatedText: ParagraphUpdate) => void;
   onNavigate: (direction: NavigationDirection) => void;
   onDelete: () => void;
-  onReorder: (direction: 'up' | 'down') => void;
+  onReorder: (direction: Direction) => void;
   onRemoteSync: () => void;
   createNewParagraphInChapter: () => void;
 }
@@ -193,7 +194,7 @@ export function useParagraph({
     if(['ArrowUp', 'ArrowDown'].includes(pressedKey)) {
       if(event.ctrlKey) {
         event.preventDefault();
-        onReorder(pressedKey === 'ArrowUp' ? 'up' : 'down');
+        onReorder(pressedKey.slice(5) as Direction);
         return;
       }
       
