@@ -192,6 +192,7 @@ export function Paragraph({
     ) {
       event.preventDefault();
 
+      // TODO: add correct focus
       // if( pressedKey === 'Backspace' ) {
       //   handleFinishEditingAndNavigate(event, 'previous');
       // }

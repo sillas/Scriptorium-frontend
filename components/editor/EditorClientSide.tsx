@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import EditorHeader from '@/components/editor/Header';
 import SideColumn from '@/components/editor/columns/SideColumn';
 import Contents from '@/components/editor/editorComponents/Contents';
@@ -54,6 +54,9 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
   // const [shouldAddNewParagraphAbove, setShouldAddNewParagraphAbove] = useState<{chapter: ChapterInterface, paragraphIndex: number} | null>(null);
   const [activeParagraph, setActiveParagraph] = useState<ActiveParagraphInterface | null>(null);
   const { paragraphLocalSave } = useLocalStorage();
+  
+  // Track pending IndexedDB save operations
+  const pendingSavesRef = useRef<Set<Promise<any>>>(new Set());
 
   // custom hooks
   // const { 
@@ -70,6 +73,29 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
   // const { syncStatus } = useSync();
   // const isOnline = useIsOnline();
 
+
+  /**
+   * Helper to track save operations and ensure they complete
+   */
+  const trackSaveOperation = useCallback((savePromise: Promise<any>) => {
+    pendingSavesRef.current.add(savePromise);
+    
+    savePromise
+      .finally(() => {
+        pendingSavesRef.current.delete(savePromise);
+      });
+    
+    return savePromise;
+  }, []);
+
+  /**
+   * Wait for all pending save operations to complete
+   */
+  const waitForPendingSaves = useCallback(async () => {
+    if (pendingSavesRef.current.size > 0) {
+      await Promise.allSettled(Array.from(pendingSavesRef.current));
+    }
+  }, []);
 
   const handleReorderParagraphs = useCallback((
     paragraphs: ParagraphInterface[] | undefined,
@@ -107,11 +133,12 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     // Update UI immediately (optimistic update)
     setLocalParagraphs(paragraphs);
 
-    // Parallelize all save operations in background
+    // Parallelize all save operations in background and track them
     if (paragraphsToUpdate.length > 0) {
-      Promise.all(paragraphsToUpdate.map(p => paragraphLocalSave(p)));
+      const savePromise = Promise.all(paragraphsToUpdate.map(p => paragraphLocalSave(p)));
+      trackSaveOperation(savePromise);
     }
-  }, [paragraphLocalSave]);
+  }, [paragraphLocalSave, trackSaveOperation]);
 
   // // Load unsynced data from IndexedDB on mount
   useEffect(() => {
@@ -124,6 +151,28 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
       setLocalParagraphs
     );
   }, [document, chapters, paragraphs]);
+
+  // Handle beforeunload to ensure all IndexedDB operations complete
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // If there are pending saves, prevent immediate unload
+      if (pendingSavesRef.current.size > 0) {
+        e.preventDefault();
+        // e.returnValue = ''; // deprecated
+        
+        // Attempt to wait for pending saves (may not complete if user forces close)
+        waitForPendingSaves().catch(err => {
+          console.error('Error completing pending saves:', err);
+        });
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [waitForPendingSaves]);
 
   // useEffect(() => {
   //   setChaptersSideMenu(localDocument.chapters!.map((ch) => ({
@@ -220,7 +269,8 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     // Simple case: append to end
     if(paragraphIndex === null) {
       setLocalParagraphs(prev => [...prev, newParagraph]);
-      paragraphLocalSave(newParagraph); // Fire-and-forget: save in background
+      const savePromise = paragraphLocalSave(newParagraph);
+      trackSaveOperation(savePromise); // Track the save operation
       return;
     }
 
@@ -231,7 +281,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     // Re-index and save affected paragraphs
     reindexAndSaveParagraphs(updatedParagraphs, paragraphIndex);
     setActiveParagraph({ id: updatedParagraphs[paragraphIndex].id, direction: null});
-  }, [localDocument.id, localParagraphs, reindexAndSaveParagraphs]);
+  }, [localDocument.id, localParagraphs, reindexAndSaveParagraphs, trackSaveOperation]);
 
   const deleteParagraph = useCallback((paragraphIndex: number) => {
     // Remove paragraph at specified index
