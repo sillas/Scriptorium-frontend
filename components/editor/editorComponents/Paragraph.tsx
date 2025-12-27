@@ -144,17 +144,18 @@ export function Paragraph({
     // Go to previous or next paragraph on Arrow Up/Down
     if(['ArrowUp', 'ArrowDown'].includes(pressedKey)) {
       const direction = pressedKey === 'ArrowUp'? 'Up' : 'Down';
-      const canNavigate = direction === 'Down' 
-        ? navigation.canNavigateNext 
-        : navigation.canNavigatePrevious;
-
-      if (!canNavigate) return;
-
+      
       if (event.ctrlKey) {
         event.preventDefault();
         onReorder?.(direction);
         return;
       }
+
+      const canNavigate = direction === 'Down' 
+        ? navigation.canNavigateNext 
+        : navigation.canNavigatePrevious;
+        
+      if (!canNavigate) return;
 
       // Navegar apenas se o cursor estiver na extremidade
       const isAtEdge = direction === 'Up' 

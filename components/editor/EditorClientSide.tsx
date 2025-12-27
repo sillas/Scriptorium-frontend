@@ -96,14 +96,6 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     }
   }, []);
 
-  const handleReorderParagraphs = useCallback((
-    direction: NavigationDirection,
-    paragraphIndex: number
-  ) => {
-
-    console.log('Reorder...', direction, paragraphIndex);
-  }, []);
-
   /**
    * Re-indexes paragraphs from a specific position and saves them
    * @param paragraphs - Array of paragraphs to update
@@ -127,6 +119,51 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
       trackSaveOperation(savePromise);
     }
   }, [paragraphLocalSave, trackSaveOperation]);
+
+
+  const handleReorderParagraphs = useCallback((
+    direction: NavigationDirection,
+    paragraphIndex: number,
+    chapterIndex: number
+  ) => {
+    const targetIndex = direction === 'Up' ? paragraphIndex - 1 : paragraphIndex + 1;
+    if(targetIndex < 0) return
+
+    const updatedParagraphs = [...localParagraphs];
+    
+    if(targetIndex >= localParagraphs.length) {
+      if( chapterIndex < localChapters.length - 1) {
+        updatedParagraphs[paragraphIndex].chapterId = localChapters[chapterIndex + 1].id;
+        setLocalParagraphs(updatedParagraphs);
+        setActiveParagraph({ id: updatedParagraphs[paragraphIndex].id, direction: null });
+        const savePromise = paragraphLocalSave(updatedParagraphs[paragraphIndex]);
+        trackSaveOperation(savePromise); // Track the save operation
+      }
+      return
+    }
+    
+    const currentParagraph = updatedParagraphs[paragraphIndex];
+    const targetParagraph = updatedParagraphs[targetIndex];
+
+    // Copy chapters, if needed, preserving ordering
+    if (currentParagraph.chapterId !== targetParagraph.chapterId) {
+      currentParagraph.chapterId = targetParagraph.chapterId
+
+      setLocalParagraphs(updatedParagraphs);
+      setActiveParagraph({ id: currentParagraph.id, direction: null });
+      const savePromise = paragraphLocalSave(currentParagraph);
+      trackSaveOperation(savePromise); // Track the save operation
+      return
+    }
+
+    // Swap paragraphs, same chapter
+    [updatedParagraphs[paragraphIndex], updatedParagraphs[targetIndex]] = 
+      [updatedParagraphs[targetIndex], updatedParagraphs[paragraphIndex]];
+    
+    // Re-index and save affected paragraphs
+    reindexAndSaveParagraphs(updatedParagraphs, Math.min(paragraphIndex, targetIndex));
+    setActiveParagraph({ id: updatedParagraphs[targetIndex].id, direction: null });
+  }, [localParagraphs, reindexAndSaveParagraphs]);
 
   // // Load unsynced data from IndexedDB on mount
   useEffect(() => {
@@ -324,7 +361,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
           />
           
           {/* Chapters with Titles and Paragraphs */}
-          {localChapters.map((chapter) => (
+          {localChapters.map((chapter, chapterIndex) => (
             <Chapter
               key={chapter.id}
               chapter={chapter}
@@ -336,7 +373,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
                     focusActivation={activeParagraph?.id === paragraph.id ? { direction: activeParagraph.direction } : null}
                     navigation={getNavigationAvailability(paragraph.index, localParagraphs)}
                     onNavigate={(direction) => navigateToAdjacentParagraph(direction, paragraph.index, localParagraphs, setActiveParagraph)}
-                    onReorder={(direction) => handleReorderParagraphs(direction, paragraph.index)}
+                    onReorder={(direction) => handleReorderParagraphs(direction, paragraph.index, chapterIndex)}
                     onDelete={() => handleDeleteParagraph(paragraph.index)}
                     onCreateNewParagraph={(paragraphIndex) => createParagraph(chapter.id, paragraphIndex)}
                   />

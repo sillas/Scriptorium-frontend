@@ -99,8 +99,9 @@ export const setCursorAt = (
     position: 'START' | 'END'
 ) => {
     setTimeout(() => {
+        if (!elementRef.current) return;
         const range = document.createRange();
-        range.selectNodeContents(elementRef.current!);
+        range.selectNodeContents(elementRef.current);
         range.collapse(position === 'START');
         
         const sel = window.getSelection();
