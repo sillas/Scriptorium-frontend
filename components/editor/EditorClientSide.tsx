@@ -90,6 +90,29 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     console.log('Reorder...');
   }, []);
 
+  /**
+   * Re-indexes paragraphs from a specific position and saves them
+   * @param paragraphs - Array of paragraphs to update
+   * @param fromIndex - Starting index for re-indexation
+   */
+  const reindexAndSaveParagraphs = useCallback((paragraphs: ParagraphInterface[], fromIndex: number) => {
+    const paragraphsToUpdate: ParagraphInterface[] = [];
+    
+    for (let i = fromIndex; i < paragraphs.length; i++) {
+      const updated = { ...paragraphs[i], index: i };
+      paragraphs[i] = updated;
+      paragraphsToUpdate.push(updated);
+    }
+
+    // Update UI immediately (optimistic update)
+    setLocalParagraphs(paragraphs);
+
+    // Parallelize all save operations in background
+    if (paragraphsToUpdate.length > 0) {
+      Promise.all(paragraphsToUpdate.map(p => paragraphLocalSave(p)));
+    }
+  }, [paragraphLocalSave]);
+
   // // Load unsynced data from IndexedDB on mount
   useEffect(() => {
     loadUnsyncedData(
@@ -201,26 +224,22 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
       return;
     }
 
-    // Insert at specific position and re-index only affected paragraphs
+    // Insert at specific position
     const updatedParagraphs = [...localParagraphs];
     updatedParagraphs.splice(paragraphIndex, 0, newParagraph);
     
-    // Only re-index paragraphs from insertion point onwards
-    const paragraphsToUpdate: ParagraphInterface[] = [];
-    
-    for (let i = paragraphIndex; i < updatedParagraphs.length; i++) {
-      const updated = { ...updatedParagraphs[i], index: i };
-      updatedParagraphs[i] = updated;
-      paragraphsToUpdate.push(updated);
-    }
-
-    // Update UI immediately (optimistic update)
-    setLocalParagraphs(updatedParagraphs);
+    // Re-index and save affected paragraphs
+    reindexAndSaveParagraphs(updatedParagraphs, paragraphIndex);
     setActiveParagraph({ id: updatedParagraphs[paragraphIndex].id, direction: null});
+  }, [localDocument.id, localParagraphs, reindexAndSaveParagraphs]);
 
-    // Parallelize all save operations in background
-    Promise.all(paragraphsToUpdate.map(p => paragraphLocalSave(p)));
-  }, [localDocument.id, localParagraphs, paragraphLocalSave]);
+  const deleteParagraph = useCallback((paragraphIndex: number) => {
+    // Remove paragraph at specified index
+    const updatedParagraphs = localParagraphs.filter(p => p.index !== paragraphIndex);
+    
+    // Re-index and save all paragraphs from deletion point onwards
+    reindexAndSaveParagraphs(updatedParagraphs, paragraphIndex);
+  }, [localParagraphs, reindexAndSaveParagraphs]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
@@ -278,7 +297,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
                     focusActivation={activeParagraph?.id === paragraph.id ? { direction: activeParagraph.direction } : null}
                     navigation={getNavigationAvailability(paragraph.index, localParagraphs)}
                     onNavigate={(direction) => navigateToAdjacentParagraph(direction, paragraph.index, localParagraphs, setActiveParagraph)}
-                    onDelete={() => setLocalParagraphs(prev => prev.filter(p => p.id !== paragraph.id))}
+                    onDelete={() => deleteParagraph(paragraph.index)}
                     onCreateNewParagraphAbove={() => createParagraph(chapter.id, paragraph.index)}
                   />
                 ))}
