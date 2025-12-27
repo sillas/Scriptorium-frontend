@@ -37,14 +37,14 @@ interface ParagraphProps {
   };
   onDelete?: () => void;
   onNavigate?: (direction: NavigationDirection) => void;
-  onCreateNewParagraphAbove?: () => void;
+  onCreateNewParagraph?: (paragraphIndex: number | null) => void;
   // onReorder?: (direction: 'up' | 'down') => void;
   // onRemoteSync?: () => void;
   // createNewParagraphInChapter?: () => void;
 }
 
 export function Paragraph({
-  paragraph, focusActivation, navigation, onNavigate, onDelete, onCreateNewParagraphAbove
+  paragraph, focusActivation, navigation, onNavigate, onDelete, onCreateNewParagraph
 }: ParagraphProps) {
 
   
@@ -130,8 +130,11 @@ export function Paragraph({
     setWordCount(countWords(text));
   }, [clearDebounceTimer, setDebounce, triggerLocalSave]);
   
-  
-  // Handle functions ----------------------
+  const onCreateNewParagraphAbove = useCallback(() => {
+    onCreateNewParagraph && onCreateNewParagraph(paragraph.index);
+  }, [paragraph.index, onCreateNewParagraph]);
+
+  // Handle functions ----------------------    
 
   const handleFinishEditing = useCallback(async () => {
     setIsEditing(false);
@@ -157,7 +160,6 @@ export function Paragraph({
 
 
   // Navigation ------------------------
-
 
   const handleFinishEditingAndNavigate = useCallback((
     event: React.KeyboardEvent<HTMLDivElement>,
@@ -186,25 +188,32 @@ export function Paragraph({
       }
     }
 
+    const currentText = paragraphRef.current?.textContent?.trim() || '';
+
     // Finish editing on Escape
-    if (pressedKey === 'Escape' && paragraphRef.current?.textContent?.trim() !== '') {
+    if (pressedKey === 'Escape' && currentText !== '') {
       event.preventDefault();
       handleFinishEditing();
       return;
     }
 
-    // Delete paragraph on Escape if it's the last in chapter and empty
-    if (['Backspace', 'Escape'].includes(pressedKey) &&
-      paragraphRef.current?.textContent?.trim() === ''
-    ) {
+    // Delete paragraph on Escape if it's empty
+    if (['Backspace', 'Escape'].includes(pressedKey) && currentText === '') {
       event.preventDefault();
 
-      // TODO: add correct focus
       if( pressedKey === 'Backspace' ) {
-        handleFinishEditingAndNavigate(event, 'previous');
+        const direction = navigation.canNavigatePrevious ? 'previous' : null;
+        handleFinishEditingAndNavigate(event, direction);
       }
 
       handleDeleteAction();
+      return;
+    }
+
+    if (pressedKey === 'Enter' && isEditing && navigation.isTheLastParagraphInChapter) {
+      event.preventDefault();
+      handleFinishEditing();
+      onCreateNewParagraph && onCreateNewParagraph(null);
       return;
     }
   }, [
@@ -263,7 +272,6 @@ export function Paragraph({
 
 
   // Toggles Buttons ------------------------------
-
 
   useEffect(  () => {
     triggerLocalSave(true);

@@ -44,7 +44,7 @@ export function useNavigation() {
         return {
           canNavigatePrevious: paragraphIndex > 0,
           canNavigateNext: paragraphIndex < paragraphs.length -1,
-          isTheLastParagraphInChapter: false
+          isTheLastParagraphInChapter: paragraphs[paragraphIndex].chapterId !== paragraphs[paragraphIndex + 1]?.chapterId
         }
       }, []);
 

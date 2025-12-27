@@ -269,6 +269,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     // Simple case: append to end
     if(paragraphIndex === null) {
       setLocalParagraphs(prev => [...prev, newParagraph]);
+      setActiveParagraph({ id: newParagraph.id, direction: null });
       const savePromise = paragraphLocalSave(newParagraph);
       trackSaveOperation(savePromise); // Track the save operation
       return;
@@ -348,7 +349,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
                     navigation={getNavigationAvailability(paragraph.index, localParagraphs)}
                     onNavigate={(direction) => navigateToAdjacentParagraph(direction, paragraph.index, localParagraphs, setActiveParagraph)}
                     onDelete={() => handleDeleteParagraph(paragraph.index)}
-                    onCreateNewParagraphAbove={() => createParagraph(chapter.id, paragraph.index)}
+                    onCreateNewParagraph={(paragraphIndex) => createParagraph(chapter.id, paragraphIndex)}
                   />
                 ))}
               {/* Add Paragraph Button */}
