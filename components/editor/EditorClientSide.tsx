@@ -13,17 +13,17 @@ import {
   DocumentInterface,
   ChapterInterface,
   ParagraphInterface,
-  // ActiveParagraphInterface,
+  ActiveParagraphInterface,
 } from '@/components/editor/utils/interfaces';
 import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
 import { Paragraph } from './editorComponents/Paragraph';
 import { 
   // updateDocumentWithChapter, 
-  // reorderParagraphs, 
+  // reorderParagraphs,
   createParagraphObject
 } from '@/components/editor/utils/helpers';
 // import { useLocalStorage } from '@/hooks/useLocalStorage';
-// import { useNavigation } from '@/hooks/useNavigation';
+import { useNavigation } from '@/hooks/useNavigation';
 // import { useSync } from '@/hooks/useSync';
 
 interface EditorClientSideProps {
@@ -52,7 +52,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
   // const [shouldAddNewChapter, setShouldAddNewChapter] = useState(false);
   // const [shouldAddNewParagraph, setShouldAddNewParagraph] = useState<ChapterInterface | null>(null);
   // const [shouldAddNewParagraphAbove, setShouldAddNewParagraphAbove] = useState<{chapter: ChapterInterface, paragraphIndex: number} | null>(null);
-  // const [activeParagraph, setActiveParagraph] = useState<ActiveParagraphInterface | null>(null);
+  const [activeParagraph, setActiveParagraph] = useState<ActiveParagraphInterface | null>(null);
   
   // custom hooks
   // const { 
@@ -61,31 +61,33 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     // paragraphLocalSave, 
   //   deleteParagraph, 
   // } = useLocalStorage();
-  // const { 
-  //   navigateToAdjacentParagraph,
-  //   getNavigationAvailability,
-  //   onSubtitleTab
-  // } = useNavigation();
+  const { 
+    navigateToAdjacentParagraph,
+    getNavigationAvailability,
+    // onSubtitleTab
+  } = useNavigation();
   // const { syncStatus } = useSync();
   // const isOnline = useIsOnline();
 
 
-  // const handleReorderParagraphs = useCallback((
-  //   paragraphs: ParagraphInterface[] | undefined,
-  //   chIndex: number,
-  //   pIndex: number,
-  //   direction: 'up' | 'down'
-  // ) => {
-  //   reorderParagraphs(
-  //     paragraphs ?? [],
-  //     chIndex,
-  //     pIndex,
-  //     direction,
-  //     localDocument,
-  //     setLocalDocument,
-  //     paragraphLocalSave
-  //   )
-  // }, [localDocument, setLocalDocument, paragraphLocalSave]);
+  const handleReorderParagraphs = useCallback((
+    paragraphs: ParagraphInterface[] | undefined,
+    chIndex: number,
+    pIndex: number,
+    direction: 'up' | 'down'
+  ) => {
+    // reorderParagraphs(
+    //   paragraphs ?? [],
+    //   chIndex,
+    //   pIndex,
+    //   direction,
+    //   localDocument,
+    //   setLocalDocument,
+    //   paragraphLocalSave
+    // )
+
+    console.log('Reorder...');
+  }, []);
 
   // // Load unsynced data from IndexedDB on mount
   useEffect(() => {
@@ -146,33 +148,6 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
   //   chapterLocalSave
   // ]);
   
-  // Add new paragraph at the end of chapter
-  // useEffect(() => {
-  //   if (!shouldAddNewParagraph) return;
-
-  //   (async () => {
-  //     const thisChapter = { ...shouldAddNewParagraph };
-  //     const chapterParagraphs = thisChapter.paragraphs ?? [];
-      
-  //     const lastIndex = chapterParagraphs.length > 0
-  //       ? Math.max(...chapterParagraphs.map(p => p.index))
-  //       : 0;
-      
-  //     const newParagraph = createParagraphObject(localDocument.id, thisChapter.id, lastIndex + 1);
-  //     thisChapter.paragraphs = [...chapterParagraphs, newParagraph];
-
-  //     if (await updateDocumentWithChapter(
-  //       localDocument,
-  //       thisChapter,
-  //       newParagraph,
-  //       setLocalDocument,
-  //       setActiveParagraph,
-  //       paragraphLocalSave,
-  //     )) {
-  //       setShouldAddNewParagraph(null);
-  //     }
-  //   })();
-  // }, [shouldAddNewParagraph, localDocument.id, paragraphLocalSave]);
 
   // Add new paragraph at specific position (above existing paragraph)
   // useEffect(() => {
@@ -262,23 +237,19 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
           />
           
           {/* Chapters with Titles and Paragraphs */}
-          {localChapters.map((chapter, chIndex) => (
+          {localChapters.map((chapter) => (
             <Chapter
               key={chapter.id} 
               chapter={chapter}
             >
-              {localParagraphs.filter(p => p.chapterId === chapter.id).map((paragraph, pIndex) => (
+              {localParagraphs.filter(p => p.chapterId === chapter.id).map((paragraph) => (
                   <Paragraph 
                     key={paragraph.id}
                     paragraph={paragraph}
-                    onDelete={() => {
-                      setLocalParagraphs(prev => prev.filter(p => p.id !== paragraph.id));
-                    }}
-                    navigation={{
-                      canNavigatePrevious: chIndex > 0 || pIndex > 0,
-                      canNavigateNext: chIndex < localChapters.length -1 || pIndex < localParagraphs.filter(p => p.chapterId === chapter.id).length -1,
-                      isTheLastParagraphInChapter: pIndex === localParagraphs.filter(p => p.chapterId === chapter.id).length -1
-                    }}
+                    focusActivation={activeParagraph?.id === paragraph.id ? { direction: activeParagraph.direction } : null}
+                    navigation={getNavigationAvailability(paragraph.index, localParagraphs)}
+                    onNavigate={(direction) => navigateToAdjacentParagraph(direction, paragraph.index, localParagraphs, setActiveParagraph)}
+                    onDelete={() => setLocalParagraphs(prev => prev.filter(p => p.id !== paragraph.id))}
                   />
                 ))}
               {/* Add Paragraph Button */}

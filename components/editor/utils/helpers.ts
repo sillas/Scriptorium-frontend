@@ -65,40 +65,39 @@ export const updateDocumentWithChapter = async (
  */
 export const reorderParagraphs = async (
   paragraphs: ParagraphInterface[],
-  cIndex: number,
-  pIndex: number,
+  chapterId: string,
+  paragraphId: number,
   direction: 'up' | 'down',
-  localDocument: DocumentInterface,
-  setLocalDocument: (doc: DocumentInterface) => void,
+  setLocalParagraphs: (paragraphs: ParagraphInterface[]) => void,
   paragraphLocalSave: (paragraph: ParagraphInterface) => Promise<boolean>
 ) => {
-  const localParagraphs = paragraphs.map(p => ({ ...p }));
-  const targetIndex = direction === 'up' ? pIndex - 1 : pIndex + 1;
+  // const chapterParagraphs = paragraphs.filter(p => p.chapterId === paragraphs[paragraphIndex].chapterId);
+  // const targetIndex = direction === 'up' ? paragraphIndex - 1 : paragraphIndex + 1;
 
-  // Check bounds
-  if (targetIndex < 0 || targetIndex >= localParagraphs.length) return;
+  // // Check bounds
+  // if (targetIndex < 0 || targetIndex >= chapterParagraphs.length) return;
 
-  // Swap indices
-  const tempIndex = localParagraphs[pIndex].index;
-  localParagraphs[pIndex].index = localParagraphs[targetIndex].index;
-  localParagraphs[targetIndex].index = tempIndex;
+  // // Swap indices
+  // const tempIndex = localParagraphs[paragraphIndex].index;
+  // localParagraphs[paragraphIndex].index = localParagraphs[targetIndex].index;
+  // localParagraphs[targetIndex].index = tempIndex;
 
-  // Save changes locally
-  const result1 = await paragraphLocalSave({ ...localParagraphs[pIndex] });
-  const result2 = await paragraphLocalSave({ ...localParagraphs[targetIndex] });
+  // // Save changes locally
+  // const result1 = await paragraphLocalSave({ ...localParagraphs[paragraphIndex] });
+  // const result2 = await paragraphLocalSave({ ...localParagraphs[targetIndex] });
 
-  if (result1 && result2) {
-    // Reorder for visualization
-    const reorderedParagraphs = localParagraphs.sort((a, b) => a.index - b.index);
+  // if (result1 && result2) {
+  //   // Reorder for visualization
+  //   const reorderedParagraphs = localParagraphs.sort((a, b) => a.index - b.index);
 
-    const documentUpdated = { ...localDocument };
-    documentUpdated.chapters![cIndex]!.paragraphs = reorderedParagraphs;
+  //   const documentUpdated = { ...localDocument };
+  //   documentUpdated.chapters![chapterIndex]!.paragraphs = reorderedParagraphs;
 
-    setLocalDocument(documentUpdated);
-    return;
-  }
+  //   setLocalDocument(documentUpdated);
+  //   return;
+  // }
 
-  console.error('Error saving reordered paragraphs');
+  // console.error('Error saving reordered paragraphs');
 };
 
 

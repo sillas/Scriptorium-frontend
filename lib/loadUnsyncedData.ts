@@ -105,12 +105,8 @@ const processParagraphs = (
         });
     }
 
-    // Sort paragraphs by chapterId and index to ensure correct order
-    updatedParagraphs.sort((a, b) => {
-        if (a.chapterId !== b.chapterId) return a.chapterId.localeCompare(b.chapterId);
-        return a.index - b.index;
-    });
-
+    // Sort paragraphs by index to ensure correct order
+    updatedParagraphs.sort((a, b) => a.index - b.index);
     return updatedParagraphs;
 }
 

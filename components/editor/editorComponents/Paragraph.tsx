@@ -9,6 +9,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { paragraphStyles as pStyle } from '@/components/editor/utils/paragraphStyles';
 import { 
   handleClick,
+  setCursorAt,
   handleRightClick,
   handleDeleteQuestion,
   updateCursorPosition
@@ -35,7 +36,7 @@ interface ParagraphProps {
     isTheLastParagraphInChapter: boolean;
   };
   onDelete?: () => void;
-  // onNavigate?: (direction: NavigationDirection) => void;
+  onNavigate?: (direction: NavigationDirection) => void;
   // onReorder?: (direction: 'up' | 'down') => void;
   // onRemoteSync?: () => void;
   // createNewParagraphAbove?: () => void;
@@ -43,7 +44,7 @@ interface ParagraphProps {
 }
 
 export function Paragraph({
-  paragraph, navigation, onDelete
+  paragraph, focusActivation, navigation, onNavigate, onDelete
 }: ParagraphProps) {
 
   
@@ -103,9 +104,8 @@ export function Paragraph({
 
   // Placeholder functions -----------------
   const createNewParagraphAbove = () => {}
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {}
   // --------------------------------------
-
+  
   // Local Storage Functions --------------
   const triggerLocalSave = useCallback(async (forceUpdate = false) => {
       let newText = paragraphRef.current?.textContent?.trim() || '';
@@ -132,14 +132,14 @@ export function Paragraph({
     setCharacterCount(text.length);
     setWordCount(countWords(text));
   }, [clearDebounceTimer, setDebounce, triggerLocalSave]);
-
-
+  
+  
   // Handle functions ----------------------
   const handleFinishEditing = useCallback(async () => {
     setIsEditing(false);
     setIsCursorAtFirstPosition(false);
     setIsCursorAtLastPosition(false);
-
+    
     const text = paragraphRef.current!.textContent.trim() || '';    
     if(text.length === 0) paragraphRef.current!.textContent = EMPTY_TEXT_PLACEHOLDER;
 
@@ -157,7 +157,36 @@ export function Paragraph({
     handleClick(event, paragraphRef, isEditing, setIsEditing);
   }, [isEditing]);
 
-  // Navigation Indicators ------------------------
+  // Navigation ------------------------
+  const handleFinishEditingAndNavigate = useCallback((
+    event: React.KeyboardEvent<HTMLDivElement>,
+    direction: NavigationDirection
+  ) => {
+    console.log(direction);
+    
+    event.preventDefault();
+    handleFinishEditing();
+    onNavigate && onNavigate(direction);
+  }, [handleFinishEditing, onNavigate]);
+
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    const pressedKey = event.key;
+
+    if(['ArrowUp', 'ArrowDown'].includes(pressedKey)) {
+      if(pressedKey === 'ArrowUp' && isCursorAtFirstPosition && navigation.canNavigatePrevious) {
+        handleFinishEditingAndNavigate(event, 'previous');
+      }
+      else if(pressedKey === 'ArrowDown' && isCursorAtLastPosition && navigation.canNavigateNext) {
+        handleFinishEditingAndNavigate(event, 'next');
+      }
+    }
+  }, [
+    isCursorAtFirstPosition, 
+    isCursorAtLastPosition, 
+    navigation.canNavigateNext, 
+    navigation.canNavigatePrevious,
+    handleFinishEditingAndNavigate 
+  ]);
 
   const handleCursorPositionUpdate = useCallback(() => {
     updateCursorPosition(
@@ -185,6 +214,25 @@ export function Paragraph({
       element.removeEventListener('focus', handleCursorPositionUpdate);
     };
   }, [isEditing, handleCursorPositionUpdate]);
+
+  useEffect(() => {    
+    if (!focusActivation) return;
+
+    setIsEditing(true);
+    paragraphRef.current?.focus();
+
+    // Scroll to ensure the element is visible in the center
+    paragraphRef.current?.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'center' 
+    });
+
+    if (focusActivation.direction === 'previous') {
+      setCursorAt(paragraphRef, 'END');
+    } else {
+      setCursorAt(paragraphRef, 'START');
+    }
+  }, [focusActivation]);
 
   // Toggles Buttons ------------------------------
   useEffect(  () => {
@@ -265,7 +313,7 @@ export function Paragraph({
           ></div>
 
           <span className={pStyle.characterCountStyle(isEditing)}>
-            {characterCount} chars • {wordCount} words
+            {characterCount} chars • {wordCount} words - index {paragraph.index + 1}
           </span>
 
           {isCursorAtLastPosition && navigation.canNavigateNext && (
