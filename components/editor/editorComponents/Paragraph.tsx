@@ -140,12 +140,6 @@ export function Paragraph({
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     const pressedKey = event.key;
 
-    // Go to next paragraph on Tab
-    if (pressedKey === 'Tab' && isEditing && navigation.canNavigateNext) {
-      handleFinishEditingAndNavigate(event, 'next');
-      return;
-    }
-
     if(['ArrowUp', 'ArrowDown'].includes(pressedKey)) {
       if(pressedKey === 'ArrowUp' && isCursorAtFirstPosition && navigation.canNavigatePrevious) {
         handleFinishEditingAndNavigate(event, 'previous');
@@ -153,6 +147,36 @@ export function Paragraph({
       else if(pressedKey === 'ArrowDown' && isCursorAtLastPosition && navigation.canNavigateNext) {
         handleFinishEditingAndNavigate(event, 'next');
       }
+      return;
+    }
+
+    // Go to next paragraph on Tab
+    if (pressedKey === 'Tab' && isEditing && navigation.canNavigateNext) {
+      handleFinishEditingAndNavigate(event, 'next');
+      return;
+    }
+
+    if (pressedKey === 'Enter' && isEditing) {
+      // Allow line break with Shift+Enter
+      if (event.shiftKey) return;
+
+      // Create new paragraph at end of chapter
+      if (navigation.isTheLastParagraphInChapter) {
+        event.preventDefault();
+        handleFinishEditing();
+        onCreateNewParagraph && onCreateNewParagraph(null);
+        return;
+      }
+
+      // Create new paragraph in between with Ctrl+Enter
+      if (event.ctrlKey) {
+        event.preventDefault();
+        handleFinishEditing();
+        onCreateNewParagraph && onCreateNewParagraph(paragraph.index + 1);
+        return;
+      }
+
+      handleFinishEditingAndNavigate(event, 'next');
     }
 
     const currentText = paragraphRef.current?.textContent?.trim() || '';
@@ -175,20 +199,6 @@ export function Paragraph({
 
       handleDeleteAction();
       return;
-    }
-
-    if (pressedKey === 'Enter' && isEditing) {
-      // Allow line break with Shift+Enter
-      if (event.shiftKey) return;
-      
-      if (navigation.isTheLastParagraphInChapter) {
-        event.preventDefault();
-        handleFinishEditing();
-        onCreateNewParagraph && onCreateNewParagraph(null);
-        return;
-      }
-
-      handleFinishEditingAndNavigate(event, 'next');
     }
   }, [
     isCursorAtFirstPosition, 
