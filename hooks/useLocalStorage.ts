@@ -2,7 +2,8 @@ import { useCallback } from 'react';
 
 import {
   initDB,
-  saveToIndexedDB
+  saveToIndexedDB,
+  deleteFromIndexedDB
 } from '@/lib/indexedDB';
 
 import {
@@ -42,12 +43,19 @@ export function useLocalStorage() {
             try {
                 await initDB();
                 const storeName = `${type}s`;
-                const deletedData = {
-                    id,
-                    deleted: true,
-                    sync: false
-                };
-               await saveToIndexedDB(storeName, deletedData);
+                
+                // If id starts with 'temp-', completely remove from IndexedDB
+                if (id.startsWith('temp-')) {
+                    await deleteFromIndexedDB(storeName, id);
+                } else {
+                    // Otherwise, mark as deleted but keep for sync
+                    const deletedData = {
+                        id,
+                        deleted: true,
+                        sync: false
+                    };
+                    await saveToIndexedDB(storeName, deletedData);
+                }
         
             } catch (error) {
                 console.error('Error in deleteLocal:', id, error);

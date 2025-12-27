@@ -186,6 +186,7 @@ export function Paragraph({
       }
     }
 
+    // Finish editing on Escape
     if (pressedKey === 'Escape' && paragraphRef.current?.textContent?.trim() !== '') {
       event.preventDefault();
       handleFinishEditing();
@@ -199,9 +200,9 @@ export function Paragraph({
       event.preventDefault();
 
       // TODO: add correct focus
-      // if( pressedKey === 'Backspace' ) {
-      //   handleFinishEditingAndNavigate(event, 'previous');
-      // }
+      if( pressedKey === 'Backspace' ) {
+        handleFinishEditingAndNavigate(event, 'previous');
+      }
 
       handleDeleteAction();
       return;
@@ -278,9 +279,12 @@ export function Paragraph({
 
   const handleDeleteAction = useCallback(() => {
     if (!onDelete) return;
-    const text = paragraphRef.current?.textContent || '';
-    const result = handleDeleteQuestion(text, onDelete);
-    if(result) deleteParagraph(paragraph.id);
+    let text = paragraphRef.current?.textContent?.trim() || '';
+    if (text === EMPTY_TEXT_PLACEHOLDER) text = '';
+    const result = handleDeleteQuestion(text, 'parágrafo');
+    if(!result) return;
+    onDelete();
+    deleteParagraph(paragraph.id);
   }, [onDelete]);
   
   const buttons_actions = [

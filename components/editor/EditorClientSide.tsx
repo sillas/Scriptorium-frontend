@@ -283,7 +283,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     setActiveParagraph({ id: updatedParagraphs[paragraphIndex].id, direction: null});
   }, [localDocument.id, localParagraphs, reindexAndSaveParagraphs, trackSaveOperation]);
 
-  const deleteParagraph = useCallback((paragraphIndex: number) => {
+  const handleDeleteParagraph = useCallback((paragraphIndex: number) => {
     // Remove paragraph at specified index
     const updatedParagraphs = localParagraphs.filter(p => p.index !== paragraphIndex);
     
@@ -347,7 +347,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
                     focusActivation={activeParagraph?.id === paragraph.id ? { direction: activeParagraph.direction } : null}
                     navigation={getNavigationAvailability(paragraph.index, localParagraphs)}
                     onNavigate={(direction) => navigateToAdjacentParagraph(direction, paragraph.index, localParagraphs, setActiveParagraph)}
-                    onDelete={() => deleteParagraph(paragraph.index)}
+                    onDelete={() => handleDeleteParagraph(paragraph.index)}
                     onCreateNewParagraphAbove={() => createParagraph(chapter.id, paragraph.index)}
                   />
                 ))}
