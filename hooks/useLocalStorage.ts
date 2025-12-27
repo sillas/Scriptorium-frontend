@@ -175,21 +175,8 @@ export function useLocalStorage() {
        * @param paragraphId - id of the paragraph to delete
        * @param setLocalDocument - function to update the local document state
        */
-      const deleteParagraph = useCallback(
-        async (
-          localDocument: DocumentInterface,
-          paragraphId: string,
-          setLocalDocument: (doc: DocumentInterface) => void
-        ) => {
-        const documentUpdated = { ...localDocument };
-        
-        documentUpdated.chapters = documentUpdated.chapters!.map(chapter => ({
-          ...chapter,
-          paragraphs: chapter.paragraphs!.filter(p => p.id !== paragraphId)
-        }));
-    
+      const deleteParagraph = useCallback( async ( paragraphId: string ) => {
         await deleteLocal('paragraph', paragraphId);
-        setLocalDocument(documentUpdated);
       }, [deleteLocal]);
 
     return {

@@ -4,7 +4,7 @@ import { countWords } from '@/components/editor/utils/helpers';
 import { 
   updateCursorPosition, 
   setCursorAt,
-  handleDelete
+  handleDeleteQuestion
 } from '@/components/editor/utils/utils';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 import { ParagraphUpdate } from '@/components/editor/editorComponents/Paragraph';
@@ -250,7 +250,7 @@ export function useParagraph({
    * Handles delete action with confirmation
    */
   const handleDeleteAction = useCallback(() => {
-    handleDelete(paragraphRef.current?.textContent, onDelete);
+    handleDeleteQuestion(paragraphRef.current?.textContent, onDelete);
   }, [onDelete]);
 
   /**

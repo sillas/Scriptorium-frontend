@@ -17,11 +17,11 @@ import {
 } from '@/components/editor/utils/interfaces';
 import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
 import { Paragraph } from './editorComponents/Paragraph';
-// import { 
-//   updateDocumentWithChapter, 
-//   reorderParagraphs, 
-//   createParagraphObject
-// } from '@/components/editor/utils/helpers';
+import { 
+  // updateDocumentWithChapter, 
+  // reorderParagraphs, 
+  createParagraphObject
+} from '@/components/editor/utils/helpers';
 // import { useLocalStorage } from '@/hooks/useLocalStorage';
 // import { useNavigation } from '@/hooks/useNavigation';
 // import { useSync } from '@/hooks/useSync';
@@ -56,9 +56,9 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
   
   // custom hooks
   // const { 
-  //   documentLocalSave, 
-  //   chapterLocalSave, 
-  //   paragraphLocalSave, 
+    // documentLocalSave, 
+    // chapterLocalSave, 
+    // paragraphLocalSave, 
   //   deleteParagraph, 
   // } = useLocalStorage();
   // const { 
@@ -89,7 +89,14 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
 
   // // Load unsynced data from IndexedDB on mount
   useEffect(() => {
-    loadUnsyncedData(document, chapters, paragraphs, setLocalDocument, setLocalChapters, setLocalParagraphs);
+    loadUnsyncedData(
+      document, 
+      chapters, 
+      paragraphs, 
+      setLocalDocument,
+      setLocalChapters,
+      setLocalParagraphs
+    );
   }, [document, chapters, paragraphs]);
 
   // useEffect(() => {
@@ -204,6 +211,13 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
   //   })();
   // }, [shouldAddNewParagraphAbove, localDocument.id, paragraphLocalSave]);
 
+  const createParagraph = useCallback(async (chapterId: string) => {
+    const newParagraph = createParagraphObject(
+      localDocument.id, chapterId, localParagraphs.length
+    );
+    setLocalParagraphs(prev => [...prev, newParagraph]);
+  }, [localDocument.id, localParagraphs]);
+
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
       {/* Barra Superior */}
@@ -257,6 +271,9 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
                   <Paragraph 
                     key={paragraph.id}
                     paragraph={paragraph}
+                    onDelete={() => {
+                      setLocalParagraphs(prev => prev.filter(p => p.id !== paragraph.id));
+                    }}
                     navigation={{
                       canNavigatePrevious: chIndex > 0 || pIndex > 0,
                       canNavigateNext: chIndex < localChapters.length -1 || pIndex < localParagraphs.filter(p => p.chapterId === chapter.id).length -1,
@@ -265,7 +282,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
                   />
                 ))}
               {/* Add Paragraph Button */}
-              <AddButton type="paragraph" onClick={() => {}} />
+              <AddButton type="paragraph" onClick={() => createParagraph(chapter.id)} />
             </Chapter>
           ))}
           
