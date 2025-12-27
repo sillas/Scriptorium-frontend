@@ -140,19 +140,31 @@ export function Paragraph({
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     const pressedKey = event.key;
 
+    // Go to previous or next paragraph on Arrow Up/Down
     if(['ArrowUp', 'ArrowDown'].includes(pressedKey)) {
-      if(pressedKey === 'ArrowUp' && isCursorAtFirstPosition && navigation.canNavigatePrevious) {
-        handleFinishEditingAndNavigate(event, 'previous');
-      }
-      else if(pressedKey === 'ArrowDown' && isCursorAtLastPosition && navigation.canNavigateNext) {
-        handleFinishEditingAndNavigate(event, 'next');
+      const direction = pressedKey === 'ArrowUp'? 'previous' : 'next';
+      const shouldNavigate = 
+        (direction === 'previous' && isCursorAtFirstPosition && navigation.canNavigatePrevious) ||
+        (direction === 'next' && isCursorAtLastPosition && navigation.canNavigateNext);
+      
+      if(shouldNavigate) {
+        handleFinishEditingAndNavigate(event, direction);
       }
       return;
     }
 
-    // Go to next paragraph on Tab
-    if (pressedKey === 'Tab' && isEditing && navigation.canNavigateNext) {
-      handleFinishEditingAndNavigate(event, 'next');
+    // Go to previous or next paragraph on Tab
+    if (pressedKey === 'Tab' && isEditing) {
+
+      const direction = event.shiftKey ? 'previous':'next';
+      const shouldNavigate = 
+        (direction === 'next' && navigation.canNavigateNext) ||
+        (direction === 'previous' && navigation.canNavigatePrevious)
+
+      if( shouldNavigate ) {
+        console.log(direction);
+        handleFinishEditingAndNavigate(event, direction);
+      }
       return;
     }
 
