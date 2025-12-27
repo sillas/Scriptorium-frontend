@@ -38,58 +38,26 @@ interface ParagraphProps {
   onDelete?: () => void;
   onNavigate?: (direction: NavigationDirection) => void;
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
-  // onReorder?: (direction: 'up' | 'down') => void;
+  // onReorder?: (direction: 'Up' | 'Down') => void;
   // onRemoteSync?: () => void;
-  // createNewParagraphInChapter?: () => void;
 }
 
 export function Paragraph({
   paragraph, focusActivation, navigation, onNavigate, onDelete, onCreateNewParagraph
 }: ParagraphProps) {
-
-  
-  // const {
-  //   paragraphRef,
-  //   isEditing,
-  //   setIsEditing,
-  //   isQuote,
-  //   isHighlighted,
-  //   isCursorAtFirstPosition,
-  //   isCursorAtLastPosition,
-  //   characterCount,
-  //   wordCount,
-  //   handleKeyDown,
-  //   handleFinishEditing,
-  //   scheduleAutoSave,
-  //   handleDeleteAction,
-  //   toggleQuote,
-  //   toggleHighlight,
-  // } = useParagraph({
-  //   paragraph,
-  //   focusActivation,
-  //   navigation,
-  //   onTextChange,
-  //   onNavigate,
-  //   onDelete,
-  //   onReorder,
-  //   onRemoteSync,
-  //   createNewParagraphInChapter,
-  // });
  
   const paragraphRef = useRef<HTMLDivElement>(null);
   const previousTextRef = useRef(paragraph.text);
   
+  const [isEditing, setIsEditing] = useState(false);
   const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
   const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);    
-  const [isEditing, setIsEditing] = useState(false);
   const [characterCount, setCharacterCount] = useState(paragraph.text?.trim().length || 0);
   const [wordCount, setWordCount] = useState(countWords(paragraph.text));
   const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
   const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
-
-  const { paragraphLocalSave, deleteParagraph } = useLocalStorage();
-  
   // Custom hooks
+  const { paragraphLocalSave, deleteParagraph } = useLocalStorage();
   const [setDebounce, clearDebounceTimer] = useDebounceTimer();
 
   // Effect to set initial content
@@ -255,13 +223,19 @@ export function Paragraph({
     if (!focusActivation) return;
 
     setIsEditing(true);
-    paragraphRef.current?.focus();
+    if (!paragraphRef.current) return
+    paragraphRef.current.focus();
 
     // Scroll to ensure the element is visible in the center
-    paragraphRef.current?.scrollIntoView({ 
+    paragraphRef.current.scrollIntoView({ 
       behavior: 'smooth', 
       block: 'center' 
     });
+
+    const currentText = paragraphRef.current.textContent?.trim() || '';
+    if(currentText === EMPTY_TEXT_PLACEHOLDER) {
+      paragraphRef.current.textContent = '';
+    }
 
     if (focusActivation.direction === 'previous') {
       setCursorAt(paragraphRef, 'END');
