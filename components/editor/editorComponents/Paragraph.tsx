@@ -1,12 +1,12 @@
 'use client';
 
-import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { NavigationDirection, ParagraphInterface } from '@/components/editor/utils/interfaces';
 import SyncIndicator from '@/components/editor/SyncIndicator';
 import { countWords } from '@/components/editor/utils/helpers';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { paragraphStyles as pStyle } from '@/components/editor/utils/paragraphStyles';
+import { paragraphStyles as styles } from '@/components/editor/utils/paragraphStyles';
 import { 
   handleClick,
   setCursorAt,
@@ -308,20 +308,20 @@ export function Paragraph({
       <button 
         onClick={onCreateNewParagraphAbove}
         aria-label="Add Paragraph Here" 
-        className={pStyle.createNewParagraphAboveStyle}>
+        className={styles.createNewParagraphAboveStyle}>
       +
       </button>
-      <div className={pStyle.mainContainerStyle}>
+      <div className={styles.mainContainerStyle}>
         {/* Botões laterais à esquerda, fora do fluxo do texto */}
         <div
-          className={pStyle.toggleButtonsStyle(isEditing)}
+          className={styles.toggleButtonsStyle(isEditing)}
         >
           {buttons_actions.map(({ label, description, action, style }) => (
             <button
               key={label}
               tabIndex={-1}
               aria-label={description}
-              className={pStyle.toggleButtonStyle(isEditing, style)}
+              className={styles.toggleButtonStyle(isEditing, style)}
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={action}
@@ -332,13 +332,13 @@ export function Paragraph({
         </div>
 
         {/* Parágrafo editável */}
-        <div className={pStyle.paragraphContainerStyle(isEditing, isHighlighted)}>  
+        <div className={styles.paragraphContainerStyle(isEditing, isHighlighted)}>  
           {isCursorAtFirstPosition && navigation.canNavigatePrevious && (
-            <span className={pStyle.isCursorAtFirstPositionStyle}>▲</span>
+            <span className={styles.isCursorAtFirstPositionStyle}>▲</span>
           )}
 
           {isQuote && (
-            <div className={pStyle.isQuoteStyle} aria-hidden="true">
+            <div className={styles.isQuoteStyle} aria-hidden="true">
               “
             </div>
           )}
@@ -354,18 +354,18 @@ export function Paragraph({
             onInput={scheduleLocalAutoSave}
             onKeyDown={handleKeyDown}
             onKeyUp={handleCursorPositionUpdate}
-            className={pStyle.paragraphStyle(isEditing, characterCount, isQuote)}
+            className={styles.paragraphStyle(isEditing, characterCount, isQuote)}
           ></div>
 
-          <span className={pStyle.characterCountStyle(isEditing)}>
+          <span className={styles.characterCountStyle(isEditing)}>
             {characterCount} chars • {wordCount} words - index {paragraph.index + 1}
           </span>
 
           {isCursorAtLastPosition && navigation.canNavigateNext && (
-            <span className={pStyle.isCursorAtLastPositionStyle}>▼</span>
+            <span className={styles.isCursorAtLastPositionStyle}>▼</span>
           )}
         
-          <div className={pStyle.SyncIndicatorStyle}>
+          <div className={styles.syncIndicatorStyle}>
             <SyncIndicator isSynced={paragraph.sync} />
           </div>
         </div>

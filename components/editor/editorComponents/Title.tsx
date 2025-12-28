@@ -137,7 +137,7 @@ export function Title({
         <SyncIndicator isSynced={isSynced ?? false} />
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 pl-[5px] border-l-2 border-slate-300">
         <EditableHeading
           ref={titleRef}
           content={title}
@@ -147,19 +147,17 @@ export function Title({
           onFinishEditing={handleEditingComplete}
         />
       </div>
-      
-      {subtitle && (
-        <div className="flex items-center gap-2">
-          <EditableHeading
-            ref={subtitleRef}
-            content={subtitle}
-            level="subtitle"
-            isDocumentLevel={isDocumentLevel ?? false}
-            onInput={handleInputWithDebounce}
-            onFinishEditing={handleEditingComplete}
-          />
-        </div>
-      )}
+      <div className="flex items-center gap-2 pl-[5px] border-l-2 border-slate-300">
+        <EditableHeading
+          ref={subtitleRef}
+          content={subtitle}
+          level="subtitle"
+          isDocumentLevel={isDocumentLevel ?? false}
+          onInput={handleInputWithDebounce}
+          onFinishEditing={handleEditingComplete}
+        />
+      </div>
+
       { isDocumentLevel && <TitleMetadata 
         version={version}
         createdAt={createdAt}

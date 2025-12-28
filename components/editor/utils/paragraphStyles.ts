@@ -1,4 +1,4 @@
-  export const paragraphStyles = {
+export const paragraphStyles = {
     toggleButtonsStyle: (isEditing: boolean) => `flex flex-col items-center justify-center z-10 select-none transition-opacity duration-200 absolute -left-[2rem] top-0 h-full min-w-[2rem] ${isEditing ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`,
     toggleButtonStyle: (isEditing: boolean, style: string) => `${isEditing ? 'pointer-events-auto' : 'pointer-events-none'} my-0.5 w-6 h-6 ${style} rounded bg-slate-100 border border-slate-200 shadow-sm hover:bg-slate-200 focus:outline-none cursor-pointer`,
     paragraphContainerStyle: (isEditing: boolean, isHighlighted: boolean) => `${isEditing ? (isHighlighted ? 'border-4 border-yellow-200 shadow-sm' : 'bg-slate-200 shadow-sm'): (isHighlighted? 'bg-yellow-100 shadow-sm' : '')} rounded-md px-3 mb-1 text-slate-800 relative flex-1`,
@@ -9,5 +9,5 @@
     isCursorAtFirstPositionStyle: 'absolute left-0 top-0 text-gray-400 -translate-y-1/2',
     isCursorAtLastPositionStyle: 'absolute left-0 bottom-0 text-gray-400 translate-y-1/2',
     isQuoteStyle: 'absolute pl-[3.5rem] left-0 top-0 text-gray-400 text-5xl select-none pointer-events-none',
-    SyncIndicatorStyle: 'absolute top-0 right-0',
+    syncIndicatorStyle: 'absolute top-0 right-0',
 };

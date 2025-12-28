@@ -2,6 +2,7 @@
 
 import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { handleClick } from '@/components/editor/utils/utils';
+import { EditableHeadingStyles as styles } from '@/components/editor/utils/editableHeadingStyles';
 
 export interface EditableHeadingHandle {
   focus: () => void;
@@ -9,7 +10,7 @@ export interface EditableHeadingHandle {
 }
 
 interface EditableHeadingProps {
-  content: string;
+  content: string | undefined;
   level: 'title' | 'subtitle';
   isDocumentLevel: boolean;
   onInput: () => void;
@@ -28,6 +29,8 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
   }, forwardedRef) {
     const IS_TITLE = level === 'title';
     const EMPTY_TEXT_PLACEHOLDER = IS_TITLE ? 'Insert a Title' : 'Add a subtitle';
+    const Component = IS_TITLE ? 'h1' : 'h2';
+
     const ref = useRef<HTMLHeadingElement>(null);
 
     /**
@@ -55,15 +58,6 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
       }
     }, [EMPTY_TEXT_PLACEHOLDER]);
 
-    useEffect(() => {
-      if(!ref.current) return;
-      const element = ref.current;
-        element.addEventListener('focus', () => handlePlaceholderText());
-      return () => {
-        element.removeEventListener('focus', () => handlePlaceholderText());
-      };
-    }, [handlePlaceholderText]);
-
     const handleHeadingClick = useCallback((event: React.MouseEvent<HTMLHeadingElement>) => {
       handlePlaceholderText();
       handleClick(event, ref);
@@ -75,11 +69,9 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
       ref?.current?.blur();
     }, [EMPTY_TEXT_PLACEHOLDER, handlePlaceholderText]);
 
-    const sizeStyles = IS_TITLE
-        ? isDocumentLevel ? 'text-3xl font-bold text-slate-900' : 'text-xl font-semibold text-slate-800'
-        : isDocumentLevel ? 'text-lg mt-2 text-slate-600' : 'text-sm mt-1 text-slate-600';
-    const baseStyles = 'cursor-text flex-1 outline-none focus:bg-slate-200 focus:shadow-sm focus:rounded focus:px-1';
-    const Component = IS_TITLE ? 'h1' : 'h2';
+    useEffect(() => {
+      handlePlaceholderText(content === undefined || content === '');
+    }, [content]);
 
     return (
       <Component
@@ -88,8 +80,9 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
         suppressContentEditableWarning
         onClick={handleHeadingClick}
         onInput={onInput}
+        onFocus={() => handlePlaceholderText()}
         onBlur={handleOnBlur}
-        className={`${baseStyles} ${sizeStyles} ${className}`}
+        className={`${styles.baseStyles} ${styles.sizeStyles(IS_TITLE, isDocumentLevel)} ${className}`}
       >
         {content}
       </Component>
