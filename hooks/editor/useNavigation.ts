@@ -61,31 +61,9 @@ export function useNavigation() {
       }
     }, []);
 
-    /**
-     * Handle tab navigation from chapter subtitle to first paragraph.
-     * 
-     * @param chapters - array of chapters in the document
-     * @param chapterIndex - index of the current chapter
-     * @param paragraphs - array of paragraphs in the current chapter
-     * @param setActiveParagraph - function to set the active paragraph for focus/navigation
-     * @returns boolean indicating if navigation was successful
-     */
-    // const onSubtitleTab = useCallback((
-    //     chapters: ChapterInterface[],
-    //     chapterIndex: number, 
-    //     paragraphs: ParagraphInterface[],
-    //     setActiveParagraph: (value: { id: string; direction: NavigationDirection } | null) => void
-    // ): boolean => {
-    //     if (paragraphs.length === 0) {
-    //       return false;
-    //     }
-    //     // navigateToAdjacentParagraph(chapters, chapterIndex, -1, 'Down', setActiveParagraph);
-    //     return true;
-    //   }, [navigateToAdjacentParagraph]);
 
     return {
         navigateToAdjacentParagraph,
         getNavigationAvailability,
-        // onSubtitleTab
     };
 }

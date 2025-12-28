@@ -7,7 +7,6 @@ import Contents from '@/components/editor/editorComponents/Contents';
 import AddButton from '@/components/editor/editorComponents/AddButton';
 import Chapter from '@/components/editor/editorComponents/Chapter';
 import { Title } from '@/components/editor/editorComponents/Title';
-import { useIsOnline } from '@/components/OnlineStatusProvider';
 import {
   DocumentInterface,
   ChapterInterface,
@@ -52,9 +51,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
   const {
     navigateToAdjacentParagraph,
     getNavigationAvailability,
-    // onSubtitleTab
   } = useNavigation();
-  const isOnline = useIsOnline();
 
   /**
    * Helper to track save operations and ensure they complete
