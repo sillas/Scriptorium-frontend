@@ -14,7 +14,6 @@ interface EditableHeadingProps {
   isDocumentLevel: boolean;
   onInput: () => void;
   onFinishEditing: () => void;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLHeadingElement>) => void;
   className?: string;
 }
 
@@ -25,7 +24,6 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
     isDocumentLevel,
     onInput,
     onFinishEditing,
-    onKeyDown,
     className = '',
   }, forwardedRef) {
     const IS_TITLE = level === 'title';
@@ -90,7 +88,6 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
         suppressContentEditableWarning
         onClick={handleHeadingClick}
         onInput={onInput}
-        onKeyDown={onKeyDown}
         onBlur={handleOnBlur}
         className={`${baseStyles} ${sizeStyles} ${className}`}
       >

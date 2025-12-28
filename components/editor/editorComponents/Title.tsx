@@ -11,7 +11,6 @@ export interface TitleUpdateData {
   updatedAt?: Date;
 }
 
-// const KEYS_TAB_ENTER_ESCAPE = ['Tab', 'Enter', 'Escape'];
 const DEBOUNCE_DELAY_MS = 700;
 interface TitleProps {
   title: string;
@@ -23,7 +22,6 @@ interface TitleProps {
   isDocumentLevel?: boolean;
   onRemoteSync?: (title: string) => void;
   onChange?: (data: TitleUpdateData) => void;
-  onSubtitleTab?: () => boolean;
 }
 
 interface TitleMetadataProps {
@@ -64,7 +62,6 @@ export function Title({
   isDocumentLevel,
   onRemoteSync,
   onChange,
-  onSubtitleTab,
 }: TitleProps) {
   const previousContentSnapshot = useRef<string>(title + (subtitle || ''));
   const titleRef = useRef<EditableHeadingHandle>(null);
@@ -72,7 +69,6 @@ export function Title({
 
   const [localUpdatedAt, setLocalUpdatedAt] = useState(updatedAt);
   const [setDebounce, clearDebounceTimer] = useDebounceTimer();
-
 
   /**
    * Retrieves the current text content from both title and subtitle elements.
@@ -107,18 +103,6 @@ export function Title({
     onChange?.(data);
   }, [onChange, getTitleAndSubtitleContent]);
 
-  /**
-   * Triggers a local save and initiates remote synchronization if the document is not already synced.
-   * Calls the onRemoteSync callback only when the document has unsaved changes.
-   */
-  // const synchronize = useCallback(() => {
-  //   // persistLocalChanges()
-
-  //   // if( isSynced ) return;
-
-  //   const newTitle = titleRef.current?.getTextContent() || '';
-  //   onRemoteSync?.(newTitle);
-  // }, [isSynced, onRemoteSync, persistLocalChanges]);
 
   /**
    * Handles input changes with a debounce delay.
@@ -133,64 +117,13 @@ export function Title({
    * Stops the editing process by clearing the debounce timer and immediately triggering synchronization.
    * Called when the user finishes editing (e.g., on blur or specific key press).
    */
-  // const handleEditingComplete = useCallback(() => {
-  //   clearDebounceTimer();
-  //   synchronize();
-  // }, [synchronize]);
+  const handleEditingComplete = useCallback(() => {
+    clearDebounceTimer();
+    persistLocalChanges();
 
-  /**
-   * Handles keyboard events for the title heading element.
-   * @param event - The keyboard event from the title heading element
-   * @returns `true` if the event should stop editing (Tab with subtitle, Enter, or Escape), `false` otherwise
-   * 
-   * @remarks
-   * - Tab key moves focus to subtitle if it exists
-   * - Enter and Escape keys stop editing mode
-   * - Prevents default Tab behavior when subtitle is present
-   */
-  // const handleTitleKeyDown = useCallback((event: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
-    
-  //   // Only handle Tab, Enter and Escape keys
-  //   if (!KEYS_TAB_ENTER_ESCAPE.includes(event.key)) return false;
-    
-  //   // Handle Tab key to move focus to subtitle if it exists
-  //   if (event.key === 'Tab' && subtitle && !event.shiftKey) {
-  //     event.preventDefault();
-  //     subtitleRef.current?.focus();
-  //     return true;
-  //   }
-    
-  //   // Enter and Escape should stop editing
-  //   return true;
-  // }, [subtitle]);
-
-  /**
-   * Handles keyboard events for the subtitle heading element.
-   * @param event - The keyboard event from the subtitle heading element
-   * @returns `true` if the event should stop editing (Tab, Enter, or Escape pressed), `false` otherwise
-   * 
-   * @remarks
-   * - If Tab is pressed and `onSubtitleTab` callback is provided, it attempts to move focus to the first paragraph
-   * - Prevents default Tab behavior if the callback successfully handles the event
-   * - Automatically stops editing mode on Tab, Enter, or Escape key press
-   */
-  // const handleSubtitleKeyDown = useCallback((event: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
-  //   // Handle Tab key to move focus to first paragraph if callback is provided
-  //   if (event.key === 'Tab' && onSubtitleTab) {
-  //     const handled = onSubtitleTab();
-  //     if (handled) {
-  //       event.preventDefault();
-  //       return true;
-  //     }
-  //   }
-    
-  //   // Tab, Enter and Escape should stop editing
-  //   if (KEYS_TAB_ENTER_ESCAPE.includes(event.key)) {
-  //     return true;
-  //   }
-    
-  //   return false;
-  // }, [onSubtitleTab]);
+    const title = titleRef.current?.getTextContent() || '';
+    onRemoteSync?.(title);
+  }, [persistLocalChanges, onRemoteSync]);
 
   return (
     <div
@@ -211,8 +144,7 @@ export function Title({
           level="title"
           isDocumentLevel={isDocumentLevel ?? false}
           onInput={handleInputWithDebounce}
-          onFinishEditing={() => {}}
-          onKeyDown={() => {}}
+          onFinishEditing={handleEditingComplete}
         />
       </div>
       
@@ -224,8 +156,7 @@ export function Title({
             level="subtitle"
             isDocumentLevel={isDocumentLevel ?? false}
             onInput={handleInputWithDebounce}
-            onFinishEditing={() => {}}
-            onKeyDown={() => {}}
+            onFinishEditing={handleEditingComplete}
           />
         </div>
       )}

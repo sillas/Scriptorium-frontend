@@ -21,14 +21,13 @@ export default function Chapter({ chapter, children }: ChapterProps) {
       <Title
         title={chapter.title === '' ? 'Insert a Title' : chapter.title}
         subtitle={chapter.subtitle === '' ? 'Add a subtitle' : chapter.subtitle}
-        onRemoteSync={(title) => console.log('Syncing...', title)}
-        onChange={handleChapterLocalChange}
-        onSubtitleTab={() => false}
         isSynced={chapter.sync}
         isDocumentLevel={false}
         version={chapter.version}
         createdAt={chapter.createdAt}
         updatedAt={chapter.updatedAt}
+        onChange={handleChapterLocalChange}
+        onRemoteSync={(title) => console.log('Syncing MongoDB...', title)}
       />
       {children}
     </div>
