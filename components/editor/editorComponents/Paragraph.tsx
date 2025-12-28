@@ -7,7 +7,7 @@ import { countWords } from '@/components/editor/utils/helpers';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { paragraphStyles as styles } from '@/components/editor/utils/paragraphStyles';
-import { 
+import {
   handleClick,
   setCursorAt,
   handleRightClick,
@@ -44,13 +44,13 @@ interface ParagraphProps {
 export function Paragraph({
   paragraph, focusActivation, navigation, onNavigate, onDelete, onCreateNewParagraph, onReorder
 }: ParagraphProps) {
- 
+
   const paragraphRef = useRef<HTMLDivElement>(null);
   const previousTextRef = useRef(paragraph.text);
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
-  const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);    
+  const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);
   const [characterCount, setCharacterCount] = useState(paragraph.text?.trim().length || 0);
   const [wordCount, setWordCount] = useState(countWords(paragraph.text));
   const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
@@ -68,27 +68,27 @@ export function Paragraph({
     }
     paragraphRef.current.innerText = content
   }, [paragraph.text]);
-  
+
   // Local Storage Functions --------------
 
   const triggerLocalSave = useCallback(async (forceUpdate = false) => {
-      let newText = paragraphRef.current?.innerText?.trim() || '';
-      if(newText === EMPTY_TEXT_PLACEHOLDER) newText = ''
+    let newText = paragraphRef.current?.innerText?.trim() || '';
+    if (newText === EMPTY_TEXT_PLACEHOLDER) newText = ''
 
-      if (!forceUpdate && newText === previousTextRef.current) return;
-      previousTextRef.current = newText;
-      
-      await paragraphLocalSave(paragraph, {
-        text: newText,
-        characterCount: newText.length,
-        wordCount: countWords(newText),
-        isQuote: isQuote || false,
-        isHighlighted: isHighlighted || false,
-        updatedAt: new Date(),
-      });
+    if (!forceUpdate && newText === previousTextRef.current) return;
+    previousTextRef.current = newText;
+
+    await paragraphLocalSave(paragraph, {
+      text: newText,
+      characterCount: newText.length,
+      wordCount: countWords(newText),
+      isQuote: isQuote || false,
+      isHighlighted: isHighlighted || false,
+      updatedAt: new Date(),
+    });
   }, [paragraph, isQuote, isHighlighted]);
 
-  const scheduleLocalAutoSave = useCallback(() => {    
+  const scheduleLocalAutoSave = useCallback(() => {
     clearDebounceTimer();
     setDebounce(triggerLocalSave, DEBOUNCE_DELAY_MS);
 
@@ -96,7 +96,7 @@ export function Paragraph({
     setCharacterCount(text.length);
     setWordCount(countWords(text));
   }, [clearDebounceTimer, setDebounce, triggerLocalSave]);
-  
+
   const onCreateNewParagraphAbove = useCallback(() => {
     onCreateNewParagraph && onCreateNewParagraph(paragraph.index);
   }, [paragraph.index, onCreateNewParagraph]);
@@ -107,19 +107,19 @@ export function Paragraph({
     setIsEditing(false);
     setIsCursorAtFirstPosition(false);
     setIsCursorAtLastPosition(false);
-    
-    const text = paragraphRef.current!.textContent.trim() || '';    
-    if(text.length === 0) paragraphRef.current!.textContent = EMPTY_TEXT_PLACEHOLDER;
+
+    const text = paragraphRef.current!.textContent.trim() || '';
+    if (text.length === 0) paragraphRef.current!.textContent = EMPTY_TEXT_PLACEHOLDER;
     await triggerLocalSave();
     paragraphRef.current?.blur();
   }, [triggerLocalSave, isEditing]);
 
 
   const handleParagraphClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    if(!paragraphRef.current) return;
+    if (!paragraphRef.current) return;
 
     const text = paragraphRef.current?.textContent?.trim() || '';
-    if(text === EMPTY_TEXT_PLACEHOLDER) paragraphRef.current.textContent = '';
+    if (text === EMPTY_TEXT_PLACEHOLDER) paragraphRef.current.textContent = '';
 
     handleClick(event, paragraphRef, isEditing, setIsEditing);
   }, [isEditing]);
@@ -138,20 +138,19 @@ export function Paragraph({
     const pressedKey = event.key;
 
     // Go to previous or next paragraph on Arrow Up/Down
-    if(['ArrowUp', 'ArrowDown'].includes(pressedKey)) {
-      const direction = pressedKey === 'ArrowUp'? 'Up' : 'Down';
-      
-      if (event.ctrlKey)
-      {
+    if (['ArrowUp', 'ArrowDown'].includes(pressedKey)) {
+      const direction = pressedKey === 'ArrowUp' ? 'Up' : 'Down';
+
+      if (event.ctrlKey) {
         event.preventDefault();
         onReorder?.(direction);
         return;
       }
 
-      const canNavigate = direction === 'Down' 
+      const canNavigate = direction === 'Down'
         ? navigation.canNavigateNext
         : navigation.canNavigatePrevious;
-        
+
       if (!canNavigate) return;
 
       // Navegar apenas se o cursor estiver na extremidade
@@ -159,8 +158,7 @@ export function Paragraph({
         ? isCursorAtFirstPosition
         : isCursorAtLastPosition;
 
-      if (isAtEdge)
-      {
+      if (isAtEdge) {
         event.preventDefault();
         handleFinishEditingAndNavigate(event, direction);
       }
@@ -169,36 +167,32 @@ export function Paragraph({
     }
 
     // Go to previous or next paragraph on Tab
-    if (pressedKey === 'Tab' && isEditing)
-    {
+    if (pressedKey === 'Tab' && isEditing) {
       const direction: NavigationDirection = event.shiftKey ? 'Up' : 'Down';
-      const shouldNavigate = 
+      const shouldNavigate =
         (direction === 'Down' && navigation.canNavigateNext) ||
         (direction === 'Up' && navigation.canNavigatePrevious)
 
-      if( shouldNavigate ) {
+      if (shouldNavigate) {
         handleFinishEditingAndNavigate(event, direction);
       }
       return;
     }
 
-    if (pressedKey === 'Enter' && isEditing)
-    {
+    if (pressedKey === 'Enter' && isEditing) {
       // Allow line break with Shift+Enter
       if (event.shiftKey) return;
 
       event.preventDefault();
       // Create new paragraph at end of chapter
-      if (navigation.isTheLastParagraphInChapter)
-      {
+      if (navigation.isTheLastParagraphInChapter) {
         handleFinishEditing();
         onCreateNewParagraph && onCreateNewParagraph(null);
         return;
       }
 
       // Create new paragraph in between with Ctrl+Enter
-      if (event.ctrlKey)
-      {
+      if (event.ctrlKey) {
         handleFinishEditing();
         onCreateNewParagraph && onCreateNewParagraph(paragraph.index + 1);
         return;
@@ -210,20 +204,17 @@ export function Paragraph({
     const currentText = paragraphRef.current?.textContent?.trim() || '';
 
     // Finish editing on Escape
-    if (pressedKey === 'Escape' && currentText !== '')
-    {
+    if (pressedKey === 'Escape' && currentText !== '') {
       event.preventDefault();
       handleFinishEditing();
       return;
     }
 
     // Delete paragraph on Escape if it's empty
-    if (['Backspace', 'Escape'].includes(pressedKey) && currentText === '')
-    {
+    if (['Backspace', 'Escape'].includes(pressedKey) && currentText === '') {
       event.preventDefault();
 
-      if( pressedKey === 'Backspace' )
-      {
+      if (pressedKey === 'Backspace') {
         const direction: NavigationDirection = navigation.canNavigatePrevious ? 'Up' : null;
         handleFinishEditingAndNavigate(event, direction);
       }
@@ -232,30 +223,29 @@ export function Paragraph({
       return;
     }
   }, [
-    isCursorAtFirstPosition, 
-    isCursorAtLastPosition, 
-    navigation.canNavigateNext, 
+    isCursorAtFirstPosition,
+    isCursorAtLastPosition,
+    navigation.canNavigateNext,
     navigation.canNavigatePrevious,
-    handleFinishEditingAndNavigate 
+    handleFinishEditingAndNavigate
   ]);
 
   const handleOnFocus = useCallback(() => {
     if (!paragraphRef.current) return
-    
-    if(isEditing) return;
+
+    if (isEditing) return;
     setIsEditing(true);
     paragraphRef.current.focus();
-    
+
     // Scroll to ensure the element is visible in the center
-    paragraphRef.current.scrollIntoView({ 
-      behavior: 'smooth', 
-      block: 'center' 
+    paragraphRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
     });
 
     const currentText = paragraphRef.current.textContent?.trim() || '';
 
-    if(currentText === EMPTY_TEXT_PLACEHOLDER) 
-    {
+    if (currentText === EMPTY_TEXT_PLACEHOLDER) {
       paragraphRef.current.textContent = '';
     }
   }, [isEditing]);
@@ -270,10 +260,9 @@ export function Paragraph({
     );
   }, [isEditing, handleOnFocus]);
 
-  useEffect(() => {    
+  useEffect(() => {
     if (!focusActivation) return;
-    if (focusActivation.direction === 'Up')
-    {
+    if (focusActivation.direction === 'Up') {
       setCursorAt(paragraphRef, 'END');
     } else {
       setCursorAt(paragraphRef, 'START');
@@ -287,9 +276,9 @@ export function Paragraph({
   }, [isQuote, isHighlighted]);
 
   const toggleQuote = useCallback(() => {
-      setIsQuote(prev => !prev);
+    setIsQuote(prev => !prev);
   }, []);
-  
+
   const toggleHighlight = useCallback(() => {
     setIsHighlighted(prev => !prev);
   }, []);
@@ -299,26 +288,26 @@ export function Paragraph({
     let text = paragraphRef.current?.textContent?.trim() || '';
     if (text === EMPTY_TEXT_PLACEHOLDER) text = '';
     const result = handleDeleteQuestion(text, 'parágrafo');
-    if(!result) return;
+    if (!result) return;
     onDelete();
     deleteParagraph(paragraph.id);
   }, [onDelete]);
-  
+
   const buttons_actions = [
-    { label: '"',description: 'Toggle Quote', action: toggleQuote, style: 'text-5xl text-gray-500' },
-    { label: '★',description: 'Toggle Highlight', action: toggleHighlight, style: 'text-lg text-yellow-500' },
-    { label: 'X',description: 'Delete Paragraph', action: handleDeleteAction, style: 'text-2xs text-red-400 font-bold' },
+    { label: '"', description: 'Toggle Quote', action: toggleQuote, style: 'text-5xl text-gray-500' },
+    { label: '★', description: 'Toggle Highlight', action: toggleHighlight, style: 'text-lg text-yellow-500' },
+    { label: 'X', description: 'Delete Paragraph', action: handleDeleteAction, style: 'text-2xs text-red-400 font-bold' },
   ];
 
   // --------------------------------------
 
   return (
     <>
-      <button 
+      <button
         onClick={onCreateNewParagraphAbove}
-        aria-label="Add Paragraph Here" 
+        aria-label="Add Paragraph Here"
         className={styles.createNewParagraphAboveStyle}>
-      +
+        +
       </button>
       <div className={styles.mainContainerStyle}>
         {/* Botões laterais à esquerda, fora do fluxo do texto */}
@@ -341,7 +330,7 @@ export function Paragraph({
         </div>
 
         {/* Parágrafo editável */}
-        <div className={styles.paragraphContainerStyle(isEditing, isHighlighted)}>  
+        <div className={styles.paragraphContainerStyle(isEditing, isHighlighted)}>
           {isCursorAtFirstPosition && navigation.canNavigatePrevious && (
             <span className={styles.isCursorAtFirstPositionStyle}>▲</span>
           )}
@@ -367,13 +356,13 @@ export function Paragraph({
           ></div>
 
           <span className={styles.characterCountStyle(isEditing)}>
-            {characterCount} chars • {wordCount} words - index {paragraph.index + 1}
+            {paragraph.index + 1}° parágrafo • {characterCount} chars • {wordCount} words
           </span>
 
           {isCursorAtLastPosition && navigation.canNavigateNext && (
             <span className={styles.isCursorAtLastPositionStyle}>▼</span>
           )}
-        
+
           <div className={styles.syncIndicatorStyle}>
             <SyncIndicator isSynced={paragraph.sync} />
           </div>

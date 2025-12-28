@@ -38,13 +38,14 @@ export function useNavigation() {
 
         const nextParagraph = paragraphs[newParagraphIndex];
 
-        if(currentParagraph.chapterId !== nextParagraph.chapterId) {
-          // crossing chapter boundary
-          setActiveParagraph(null);
-          return;
+        if(event.key === 'Tab') {
+          if(currentParagraph.chapterId !== nextParagraph.chapterId) {
+            // crossing chapter boundary on Tab
+            setActiveParagraph(null);
+            return;
+          }
+          direction = 'Up';
         }
-        
-        if(event.key === 'Tab') direction = 'Up';
 
         setActiveParagraph({
           id: nextParagraph.id,
