@@ -301,6 +301,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
             <Chapter
               key={chapter.id}
               chapter={chapter}
+              setChapters={setLocalChapters}
             >
               {localParagraphs.filter(p => p.chapterId === chapter.id).map((paragraph) => (
                   <Paragraph 

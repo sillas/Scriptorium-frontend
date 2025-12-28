@@ -5,16 +5,32 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 interface ChapterProps {
   chapter: ChapterInterface;
+  setChapters?: React.Dispatch<React.SetStateAction<ChapterInterface[]>>;
   children?: ReactNode;
 }
 
-export default function Chapter({ chapter, children }: ChapterProps) {
+const updateChapterInList = (currentChapter: ChapterInterface, updatedChapterId: string, data: TitleUpdateData) => {
+  if (currentChapter.id !== updatedChapterId) return currentChapter
+  return {
+    ...currentChapter,
+    title: data.title,
+    subtitle: data.subtitle,
+    updatedAt: data.updatedAt || new Date(),
+  };
+}
 
+export default function Chapter({ chapter, setChapters, children }: ChapterProps) {
   const { chapterLocalSave } = useLocalStorage();
 
   const handleChapterLocalChange = useCallback( async (data: TitleUpdateData) => {
     await chapterLocalSave(chapter, data);
   }, [chapter, chapterLocalSave]);
+
+  const setLocalChapters = useCallback((data: TitleUpdateData)  => {
+    setChapters?.( prevChapters => 
+      prevChapters.map( ch => updateChapterInList(ch, chapter.id, data))
+    );
+  }, []);
   
   return (
     <div className="bg-slate-100 rounded-lg p-4 mb-4 shadow-sm" id={`chapter-${chapter.id}`}>
@@ -27,7 +43,7 @@ export default function Chapter({ chapter, children }: ChapterProps) {
         createdAt={chapter.createdAt}
         updatedAt={chapter.updatedAt}
         onChange={handleChapterLocalChange}
-        onRemoteSync={(title) => console.log('Syncing MongoDB...', title)}
+        onRemoteSync={setLocalChapters}
       />
       {children}
     </div>

@@ -71,7 +71,7 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
 
     useEffect(() => {
       handlePlaceholderText(content === undefined || content === '');
-    }, [content]);
+    }, [content, handlePlaceholderText]);
 
     return (
       <Component

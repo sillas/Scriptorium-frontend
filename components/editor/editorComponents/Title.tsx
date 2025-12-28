@@ -20,7 +20,7 @@ interface TitleProps {
   createdAt?: Date;
   isSynced?: boolean;
   isDocumentLevel?: boolean;
-  onRemoteSync?: (title: string) => void;
+  onRemoteSync?: (data: TitleUpdateData) => void;
   onChange?: (data: TitleUpdateData) => void;
 }
 
@@ -84,13 +84,13 @@ export function Title({
    * Saves the current title and subtitle changes locally if they differ from the previous values.
    * Updates the local timestamp and invokes the onChange callback with the new data.
    */
-  const persistLocalChanges = useCallback(() => {
+  const persistLocalChanges = useCallback((force: boolean = false): TitleUpdateData | undefined => {
     if (previousContentSnapshot.current === null) return;
 
     const [newTitle, newSubtitle] = getTitleAndSubtitleContent();
-    const snapshot = newTitle + newSubtitle
 
-    if( snapshot === previousContentSnapshot.current ) return;
+    const snapshot = newTitle + newSubtitle
+    if( !force && snapshot === previousContentSnapshot.current ) return;
     previousContentSnapshot.current = snapshot;
     
     const data: TitleUpdateData = {
@@ -100,7 +100,8 @@ export function Title({
     };
     
     setLocalUpdatedAt(data.updatedAt);
-    onChange?.(data);
+    onChange?.(data);    
+    return data;
   }, [onChange, getTitleAndSubtitleContent]);
 
 
@@ -119,10 +120,8 @@ export function Title({
    */
   const handleEditingComplete = useCallback(() => {
     clearDebounceTimer();
-    persistLocalChanges();
-
-    const title = titleRef.current?.getTextContent() || '';
-    onRemoteSync?.(title);
+    const data = persistLocalChanges(true);    
+    if(data) onRemoteSync?.(data);
   }, [persistLocalChanges, onRemoteSync]);
 
   return (
