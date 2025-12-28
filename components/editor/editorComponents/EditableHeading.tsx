@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
-import { handleClick } from '@/components/editor/utils/utils';
+import { handleClick, setCursorAt } from '@/components/editor/utils/utils';
 import { EditableHeadingStyles as styles } from '@/components/editor/utils/editableHeadingStyles';
 
 export interface EditableHeadingHandle {
@@ -32,6 +32,7 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
     const Component = IS_TITLE ? 'h1' : 'h2';
 
     const ref = useRef<HTMLHeadingElement>(null);
+    const focusByClick = useRef(false);
 
     /**
      * Expose imperative methods to parent components
@@ -61,6 +62,7 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
     const handleHeadingClick = useCallback((event: React.MouseEvent<HTMLHeadingElement>) => {
       handlePlaceholderText();
       handleClick(event, ref);
+      focusByClick.current = false;
     }, [handlePlaceholderText]);
 
     const handleOnBlur = useCallback(() => {
@@ -73,14 +75,21 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
       handlePlaceholderText(content === undefined || content === '');
     }, [content, handlePlaceholderText]);
 
+    const handleOnFocus = useCallback(() => {
+      if(focusByClick.current) return;
+      handlePlaceholderText();
+      setCursorAt(ref, 'END');
+    }, [handlePlaceholderText]);
+
     return (
       <Component
         ref={ref}
         contentEditable
         suppressContentEditableWarning
+        onMouseDown={() => focusByClick.current = true}
         onClick={handleHeadingClick}
         onInput={onInput}
-        onFocus={() => handlePlaceholderText()}
+        onFocus={handleOnFocus}
         onBlur={handleOnBlur}
         className={`${styles.baseStyles} ${styles.sizeStyles(IS_TITLE, isDocumentLevel)} ${className}`}
       >
