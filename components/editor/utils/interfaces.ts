@@ -24,7 +24,7 @@ export interface ChapterInterface {
   updatedAt: Date;
   version: number;
   sync: boolean;
-  wordCount: number;
+  wordCount?: number;
 }
 
 export interface DocumentInterface {

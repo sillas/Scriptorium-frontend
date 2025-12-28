@@ -15,8 +15,6 @@ import {
   updateCursorPosition
 } from '@/components/editor/utils/utils';
 
-// import { useParagraph } from '@/hooks/useParagraph';
-
 const DEBOUNCE_DELAY_MS = 700;
 const EMPTY_TEXT_PLACEHOLDER = 'Clique para editar este parágrafo...';
 
@@ -125,7 +123,6 @@ export function Paragraph({
 
     handleClick(event, paragraphRef, isEditing, setIsEditing);
   }, [isEditing]);
-
 
   // Navigation ------------------------
 
@@ -287,10 +284,9 @@ export function Paragraph({
     }
   }, [focusActivation]);
 
-
   // Toggles Buttons ------------------------------
 
-  useEffect(  () => {
+  useEffect(() => {
     triggerLocalSave(true);
   }, [isQuote, isHighlighted]);
 

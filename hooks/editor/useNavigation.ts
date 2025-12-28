@@ -2,7 +2,6 @@ import { useCallback } from "react";
 import { ActiveParagraphInterface, NavigationDirection, ParagraphInterface } from "@/components/editor/utils/interfaces";
 
 export function useNavigation() {
-
     /**
        * Activate the next or previous paragraph for focus/navigation.
        * Calculates boundaries across chapters and sets `activeParagraph` accordingly.

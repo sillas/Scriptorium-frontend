@@ -5,15 +5,6 @@
 const DB_NAME = 'EditorDB';
 const DB_VERSION = 1;
 
-export interface SyncQueueItem {
-  id: string;
-  type: 'document' | 'chapter' | 'paragraph';
-  action: 'create' | 'update' | 'delete';
-  data: any;
-  timestamp: number;
-  retryCount: number;
-}
-
 let dbInstance: IDBDatabase | null = null;
 
 /**
@@ -51,12 +42,6 @@ export async function initDB(): Promise<IDBDatabase> {
         const paragraphsStore = db.createObjectStore('paragraphs', { keyPath: 'id' });
         paragraphsStore.createIndex('chapterId', 'chapterId', { unique: false });
         paragraphsStore.createIndex('documentId', 'documentId', { unique: false });
-      }
-
-      // Store for sync queue
-      if (!db.objectStoreNames.contains('syncQueue')) {
-        const syncStore = db.createObjectStore('syncQueue', { keyPath: 'id' });
-        syncStore.createIndex('timestamp', 'timestamp', { unique: false });
       }
     };
   });
@@ -154,69 +139,6 @@ export async function getByIndex<T>(
 }
 
 /**
- * Add item to sync queue
- */
-export async function addToSyncQueue(
-  type: SyncQueueItem['type'],
-  action: SyncQueueItem['action'],
-  data: any
-): Promise<void> {
-  const queueItem: SyncQueueItem = {
-    id: `${type}-${data.id}-${Date.now()}`,
-    type,
-    action,
-    data,
-    timestamp: Date.now(),
-    retryCount: 0,
-  };
-
-  await saveToIndexedDB('syncQueue', queueItem);
-}
-
-/**
- * Get all items from sync queue
- */
-export async function getSyncQueue(): Promise<SyncQueueItem[]> {
-  return getAllFromIndexedDB<SyncQueueItem>('syncQueue');
-}
-
-/**
- * Remove item from sync queue
- */
-export async function removeFromSyncQueue(id: string): Promise<void> {
-  await deleteFromIndexedDB('syncQueue', id);
-}
-
-/**
- * Update retry count for sync queue item
- */
-export async function updateSyncQueueRetry(
-  id: string,
-  retryCount: number
-): Promise<void> {
-  const db = await initDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['syncQueue'], 'readwrite');
-    const store = transaction.objectStore('syncQueue');
-    const getRequest = store.get(id);
-
-    getRequest.onsuccess = () => {
-      const item = getRequest.result;
-      if (item) {
-        item.retryCount = retryCount;
-        const putRequest = store.put(item);
-        putRequest.onsuccess = () => resolve();
-        putRequest.onerror = () => reject(putRequest.error);
-      } else {
-        resolve();
-      }
-    };
-
-    getRequest.onerror = () => reject(getRequest.error);
-  });
-}
-
-/**
  * Get unsynced items for a document
  * Returns document, chapters and paragraphs with sync === false
  */
@@ -286,7 +208,7 @@ export async function getUnsyncedItemsForDocument(documentId: string): Promise<{
  */
 export async function clearAllData(): Promise<void> {
   const db = await initDB();
-  const storeNames = ['documents', 'chapters', 'paragraphs', 'syncQueue'];
+  const storeNames = ['documents', 'chapters', 'paragraphs'];
 
   for (const storeName of storeNames) {
     await new Promise<void>((resolve, reject) => {
