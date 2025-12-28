@@ -35,7 +35,7 @@ interface ParagraphProps {
     isTheLastParagraphInChapter: boolean;
   };
   onDelete?: () => void;
-  onNavigate?: (direction: NavigationDirection) => void;
+  onNavigate?: (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => void;
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
   onReorder?: (direction: NavigationDirection) => void;
   // onRemoteSync?: () => void;
@@ -130,9 +130,8 @@ export function Paragraph({
     event: React.KeyboardEvent<HTMLDivElement>,
     direction: NavigationDirection
   ) => {
-    event.preventDefault();
     handleFinishEditing();
-    onNavigate && onNavigate(direction);
+    onNavigate?.(event, direction);
   }, [handleFinishEditing, onNavigate]);
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -142,24 +141,27 @@ export function Paragraph({
     if(['ArrowUp', 'ArrowDown'].includes(pressedKey)) {
       const direction = pressedKey === 'ArrowUp'? 'Up' : 'Down';
       
-      if (event.ctrlKey) {
+      if (event.ctrlKey)
+      {
         event.preventDefault();
         onReorder?.(direction);
         return;
       }
 
       const canNavigate = direction === 'Down' 
-        ? navigation.canNavigateNext 
+        ? navigation.canNavigateNext
         : navigation.canNavigatePrevious;
         
       if (!canNavigate) return;
 
       // Navegar apenas se o cursor estiver na extremidade
-      const isAtEdge = direction === 'Up' 
-        ? isCursorAtFirstPosition 
+      const isAtEdge = direction === 'Up'
+        ? isCursorAtFirstPosition
         : isCursorAtLastPosition;
 
-      if (isAtEdge) {
+      if (isAtEdge)
+      {
+        event.preventDefault();
         handleFinishEditingAndNavigate(event, direction);
       }
 
@@ -167,8 +169,8 @@ export function Paragraph({
     }
 
     // Go to previous or next paragraph on Tab
-    if (pressedKey === 'Tab' && isEditing) {
-
+    if (pressedKey === 'Tab' && isEditing)
+    {
       const direction: NavigationDirection = event.shiftKey ? 'Up' : 'Down';
       const shouldNavigate = 
         (direction === 'Down' && navigation.canNavigateNext) ||
@@ -180,21 +182,23 @@ export function Paragraph({
       return;
     }
 
-    if (pressedKey === 'Enter' && isEditing) {
+    if (pressedKey === 'Enter' && isEditing)
+    {
       // Allow line break with Shift+Enter
       if (event.shiftKey) return;
 
+      event.preventDefault();
       // Create new paragraph at end of chapter
-      if (navigation.isTheLastParagraphInChapter) {
-        event.preventDefault();
+      if (navigation.isTheLastParagraphInChapter)
+      {
         handleFinishEditing();
         onCreateNewParagraph && onCreateNewParagraph(null);
         return;
       }
 
       // Create new paragraph in between with Ctrl+Enter
-      if (event.ctrlKey) {
-        event.preventDefault();
+      if (event.ctrlKey)
+      {
         handleFinishEditing();
         onCreateNewParagraph && onCreateNewParagraph(paragraph.index + 1);
         return;
@@ -206,17 +210,20 @@ export function Paragraph({
     const currentText = paragraphRef.current?.textContent?.trim() || '';
 
     // Finish editing on Escape
-    if (pressedKey === 'Escape' && currentText !== '') {
+    if (pressedKey === 'Escape' && currentText !== '')
+    {
       event.preventDefault();
       handleFinishEditing();
       return;
     }
 
     // Delete paragraph on Escape if it's empty
-    if (['Backspace', 'Escape'].includes(pressedKey) && currentText === '') {
+    if (['Backspace', 'Escape'].includes(pressedKey) && currentText === '')
+    {
       event.preventDefault();
 
-      if( pressedKey === 'Backspace' ) {
+      if( pressedKey === 'Backspace' )
+      {
         const direction: NavigationDirection = navigation.canNavigatePrevious ? 'Up' : null;
         handleFinishEditingAndNavigate(event, direction);
       }
@@ -247,7 +254,8 @@ export function Paragraph({
 
     const currentText = paragraphRef.current.textContent?.trim() || '';
 
-    if(currentText === EMPTY_TEXT_PLACEHOLDER) {
+    if(currentText === EMPTY_TEXT_PLACEHOLDER) 
+    {
       paragraphRef.current.textContent = '';
     }
   }, [isEditing]);
@@ -262,10 +270,10 @@ export function Paragraph({
     );
   }, [isEditing, handleOnFocus]);
 
-
   useEffect(() => {    
     if (!focusActivation) return;
-    if (focusActivation.direction === 'Up') {
+    if (focusActivation.direction === 'Up')
+    {
       setCursorAt(paragraphRef, 'END');
     } else {
       setCursorAt(paragraphRef, 'START');
@@ -301,6 +309,7 @@ export function Paragraph({
     { label: '★',description: 'Toggle Highlight', action: toggleHighlight, style: 'text-lg text-yellow-500' },
     { label: 'X',description: 'Delete Paragraph', action: handleDeleteAction, style: 'text-2xs text-red-400 font-bold' },
   ];
+
   // --------------------------------------
 
   return (

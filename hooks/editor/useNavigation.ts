@@ -1,5 +1,9 @@
 import { useCallback } from "react";
-import { ActiveParagraphInterface, NavigationDirection, ParagraphInterface } from "@/components/editor/utils/interfaces";
+import { 
+  ActiveParagraphInterface, 
+  NavigationDirection, 
+  ParagraphInterface
+} from "@/components/editor/utils/interfaces";
 
 export function useNavigation() {
     /**
@@ -12,12 +16,12 @@ export function useNavigation() {
        * @param direction - 'Up' or 'Down' to indicate navigation direction
        */
       const navigateToAdjacentParagraph = useCallback((
+        event: React.KeyboardEvent<HTMLDivElement>,
         direction: NavigationDirection,
         paragraphIndex: number,
         paragraphs: ParagraphInterface[] | undefined,
         setActiveParagraph: (value: ActiveParagraphInterface | null) => void
       ) => {
-    
         if (!paragraphs || direction === null) {
           setActiveParagraph(null);
           return;
@@ -27,11 +31,20 @@ export function useNavigation() {
         if(paragraphIndex >= paragraphs.length - 1 && direction === 'Down') return;
         
         let newParagraphIndex = paragraphIndex;
+        const currentParagraph = paragraphs[paragraphIndex];
     
         if( direction === 'Up' ) newParagraphIndex--;
         else if (direction === 'Down') newParagraphIndex++;
 
         const nextParagraph = paragraphs[newParagraphIndex];
+
+        if(currentParagraph.chapterId !== nextParagraph.chapterId) {
+          // crossing chapter boundary
+          setActiveParagraph(null);
+          return;
+        }
+        
+        if(event.key === 'Tab') direction = 'Up';
 
         setActiveParagraph({
           id: nextParagraph.id,
@@ -40,12 +53,12 @@ export function useNavigation() {
       }, []);
 
     const getNavigationAvailability = useCallback((paragraphIndex: number, paragraphs: ParagraphInterface[]) => {
-        return {
-          canNavigatePrevious: paragraphIndex > 0,
-          canNavigateNext: paragraphIndex < paragraphs.length -1,
-          isTheLastParagraphInChapter: paragraphs[paragraphIndex].chapterId !== paragraphs[paragraphIndex + 1]?.chapterId
-        }
-      }, []);
+      return {
+        canNavigatePrevious: paragraphIndex > 0,
+        canNavigateNext: paragraphIndex < paragraphs.length -1,
+        isTheLastParagraphInChapter: paragraphs[paragraphIndex].chapterId !== paragraphs[paragraphIndex + 1]?.chapterId
+      }
+    }, []);
 
     /**
      * Handle tab navigation from chapter subtitle to first paragraph.
@@ -57,9 +70,9 @@ export function useNavigation() {
      * @returns boolean indicating if navigation was successful
      */
     // const onSubtitleTab = useCallback((
-    //     chapters: ChapterInterface[], 
+    //     chapters: ChapterInterface[],
     //     chapterIndex: number, 
-    //     paragraphs: ParagraphInterface[], 
+    //     paragraphs: ParagraphInterface[],
     //     setActiveParagraph: (value: { id: string; direction: NavigationDirection } | null) => void
     // ): boolean => {
     //     if (paragraphs.length === 0) {
@@ -68,7 +81,6 @@ export function useNavigation() {
     //     // navigateToAdjacentParagraph(chapters, chapterIndex, -1, 'Down', setActiveParagraph);
     //     return true;
     //   }, [navigateToAdjacentParagraph]);
-
 
     return {
         navigateToAdjacentParagraph,

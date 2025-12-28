@@ -22,6 +22,7 @@ interface TitleProps {
   isDocumentLevel?: boolean;
   onRemoteSync?: (data: TitleUpdateData) => void;
   onChange?: (data: TitleUpdateData) => void;
+  onFocus?: () => void;
 }
 
 interface TitleMetadataProps {
@@ -62,6 +63,7 @@ export function Title({
   isDocumentLevel,
   onRemoteSync,
   onChange,
+  onFocus
 }: TitleProps) {
   const previousContentSnapshot = useRef<string>(title + (subtitle || ''));
   const titleRef = useRef<EditableHeadingHandle>(null);
@@ -126,6 +128,7 @@ export function Title({
 
   return (
     <div
+      onFocus={onFocus}
       className={`${
         isDocumentLevel
           ? 'px-8 mb-6 rounded-lg'

@@ -17,10 +17,7 @@ import {
 } from '@/components/editor/utils/interfaces';
 import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
 import { Paragraph } from '@/components/editor/editorComponents/Paragraph';
-import { 
-  // updateDocumentWithChapter,
-  createParagraphObject
-} from '@/components/editor/utils/helpers';
+import { createParagraphObject } from '@/components/editor/utils/helpers';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useNavigation } from '@/hooks/editor/useNavigation';
 
@@ -46,7 +43,6 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(document);
   const [localChapters, setLocalChapters] = useState<ChapterInterface[]>(chapters);
   const [localParagraphs, setLocalParagraphs] = useState<ParagraphInterface[]>(paragraphs);
-  // const [chaptersSideMenu, setChaptersSideMenu] = useState<{id: string, index: number, title: string}[]>([]);
   const [shouldAddNewChapter, setShouldAddNewChapter] = useState(false);
   const [activeParagraph, setActiveParagraph] = useState<ActiveParagraphInterface | null>(null);
   const { paragraphLocalSave, chapterLocalSave } = useLocalStorage();
@@ -60,13 +56,12 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
   } = useNavigation();
   const isOnline = useIsOnline();
 
-
   /**
    * Helper to track save operations and ensure they complete
    */
   const trackSaveOperation = useCallback((savePromise: Promise<any>) => {
+
     pendingSavesRef.current.add(savePromise);
-    
     savePromise
       .finally(() => {
         pendingSavesRef.current.delete(savePromise);
@@ -79,7 +74,8 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
    * Wait for all pending save operations to complete
    */
   const waitForPendingSaves = useCallback(async () => {
-    if (pendingSavesRef.current.size > 0) {
+    if (pendingSavesRef.current.size > 0) 
+    {
       await Promise.allSettled(Array.from(pendingSavesRef.current));
     }
   }, []);
@@ -187,13 +183,6 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     };
   }, [waitForPendingSaves]);
 
-  // useEffect(() => {
-  //   setChaptersSideMenu(localDocument.chapters!.map((ch) => ({
-  //     id: ch.id,
-  //     index: ch.index,
-  //     title: ch.title === '' ? '#Empty' : ch.title,
-  //   })));
-  // }, [localDocument]);
 
   // Add new chapter when shouldAddNewChapter is set
   useEffect(() => {
@@ -294,6 +283,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
             isSynced={localDocument.sync}
             onRemoteSync={() => {}}
             onChange={(data) => true}
+            onFocus={() => setActiveParagraph(null)}
           />
           
           {/* Chapters with Titles and Paragraphs */}
@@ -302,6 +292,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
               key={chapter.id}
               chapter={chapter}
               setChapters={setLocalChapters}
+              onFocus={() => setActiveParagraph(null)}
             >
               {localParagraphs.filter(p => p.chapterId === chapter.id).map((paragraph) => (
                   <Paragraph 
@@ -309,12 +300,13 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
                     paragraph={paragraph}
                     focusActivation={activeParagraph?.id === paragraph.id ? { direction: activeParagraph.direction } : null}
                     navigation={getNavigationAvailability(paragraph.index, localParagraphs)}
-                    onNavigate={(direction) => navigateToAdjacentParagraph(direction, paragraph.index, localParagraphs, setActiveParagraph)}
+                    onNavigate={(event, direction) => navigateToAdjacentParagraph(event, direction, paragraph.index, localParagraphs, setActiveParagraph)}
                     onReorder={(direction) => handleReorderParagraphs(direction, paragraph.index, chapterIndex)}
                     onDelete={() => handleDeleteParagraph(paragraph.index)}
                     onCreateNewParagraph={(paragraphIndex) => createParagraph(chapter.id, paragraphIndex)}
                   />
                 ))}
+
               {/* Add Paragraph Button */}
               <AddButton type="paragraph" onClick={() => createParagraph(chapter.id)} />
             </Chapter>

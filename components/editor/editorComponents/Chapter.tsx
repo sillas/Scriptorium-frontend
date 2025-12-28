@@ -6,6 +6,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 interface ChapterProps {
   chapter: ChapterInterface;
   setChapters?: React.Dispatch<React.SetStateAction<ChapterInterface[]>>;
+  onFocus?: () => void;
   children?: ReactNode;
 }
 
@@ -19,7 +20,7 @@ const updateChapterInList = (currentChapter: ChapterInterface, updatedChapterId:
   };
 }
 
-export default function Chapter({ chapter, setChapters, children }: ChapterProps) {
+export default function Chapter({ chapter, setChapters, onFocus, children }: ChapterProps) {
   const { chapterLocalSave } = useLocalStorage();
 
   const handleChapterLocalChange = useCallback( async (data: TitleUpdateData) => {
@@ -33,7 +34,9 @@ export default function Chapter({ chapter, setChapters, children }: ChapterProps
   }, []);
   
   return (
-    <div className="bg-slate-100 rounded-lg p-4 mb-4 shadow-sm" id={`chapter-${chapter.id}`}>
+    <div
+      onFocus={onFocus} 
+      className="bg-slate-100 rounded-lg p-4 mb-4 shadow-sm" id={`chapter-${chapter.id}`}>
       <Title
         title={chapter.title}
         subtitle={chapter.subtitle}

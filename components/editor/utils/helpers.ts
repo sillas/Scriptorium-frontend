@@ -14,43 +14,6 @@ export const countWords = (text: string) => {
   return text === '' ? 0 : text.split(/\s+/).length;
 }
 
-
-/**
- * Atualiza o documento local com um capítulo modificado e um novo parágrafo.
- *
- * @param localDocument Documento atual
- * @param chapter Capítulo modificado
- * @param newParagraph Novo parágrafo a ser adicionado
- * @param setLocalDocument Função para atualizar o estado do documento
- * @param setActiveParagraph Função para atualizar o parágrafo ativo
- * @param paragraphLocalSave Função para salvar o parágrafo localmente
- * @returns Promise<boolean> indicando sucesso
- */
-export const updateDocumentWithChapter = async (
-  localDocument: DocumentInterface,
-  chapter: ChapterInterface,
-  newParagraph: ParagraphInterface,
-  setLocalDocument: (doc: DocumentInterface) => void,
-  setActiveParagraph: (active: ActiveParagraphInterface) => void,
-  paragraphLocalSave: (paragraph: ParagraphInterface) => Promise<boolean>,
-): Promise<boolean> => {
-  const result = await paragraphLocalSave(newParagraph);
-  if (!result) return false;
-
-  const documentUpdated = { ...localDocument };
-  documentUpdated.chapters = documentUpdated.chapters!.map(ch =>
-    ch.id === chapter.id ? chapter : ch
-  );
-
-  setLocalDocument(documentUpdated);
-  setActiveParagraph({
-    id: newParagraph.id,
-    direction: 'Up'
-  });
-
-  return true;
-};
-
 // Helper function to create a new paragraph object
 export const createParagraphObject = (
   documentId: string,
