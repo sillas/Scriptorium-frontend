@@ -101,7 +101,7 @@ export function Paragraph({
     onCreateNewParagraph && onCreateNewParagraph(paragraph.index);
   }, [paragraph.index, onCreateNewParagraph]);
 
-  // Handle functions ----------------------    
+  // Handle functions ----------------------
 
   const handleFinishEditing = useCallback(async () => {
     setIsEditing(false);
@@ -119,7 +119,7 @@ export function Paragraph({
     if(!paragraphRef.current) return;
 
     const text = paragraphRef.current?.textContent?.trim() || '';
-    if(text === EMPTY_TEXT_PLACEHOLDER) paragraphRef.current!.textContent = '';
+    if(text === EMPTY_TEXT_PLACEHOLDER) paragraphRef.current.textContent = '';
 
     handleClick(event, paragraphRef, isEditing, setIsEditing);
   }, [isEditing]);
@@ -232,40 +232,13 @@ export function Paragraph({
     handleFinishEditingAndNavigate 
   ]);
 
-  const handleCursorPositionUpdate = useCallback(() => {
-    updateCursorPosition(
-      paragraphRef,
-      isEditing,
-      setIsCursorAtFirstPosition,
-      setIsCursorAtLastPosition
-    );
-  }, [isEditing]);
-
-  useEffect(() => {
-    if (!isEditing) return;
-
-    const element = paragraphRef.current;
-    if( !element ) return;
-    
-    // Events that indicate cursor position change
-    element.addEventListener('keyup', handleCursorPositionUpdate);
-    element.addEventListener('mouseup', handleCursorPositionUpdate);
-    element.addEventListener('focus', handleCursorPositionUpdate);
-
-    return () => {
-      element.removeEventListener('keyup', handleCursorPositionUpdate);
-      element.removeEventListener('mouseup', handleCursorPositionUpdate);
-      element.removeEventListener('focus', handleCursorPositionUpdate);
-    };
-  }, [isEditing, handleCursorPositionUpdate]);
-
-  useEffect(() => {    
-    if (!focusActivation) return;
-
-    setIsEditing(true);
+  const handleOnFocus = useCallback(() => {
     if (!paragraphRef.current) return
+    
+    if(isEditing) return;
+    setIsEditing(true);
     paragraphRef.current.focus();
-
+    
     // Scroll to ensure the element is visible in the center
     paragraphRef.current.scrollIntoView({ 
       behavior: 'smooth', 
@@ -273,10 +246,25 @@ export function Paragraph({
     });
 
     const currentText = paragraphRef.current.textContent?.trim() || '';
+
     if(currentText === EMPTY_TEXT_PLACEHOLDER) {
       paragraphRef.current.textContent = '';
     }
+  }, [isEditing]);
 
+  const handleCursorPositionUpdate = useCallback(() => {
+    handleOnFocus();
+    updateCursorPosition(
+      paragraphRef,
+      isEditing,
+      setIsCursorAtFirstPosition,
+      setIsCursorAtLastPosition
+    );
+  }, [isEditing, handleOnFocus]);
+
+
+  useEffect(() => {    
+    if (!focusActivation) return;
     if (focusActivation.direction === 'Up') {
       setCursorAt(paragraphRef, 'END');
     } else {
@@ -361,9 +349,11 @@ export function Paragraph({
             suppressContentEditableWarning
             onClick={handleParagraphClick}
             onContextMenu={handleRightClick}
+            onFocus={handleCursorPositionUpdate}
             onBlur={handleFinishEditing}
             onInput={scheduleLocalAutoSave}
             onKeyDown={handleKeyDown}
+            onKeyUp={handleCursorPositionUpdate}
             className={pStyle.paragraphStyle(isEditing, characterCount, isQuote)}
           ></div>
 

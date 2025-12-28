@@ -11,8 +11,8 @@ export interface TitleUpdateData {
   updatedAt?: Date;
 }
 
-const KEYS_TAB_ENTER_ESCAPE = ['Tab', 'Enter', 'Escape'];
-
+// const KEYS_TAB_ENTER_ESCAPE = ['Tab', 'Enter', 'Escape'];
+const DEBOUNCE_DELAY_MS = 700;
 interface TitleProps {
   title: string;
   subtitle?: string;
@@ -22,7 +22,7 @@ interface TitleProps {
   isSynced?: boolean;
   isDocumentLevel?: boolean;
   onRemoteSync?: (title: string) => void;
-  onChange?: (data: TitleUpdateData, isNew?: boolean) => Promise<boolean> | boolean;
+  onChange?: (data: TitleUpdateData) => void;
   onSubtitleTab?: () => boolean;
 }
 
@@ -66,17 +66,11 @@ export function Title({
   onChange,
   onSubtitleTab,
 }: TitleProps) {
-  const DEBOUNCE_DELAY_MS = 700;
-  
-  // Track local updateAt to show in metadata,
-  // as props' updateAt only changes on remote sync,
-  // never on local edits.
-  const [localUpdatedAt, setLocalUpdatedAt] = useState(updatedAt);
-  
   const previousContentSnapshot = useRef<string>(title + (subtitle || ''));
   const titleRef = useRef<EditableHeadingHandle>(null);
   const subtitleRef = useRef<EditableHeadingHandle>(null);
-  // Use browser-compatible timeout return type to avoid NodeJS vs browser type conflicts
+
+  const [localUpdatedAt, setLocalUpdatedAt] = useState(updatedAt);
   const [setDebounce, clearDebounceTimer] = useDebounceTimer();
 
 
@@ -94,11 +88,14 @@ export function Title({
    * Saves the current title and subtitle changes locally if they differ from the previous values.
    * Updates the local timestamp and invokes the onChange callback with the new data.
    */
-  const persistLocalChanges = useCallback(async (): Promise<void> => {
+  const persistLocalChanges = useCallback(() => {
     if (previousContentSnapshot.current === null) return;
 
     const [newTitle, newSubtitle] = getTitleAndSubtitleContent();
-    if( newTitle + newSubtitle === previousContentSnapshot.current ) return;
+    const snapshot = newTitle + newSubtitle
+
+    if( snapshot === previousContentSnapshot.current ) return;
+    previousContentSnapshot.current = snapshot;
     
     const data: TitleUpdateData = {
       title: newTitle,
@@ -106,25 +103,22 @@ export function Title({
       updatedAt: new Date(),
     };
     
-    previousContentSnapshot.current = newTitle + newSubtitle;
-    const result = await onChange?.(data);
-    if(!result) return;
-    
     setLocalUpdatedAt(data.updatedAt);
+    onChange?.(data);
   }, [onChange, getTitleAndSubtitleContent]);
 
   /**
    * Triggers a local save and initiates remote synchronization if the document is not already synced.
    * Calls the onRemoteSync callback only when the document has unsaved changes.
    */
-  const synchronize = useCallback(() => {
-    persistLocalChanges()
+  // const synchronize = useCallback(() => {
+  //   // persistLocalChanges()
 
-    if( isSynced ) return;
+  //   // if( isSynced ) return;
 
-    const newTitle = titleRef.current?.getTextContent() || '';
-    onRemoteSync?.(newTitle);
-  }, [isSynced, onRemoteSync, persistLocalChanges]);
+  //   const newTitle = titleRef.current?.getTextContent() || '';
+  //   onRemoteSync?.(newTitle);
+  // }, [isSynced, onRemoteSync, persistLocalChanges]);
 
   /**
    * Handles input changes with a debounce delay.
@@ -139,10 +133,10 @@ export function Title({
    * Stops the editing process by clearing the debounce timer and immediately triggering synchronization.
    * Called when the user finishes editing (e.g., on blur or specific key press).
    */
-  const handleEditingComplete = useCallback(() => {
-    clearDebounceTimer();
-    synchronize();
-  }, [synchronize]);
+  // const handleEditingComplete = useCallback(() => {
+  //   clearDebounceTimer();
+  //   synchronize();
+  // }, [synchronize]);
 
   /**
    * Handles keyboard events for the title heading element.
@@ -154,21 +148,21 @@ export function Title({
    * - Enter and Escape keys stop editing mode
    * - Prevents default Tab behavior when subtitle is present
    */
-  const handleTitleKeyDown = useCallback((event: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
+  // const handleTitleKeyDown = useCallback((event: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
     
-    // Only handle Tab, Enter and Escape keys
-    if (!KEYS_TAB_ENTER_ESCAPE.includes(event.key)) return false;
+  //   // Only handle Tab, Enter and Escape keys
+  //   if (!KEYS_TAB_ENTER_ESCAPE.includes(event.key)) return false;
     
-    // Handle Tab key to move focus to subtitle if it exists
-    if (event.key === 'Tab' && subtitle && !event.shiftKey) {
-      event.preventDefault();
-      subtitleRef.current?.focus();
-      return true;
-    }
+  //   // Handle Tab key to move focus to subtitle if it exists
+  //   if (event.key === 'Tab' && subtitle && !event.shiftKey) {
+  //     event.preventDefault();
+  //     subtitleRef.current?.focus();
+  //     return true;
+  //   }
     
-    // Enter and Escape should stop editing
-    return true;
-  }, [subtitle]);
+  //   // Enter and Escape should stop editing
+  //   return true;
+  // }, [subtitle]);
 
   /**
    * Handles keyboard events for the subtitle heading element.
@@ -180,23 +174,23 @@ export function Title({
    * - Prevents default Tab behavior if the callback successfully handles the event
    * - Automatically stops editing mode on Tab, Enter, or Escape key press
    */
-  const handleSubtitleKeyDown = useCallback((event: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
-    // Handle Tab key to move focus to first paragraph if callback is provided
-    if (event.key === 'Tab' && onSubtitleTab) {
-      const handled = onSubtitleTab();
-      if (handled) {
-        event.preventDefault();
-        return true;
-      }
-    }
+  // const handleSubtitleKeyDown = useCallback((event: React.KeyboardEvent<HTMLHeadingElement>): boolean => {
+  //   // Handle Tab key to move focus to first paragraph if callback is provided
+  //   if (event.key === 'Tab' && onSubtitleTab) {
+  //     const handled = onSubtitleTab();
+  //     if (handled) {
+  //       event.preventDefault();
+  //       return true;
+  //     }
+  //   }
     
-    // Tab, Enter and Escape should stop editing
-    if (KEYS_TAB_ENTER_ESCAPE.includes(event.key)) {
-      return true;
-    }
+  //   // Tab, Enter and Escape should stop editing
+  //   if (KEYS_TAB_ENTER_ESCAPE.includes(event.key)) {
+  //     return true;
+  //   }
     
-    return false;
-  }, [onSubtitleTab]);
+  //   return false;
+  // }, [onSubtitleTab]);
 
   return (
     <div
@@ -217,8 +211,8 @@ export function Title({
           level="title"
           isDocumentLevel={isDocumentLevel ?? false}
           onInput={handleInputWithDebounce}
-          onFinishEditing={handleEditingComplete}
-          onKeyDown={handleTitleKeyDown}
+          onFinishEditing={() => {}}
+          onKeyDown={() => {}}
         />
       </div>
       
@@ -230,8 +224,8 @@ export function Title({
             level="subtitle"
             isDocumentLevel={isDocumentLevel ?? false}
             onInput={handleInputWithDebounce}
-            onFinishEditing={handleEditingComplete}
-            onKeyDown={handleSubtitleKeyDown}
+            onFinishEditing={() => {}}
+            onKeyDown={() => {}}
           />
         </div>
       )}

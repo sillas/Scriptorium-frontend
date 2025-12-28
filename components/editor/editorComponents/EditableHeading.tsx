@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
-import { handleContentEditableClick } from '@/components/editor/utils/utils';
+import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
+import { handleClick } from '@/components/editor/utils/utils';
 
 export interface EditableHeadingHandle {
   focus: () => void;
@@ -14,7 +14,7 @@ interface EditableHeadingProps {
   isDocumentLevel: boolean;
   onInput: () => void;
   onFinishEditing: () => void;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLHeadingElement>) => boolean;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLHeadingElement>) => void;
   className?: string;
 }
 
@@ -28,62 +28,70 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
     onKeyDown,
     className = '',
   }, forwardedRef) {
+    const IS_TITLE = level === 'title';
+    const EMPTY_TEXT_PLACEHOLDER = IS_TITLE ? 'Insert a Title' : 'Add a subtitle';
     const ref = useRef<HTMLHeadingElement>(null);
 
     /**
      * Expose imperative methods to parent components
      */
     useImperativeHandle(forwardedRef, () => ({
-      focus: () => {
-        ref.current?.focus();
-      },
+      focus: () => ref.current?.focus(),
       getTextContent: () => {
-        return ref.current?.textContent?.trim() || '';
+        const text = ref.current?.textContent?.trim() || ''
+        return text === EMPTY_TEXT_PLACEHOLDER ? '' : text;
       },
-    }), []);
+    }), [EMPTY_TEXT_PLACEHOLDER]);
 
-    
-    /**
-     * Handles keydown events on the heading element.
-     * @param event - The keyboard event triggered on the heading element
-     * @remarks
-     * This callback checks if the key press should stop editing by calling the optional `onKeyDown` handler.
-     * If editing should stop, it prevents the default behavior, triggers the finish editing callback,
-     * and removes focus from the heading element.
-     */
-    const handleHeadingKeyDown = useCallback((event: React.KeyboardEvent<HTMLHeadingElement>) => {
+    const handlePlaceholderText = useCallback((add_placeholder: boolean = false) => {
+      if(!ref.current) return;
+      const text = ref.current.textContent.trim() || '';
       
-        const shouldStop = onKeyDown?.(event);
+      if(add_placeholder && text === '') {
+        ref.current.textContent = EMPTY_TEXT_PLACEHOLDER;
+        return;
+      }
 
-        if (shouldStop) {
-          event.preventDefault();
-          onFinishEditing();
-          ref.current?.blur();
-        }
-        
-    }, [onKeyDown, onFinishEditing]);
+      if(!add_placeholder && text === EMPTY_TEXT_PLACEHOLDER) {
+        ref.current.textContent = '';
+      }
+    }, [EMPTY_TEXT_PLACEHOLDER]);
 
-    /**
-     * Handles blur event on the heading element by triggering the finish editing callback.
-     */
-    const handleBlur = useCallback(onFinishEditing, [onFinishEditing]);
+    useEffect(() => {
+      if(!ref.current) return;
+      const element = ref.current;
+        element.addEventListener('focus', () => handlePlaceholderText());
+      return () => {
+        element.removeEventListener('focus', () => handlePlaceholderText());
+      };
+    }, [handlePlaceholderText]);
 
-    const isTitle = level === 'title';
-    const sizeStyles = isTitle
+    const handleHeadingClick = useCallback((event: React.MouseEvent<HTMLHeadingElement>) => {
+      handlePlaceholderText();
+      handleClick(event, ref);
+    }, [handlePlaceholderText]);
+
+    const handleOnBlur = useCallback(() => {
+      handlePlaceholderText(true);
+      onFinishEditing();
+      ref?.current?.blur();
+    }, [EMPTY_TEXT_PLACEHOLDER, handlePlaceholderText]);
+
+    const sizeStyles = IS_TITLE
         ? isDocumentLevel ? 'text-3xl font-bold text-slate-900' : 'text-xl font-semibold text-slate-800'
         : isDocumentLevel ? 'text-lg mt-2 text-slate-600' : 'text-sm mt-1 text-slate-600';
     const baseStyles = 'cursor-text flex-1 outline-none focus:bg-slate-200 focus:shadow-sm focus:rounded focus:px-1';
-    const Component = isTitle ? 'h1' : 'h2';
+    const Component = IS_TITLE ? 'h1' : 'h2';
 
     return (
       <Component
         ref={ref}
         contentEditable
         suppressContentEditableWarning
-        onClick={(event) => handleContentEditableClick(event, ref)}
+        onClick={handleHeadingClick}
         onInput={onInput}
-        onKeyDown={handleHeadingKeyDown}
-        onBlur={handleBlur}
+        onKeyDown={onKeyDown}
+        onBlur={handleOnBlur}
         className={`${baseStyles} ${sizeStyles} ${className}`}
       >
         {content}

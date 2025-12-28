@@ -126,12 +126,11 @@ export const loadUnsyncedData = async (
         const unsyncedParagraphs = unsyncedData.paragraphs
 
         console.log('=== Unsynced data found in IndexedDB ===');
-        
         if (unsyncedChapters.length > 0) {
             const updatedChapters = proccessChapters(chapters, unsyncedChapters);
             setChapters(updatedChapters);
         }
-                
+
         if (unsyncedParagraphs.length > 0) {
             const updatedParagraphs = processParagraphs(paragraphs, unsyncedParagraphs);
             setParagraphs(updatedParagraphs);

@@ -51,10 +51,11 @@ export function handleContentEditableClick(
 export function handleClick(
     event: React.MouseEvent<HTMLHeadingElement>, 
     itemRef: React.RefObject<HTMLHeadingElement | null>, 
-    isEditing: boolean, setEditing: React.Dispatch<React.SetStateAction<boolean>>
+    isEditing?: boolean,
+    setEditing?: React.Dispatch<React.SetStateAction<boolean>>
 ): void {
     if (isEditing) return;
-    setEditing(true)
+    setEditing?.(true);
     handleContentEditableClick(event, itemRef);
 }
 
