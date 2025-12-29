@@ -10,10 +10,8 @@ import {
   DocumentInterface, 
   ChapterInterface,
   ParagraphInterface,
+  ParagraphUpdate
 } from '@/components/editor/utils/interfaces';
-import {
-  ParagraphUpdate,
-} from '@/components/editor/editorComponents/Paragraph';
 import { TitleUpdateData } from '@/components/editor/editorComponents/Title';
 
 
@@ -145,25 +143,16 @@ export function useLocalStorage() {
        */
       const paragraphLocalSave = useCallback(async (
         paragraph: ParagraphInterface,
-        textData: ParagraphUpdate | null = null,
+        textData: ParagraphUpdate | {} = {},
       ): Promise<boolean> => {
     
         const localParagraph: ParagraphInterface = {
           ...paragraph,
+          ...textData,
           sync: false,
         }
     
         // TODO: Add text validation.
-    
-        if( textData !== null) {
-          localParagraph.updatedAt = textData.updatedAt;
-          localParagraph.text = textData.text;
-          localParagraph.wordCount = textData.wordCount ?? 0;
-          localParagraph.characterCount = textData.characterCount ?? 0;
-          localParagraph.isQuote = textData.isQuote ?? false;
-          localParagraph.isHighlighted = textData.isHighlighted ?? false;
-        }
-    
         try {
           await saveLocal('paragraph', localParagraph);
           return true

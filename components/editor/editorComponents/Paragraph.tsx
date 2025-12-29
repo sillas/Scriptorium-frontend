@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { NavigationDirection, ParagraphInterface } from '@/components/editor/utils/interfaces';
+import { NavigationDirection, ParagraphInterface, textAlignmentType, TextSelectedInfo } from '@/components/editor/utils/interfaces';
 import SyncIndicator from '@/components/editor/SyncIndicator';
 import { countWords } from '@/components/editor/utils/helpers';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
@@ -10,24 +10,15 @@ import { paragraphStyles as styles } from '@/components/editor/utils/paragraphSt
 import {
   handleClick,
   setCursorAt,
-  handleRightClick,
   handleDeleteQuestion,
-  updateCursorPosition
+  updateCursorPosition,
+  getSelectedTextAndPositions
 } from '@/components/editor/utils/utils';
-import { Eraser, Quote, Star, TextAlignCenter, TextAlignEnd, TextAlignJustify, TextAlignStart } from 'lucide-react';
+import { Bold, Eraser, Italic, Quote, Star, TextAlignCenter, TextAlignEnd, TextAlignJustify, TextAlignStart, Underline } from 'lucide-react';
 
 const DEBOUNCE_DELAY_MS = 700;
 const EMPTY_TEXT_PLACEHOLDER = 'Clique para editar este parágrafo...';
 
-type textAlignmentType = 'text-justify'| 'text-right'|'text-left'|'text-center';
-export interface ParagraphUpdate {
-  text: string;
-  characterCount: number;
-  wordCount: number;
-  isQuote: boolean;
-  isHighlighted: boolean;
-  updatedAt: Date;
-}
 interface ParagraphProps {
   paragraph: ParagraphInterface;
   focusActivation?: { direction: NavigationDirection } | null;
@@ -53,7 +44,9 @@ export function Paragraph({
   const [isEditing, setIsEditing] = useState(false);
   const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
   const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);
-  const [textAlignment, setTextAlignment] = useState<textAlignmentType>('text-justify');
+  const [textAlignment, setTextAlignment] = useState<textAlignmentType>(paragraph.textAlignment || 'text-justify');
+  const [textSelected, setTextSelected] = useState<TextSelectedInfo | null>(null);
+  const [horizontalPosition, setHorizontalPosition] = useState(0);
 
   const [characterCount, setCharacterCount] = useState(paragraph.text?.trim().length || 0);
   const [wordCount, setWordCount] = useState(countWords(paragraph.text));
@@ -88,9 +81,10 @@ export function Paragraph({
       wordCount: countWords(newText),
       isQuote: isQuote || false,
       isHighlighted: isHighlighted || false,
+      textAlignment: textAlignment,
       updatedAt: new Date(),
     });
-  }, [paragraph, isQuote, isHighlighted]);
+  }, [paragraph, isQuote, isHighlighted, textAlignment]);
 
   const scheduleLocalAutoSave = useCallback(() => {
     clearDebounceTimer();
@@ -108,7 +102,9 @@ export function Paragraph({
   // Handle functions ----------------------
 
   const handleFinishEditing = useCallback(async () => {
+    if(textSelected) return;
     setIsEditing(false);
+    setTextSelected(null);
     setIsCursorAtFirstPosition(false);
     setIsCursorAtLastPosition(false);
 
@@ -116,16 +112,39 @@ export function Paragraph({
     if (text.length === 0) paragraphRef.current!.textContent = EMPTY_TEXT_PLACEHOLDER;
     await triggerLocalSave();
     paragraphRef.current?.blur();
-  }, [triggerLocalSave, isEditing]);
+  }, [triggerLocalSave, isEditing, textSelected]);
 
 
   const handleParagraphClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    setTextSelected(null);
     if (!paragraphRef.current) return;
 
     const text = paragraphRef.current?.textContent?.trim() || '';
     if (text === EMPTY_TEXT_PLACEHOLDER) paragraphRef.current.textContent = '';
 
     handleClick(event, paragraphRef, isEditing, setIsEditing);
+  }, [isEditing]);
+
+  const handleRightClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+
+    if(!isEditing) return;
+
+    event.preventDefault();
+
+    if( event.button !== 2 ) return;
+    const selected_text = getSelectedTextAndPositions(event);
+    
+    if(selected_text) {
+      // Should open popup menu on the mouse position clicked
+      const max_right_position = 200;
+      const targetBounds = event.currentTarget.getBoundingClientRect();
+      let xRelative = event.clientX - targetBounds.left;
+      if(targetBounds.width - xRelative < max_right_position) {
+        xRelative = targetBounds.width - max_right_position;
+      }
+      setHorizontalPosition(xRelative);
+      setTextSelected(selected_text);
+    }
   }, [isEditing]);
 
   // Navigation ------------------------
@@ -277,7 +296,7 @@ export function Paragraph({
 
   useEffect(() => {
     triggerLocalSave(true);
-  }, [isQuote, isHighlighted]);
+  }, [isQuote, isHighlighted, textAlignment]);
 
   const setTextCenter = useCallback(() => {
     setTextAlignment('text-center');
@@ -313,7 +332,7 @@ export function Paragraph({
     deleteParagraph(paragraph.id);
   }, [onDelete]);
 
-  const buttons_actions = [
+  const vertical_buttons_actions = [
     { icon: <TextAlignCenter color="#fff" size={20} />, description: 'Toggle Text Center', action: setTextCenter },
     { icon: <TextAlignEnd color="#fff" size={20} />, description: 'Toggle Text Right', action: setTextRight },
     { icon: <TextAlignStart color="#fff" size={20} />, description: 'Toggle Text Left', action: setTextLeft },
@@ -321,6 +340,12 @@ export function Paragraph({
     { icon: <Quote color="#fff" size={20} />, description: 'Toggle Quote', action: toggleQuote },
     { icon: <Star color="#fff" size={20} />, description: 'Toggle Highlight', action: toggleHighlight },
     { icon: <Eraser color="#fff" size={20} />, description: 'Delete Paragraph', action: handleDeleteAction },
+  ];
+
+  const context_buttons_actions = [
+    { icon: <Bold color="#fff" size={20} />, description: 'Set Text Bold', action: () => {}},
+    { icon: <Italic color="#fff" size={20} />, description: 'Set Text Italic', action: () => {}},
+    { icon: <Underline color="#fff" size={20} />, description: 'Set Text Underline', action: () => {}},
   ];
 
   // --------------------------------------
@@ -338,7 +363,7 @@ export function Paragraph({
         <div
           className={styles.toggleButtonsStyle(isEditing)}
         >
-          {buttons_actions.map(({ icon, description, action }) => (
+          {vertical_buttons_actions.map(({ icon, description, action }) => (
             <button
               key={description}
               tabIndex={-1}
@@ -352,6 +377,17 @@ export function Paragraph({
             </button>
           ))}
         </div>
+
+        {/* Botões horizontais posicionáveis */}
+        {isEditing && textSelected && <div className="absolute top-[-1.9rem] w-full h-[30px] select-none">
+        <div className="absolute bg-slate-800 focus:outline-none flex gap-[5px] p-1" style={{ left: `${horizontalPosition}px` }}>
+            {context_buttons_actions.map(({icon, description, action}) => (
+              <button key={description} className={styles.contextButtonStyle} onClick={action}>
+                {icon}
+              </button>
+            ))}
+          </div>
+        </div>}
 
         {/* Parágrafo editável */}
         <div className={styles.paragraphContainerStyle(isEditing, isHighlighted)}>

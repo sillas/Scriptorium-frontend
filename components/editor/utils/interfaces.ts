@@ -1,3 +1,18 @@
+export type textAlignmentType = 'text-justify'| 'text-right'|'text-left'|'text-center';
+export interface TextSelectedInfo {
+  selectedText: string;
+  startPosition: number;
+  endPosition: number;
+};
+export interface ParagraphUpdate {
+  text: string;
+  characterCount: number;
+  wordCount: number;
+  isQuote: boolean;
+  isHighlighted: boolean;
+  updatedAt: Date;
+  textAlignment: textAlignmentType;
+}
 export interface ParagraphInterface {
   id: string;
   documentId: string;
@@ -12,6 +27,7 @@ export interface ParagraphInterface {
   wordCount: number;
   isQuote?: boolean;
   isHighlighted?: boolean;
+  textAlignment?: textAlignmentType;
 }
 export interface ChapterInterface {
   id: string;

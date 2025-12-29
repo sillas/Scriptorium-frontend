@@ -1,3 +1,5 @@
+import { TextSelectedInfo } from "./interfaces";
+
 /**
  * Sets the cursor position at the clicked coordinates within a contentEditable element.
  * Should be called after the element becomes contentEditable.
@@ -124,13 +126,33 @@ export const handleDeleteQuestion = (text: string | undefined, what?: string): b
 }
 
 /**
- * Handles right-click event on a div element, preventing the default context menu.
- * @param event The mouse event triggered by right-click
- * @returns 
+ * Gets the selected text and its start and end positions within the contentEditable element.
+ * @param event The mouse click event on the div
+ * @returns An object with text, start, and end positions, or null if no text is selected
  */
-export const handleRightClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    // event.preventDefault();
-    if( event.button !== 2 ) return;
-    console.log(event);
-    // TODO: Handle right-click context menu
+export function getSelectedTextAndPositions(event: React.MouseEvent<HTMLDivElement>): TextSelectedInfo | null {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return null;
+
+    const range = selection.getRangeAt(0);
+    if (range.collapsed) return null; // No selection
+
+    const selectedText = range.toString().trim();
+    if (!selectedText) return null;
+
+    const element = event.currentTarget;
+
+    // Calculate start position
+    const startRange = document.createRange();
+    startRange.setStart(element, 0);
+    startRange.setEnd(range.startContainer, range.startOffset);
+    const startPosition = startRange.toString().length;
+
+    // Calculate end position
+    const endRange = document.createRange();
+    endRange.setStart(element, 0);
+    endRange.setEnd(range.endContainer, range.endOffset);
+    const endPosition = endRange.toString().length;
+
+    return { selectedText, startPosition, endPosition };
 }
