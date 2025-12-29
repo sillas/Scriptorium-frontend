@@ -18,8 +18,8 @@ export default function Contents({ chapters }: ContentsProps) {
   };
 
   return (
-    <div className="bg-slate-600 rounded-lg p-4">
-      <h3 className="text-slate-200 font-semibold mb-4 text-sm uppercase tracking-wide">
+    <div className="bg-gray-100 rounded-lg p-4">
+      <h3 className="text-gray-800 font-semibold mb-4 text-sm uppercase tracking-wide">
         Contents
       </h3>
       <nav className="space-y-0">
@@ -30,11 +30,11 @@ export default function Contents({ chapters }: ContentsProps) {
             className="w-full text-left group rounded p-0 transition-colors cursor-pointer"
             title={chapter.title}
           >
-            <div className="flex items-start gap-2 text-slate-200">
-              <span className="text-slate-400 font-medium min-w-[1.5rem] group-hover:text-slate-300">
+            <div className="flex items-start gap-2 text-gray-800">
+              <span className="text-gray-500 font-medium min-w-[1.5rem] group-hover:text-gray-700">
                 {idx + 1}
               </span>
-              <span className="flex-1 truncate text-sm group-hover:text-white">
+              <span className="flex-1 truncate text-sm group-hover:text-gray-900">
                 {chapter.title}
               </span>
             </div>

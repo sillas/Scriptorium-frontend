@@ -36,7 +36,7 @@ export default function Chapter({ chapter, setChapters, onFocus, children }: Cha
   return (
     <div
       onFocus={onFocus} 
-      className="bg-slate-100 rounded-lg p-4 mb-4 shadow-sm" id={`chapter-${chapter.id}`}>
+      className="bg-gray-100 rounded-lg p-4 mb-4 shadow-sm" id={`chapter-${chapter.id}`}>
       <Title
         title={chapter.title}
         subtitle={chapter.subtitle}

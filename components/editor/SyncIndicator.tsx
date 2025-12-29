@@ -33,7 +33,7 @@ export default function SyncIndicator({
     >
       <span
         className={`w-2 h-2 rounded-full ${
-          isOnline ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'
+          isOnline ? 'bg-yellow-500 animate-pulse' : 'bg-gray-500'
         }`}
       />
     </div>

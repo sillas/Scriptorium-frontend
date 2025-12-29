@@ -258,7 +258,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
 
         {/* Coluna Lateral Esquerda */}
         <SideColumn side="left">
-          <div className="text-sm text-slate-200">
+          <div className="text-sm text-gray-800">
             <Contents
                 chapters={localChapters}
               />
@@ -267,7 +267,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
 
         {/* Coluna Central */}
         <main
-          className={`bg-slate-100 flex-1 transition-all duration-300 ease-in-out p-4 overflow-y-auto`}
+          className={`bg-gray-100 flex-1 transition-all duration-300 ease-in-out p-4 overflow-y-auto`}
         >
           {/* Document Title */}
           <Title
@@ -315,7 +315,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
 
         {/* Coluna Lateral Direita */}
         <SideColumn side="right">
-          <div className="text-sm text-slate-200">Coluna Direita</div>
+          <div className="text-sm text-gray-800">Coluna Direita</div>
         </SideColumn>
       </div>
     </div>

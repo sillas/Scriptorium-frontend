@@ -133,13 +133,13 @@ export function Title({
         isDocumentLevel
           ? 'px-8 mb-6 rounded-lg'
           : 'px-3 mb-3 rounded-md'
-      } bg-slate-100 relative`}
+      } bg-gray-100 relative`}
     >
       <div className={`absolute top-0 right-0 ${isDocumentLevel ? 'mr-3' : ''}`}>
         <SyncIndicator isSynced={isSynced ?? false} />
       </div>
 
-      <div className="flex items-center gap-2 pl-[5px] border-l-2 border-slate-300">
+      <div className="flex items-center gap-2 pl-[5px] border-l-2 border-gray-300">
         <EditableHeading
           ref={titleRef}
           content={title}
@@ -149,7 +149,7 @@ export function Title({
           onFinishEditing={handleEditingComplete}
         />
       </div>
-      <div className="flex items-center gap-2 pl-[5px] border-l-2 border-slate-300">
+      <div className="flex items-center gap-2 pl-[5px] border-l-2 border-gray-300">
         <EditableHeading
           ref={subtitleRef}
           content={subtitle}
