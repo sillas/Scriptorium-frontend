@@ -14,6 +14,7 @@ import {
   handleDeleteQuestion,
   updateCursorPosition
 } from '@/components/editor/utils/utils';
+import { Eraser, Quote, Star } from 'lucide-react';
 
 const DEBOUNCE_DELAY_MS = 700;
 const EMPTY_TEXT_PLACEHOLDER = 'Clique para editar este parágrafo...';
@@ -294,9 +295,9 @@ export function Paragraph({
   }, [onDelete]);
 
   const buttons_actions = [
-    { label: '"', description: 'Toggle Quote', action: toggleQuote, style: 'text-5xl text-gray-500' },
-    { label: '★', description: 'Toggle Highlight', action: toggleHighlight, style: 'text-lg text-yellow-500' },
-    { label: 'X', description: 'Delete Paragraph', action: handleDeleteAction, style: 'text-2xs text-red-400 font-bold' },
+    { icon: <Quote color="#fff" />, description: 'Toggle Quote', action: toggleQuote, style: '' },
+    { icon: <Star color="#fff" />, description: 'Toggle Highlight', action: toggleHighlight, style: '' },
+    { icon: <Eraser color="#fff" />, description: 'Delete Paragraph', action: handleDeleteAction, style: '' },
   ];
 
   // --------------------------------------
@@ -314,9 +315,9 @@ export function Paragraph({
         <div
           className={styles.toggleButtonsStyle(isEditing)}
         >
-          {buttons_actions.map(({ label, description, action, style }) => (
+          {buttons_actions.map(({ icon, description, action, style }) => (
             <button
-              key={label}
+              key={description}
               tabIndex={-1}
               aria-label={description}
               className={styles.toggleButtonStyle(isEditing, style)}
@@ -324,7 +325,7 @@ export function Paragraph({
               onMouseDown={(e) => e.preventDefault()}
               onClick={action}
             >
-              {label}
+              {icon}
             </button>
           ))}
         </div>
