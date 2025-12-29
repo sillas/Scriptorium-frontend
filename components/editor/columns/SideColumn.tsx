@@ -1,27 +1,29 @@
 import { useState, useEffect } from 'react';
+import { ListTree, ArrowLeftFromLine, ArrowRightFromLine, Brain } from 'lucide-react';
 
-interface ArrowButtonProps {
+interface ToggleButtonProps {
   side: "left" | "right";
   isOpen: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-function ArrowButton({ side, isOpen, setOpen }: ArrowButtonProps) {
-
+function ToggleButton({ side, isOpen, setOpen }: ToggleButtonProps) {
+  const isLeft = side === 'left';
   const getArrowIcon = () => {
-    if (side === 'left') return isOpen ? '◀' : '▶';
-    return isOpen ? '▶' : '◀';
+    if (isLeft) return isOpen ? <ArrowLeftFromLine color="#1e2939" /> : <ListTree color="#1e2939" />;
+    return isOpen ? <ArrowRightFromLine color="#1e2939" /> : <Brain color="#1e2939" />;
   }
 
-  const buttonPosition = side === 'left' ? 'left-0' : 'right-0';
-  const buttonOffset = isOpen ? 'calc(min(25%, 200px) - 2rem)' : '0';
+  const buttonPosition = isLeft ? 'left-0' : 'right-0';
+  const buttonLeftOffset = isOpen ? 'min(25%, 200px)' : '0';
+  const buttonRightOffset = isOpen ? 'calc(min(25%, 200px) - 2rem)' : '1rem';
 
   return (<button
-      aria-label={`${isOpen ? 'Fechar' : 'Abrir'} painel ${side === 'left' ? 'esquerdo' : 'direito'}`}
+      aria-label={`${isOpen ? 'Fechar' : 'Abrir'} painel ${isLeft ? 'esquerdo' : 'direito'}`}
       aria-expanded={isOpen}
       onClick={() => setOpen(!isOpen)}
-      className={`absolute cursor-pointer ${buttonPosition} top-1 z-20 w-8 h-8 flex items-center justify-center text-xs rounded-full hover:opacity-100 hover:p-3 transition-all translate-x-0 text-gray-800 hover:text-white hover:bg-gray-800 shadow-xl shadow-black/20 opacity-50`}
-      style={{ [side]: buttonOffset }}
+      className={`absolute cursor-pointer ${buttonPosition} top-1 z-20 w-8 h-8 flex items-center justify-center text-xs rounded-md hover:opacity-100 transition-all translate-x-0 text-gray-800 hover:text-white shadow-xl shadow-black/20 opacity-50`}
+      style={{ [side]: isLeft ? buttonLeftOffset : buttonRightOffset }}
   >
       { getArrowIcon() }
   </button>);
@@ -69,7 +71,7 @@ export default function SideColumn({ side, children }: SideColumnProps) {
   
   return (
     <>
-      <ArrowButton side={side} isOpen={isOpen} setOpen={setOpen} />
+      <ToggleButton side={side} isOpen={isOpen} setOpen={setOpen} />
       <Aside isOpen={isOpen}>
         {children}
       </Aside>

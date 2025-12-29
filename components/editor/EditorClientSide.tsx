@@ -315,7 +315,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
 
         {/* Coluna Lateral Direita */}
         <SideColumn side="right">
-          <div className="text-sm text-gray-800">Coluna Direita</div>
+          <div className="text-sm text-gray-800 p-4">Right</div>
         </SideColumn>
       </div>
     </div>
