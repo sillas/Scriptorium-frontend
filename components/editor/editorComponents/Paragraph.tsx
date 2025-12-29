@@ -14,7 +14,7 @@ import {
   handleDeleteQuestion,
   updateCursorPosition
 } from '@/components/editor/utils/utils';
-import { Eraser, Quote, Star } from 'lucide-react';
+import { Eraser, Quote, Star, TextAlignCenter } from 'lucide-react';
 
 const DEBOUNCE_DELAY_MS = 700;
 const EMPTY_TEXT_PLACEHOLDER = 'Clique para editar este parágrafo...';
@@ -52,6 +52,8 @@ export function Paragraph({
   const [isEditing, setIsEditing] = useState(false);
   const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
   const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);
+  const [isTextCenter, setIsTextCenter] = useState(false); // paragraph text alignment: center, right or justify
+
   const [characterCount, setCharacterCount] = useState(paragraph.text?.trim().length || 0);
   const [wordCount, setWordCount] = useState(countWords(paragraph.text));
   const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
@@ -276,6 +278,10 @@ export function Paragraph({
     triggerLocalSave(true);
   }, [isQuote, isHighlighted]);
 
+  const toggleTextCenter = useCallback(() => {
+    setIsTextCenter(prev => !prev);
+  }, []);
+
   const toggleQuote = useCallback(() => {
     setIsQuote(prev => !prev);
   }, []);
@@ -295,9 +301,10 @@ export function Paragraph({
   }, [onDelete]);
 
   const buttons_actions = [
-    { icon: <Quote color="#fff" />, description: 'Toggle Quote', action: toggleQuote },
-    { icon: <Star color="#fff" />, description: 'Toggle Highlight', action: toggleHighlight },
-    { icon: <Eraser color="#fff" />, description: 'Delete Paragraph', action: handleDeleteAction },
+    { icon: <TextAlignCenter color="#fff" size={20} />, description: 'Toggle Text Center', action: toggleTextCenter },
+    { icon: <Quote color="#fff" size={20} />, description: 'Toggle Quote', action: toggleQuote },
+    { icon: <Star color="#fff" size={20} />, description: 'Toggle Highlight', action: toggleHighlight },
+    { icon: <Eraser color="#fff" size={20} />, description: 'Delete Paragraph', action: handleDeleteAction },
   ];
 
   // --------------------------------------
@@ -338,7 +345,7 @@ export function Paragraph({
 
           {isQuote && (
             <div className={styles.isQuoteStyle} aria-hidden="true">
-              “
+              <Quote size={15} color="#4a5565" strokeWidth={2} />
             </div>
           )}
 
@@ -353,7 +360,12 @@ export function Paragraph({
             onInput={scheduleLocalAutoSave}
             onKeyDown={handleKeyDown}
             onKeyUp={handleCursorPositionUpdate}
-            className={styles.paragraphStyle(isEditing, characterCount, isQuote)}
+            className={styles.paragraphStyle(
+              isEditing, 
+              characterCount, 
+              isQuote, 
+              isTextCenter
+            )}
           ></div>
 
           <span className={styles.characterCountStyle(isEditing)}>
