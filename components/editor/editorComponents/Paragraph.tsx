@@ -14,11 +14,12 @@ import {
   handleDeleteQuestion,
   updateCursorPosition
 } from '@/components/editor/utils/utils';
-import { Eraser, Quote, Star, TextAlignCenter } from 'lucide-react';
+import { Eraser, Quote, Star, TextAlignCenter, TextAlignEnd, TextAlignJustify, TextAlignStart } from 'lucide-react';
 
 const DEBOUNCE_DELAY_MS = 700;
 const EMPTY_TEXT_PLACEHOLDER = 'Clique para editar este parágrafo...';
 
+type textAlignmentType = 'text-justify'| 'text-right'|'text-left'|'text-center';
 export interface ParagraphUpdate {
   text: string;
   characterCount: number;
@@ -52,7 +53,7 @@ export function Paragraph({
   const [isEditing, setIsEditing] = useState(false);
   const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
   const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);
-  const [isTextCenter, setIsTextCenter] = useState(false); // paragraph text alignment: center, right or justify
+  const [textAlignment, setTextAlignment] = useState<textAlignmentType>('text-justify');
 
   const [characterCount, setCharacterCount] = useState(paragraph.text?.trim().length || 0);
   const [wordCount, setWordCount] = useState(countWords(paragraph.text));
@@ -278,8 +279,20 @@ export function Paragraph({
     triggerLocalSave(true);
   }, [isQuote, isHighlighted]);
 
-  const toggleTextCenter = useCallback(() => {
-    setIsTextCenter(prev => !prev);
+  const setTextCenter = useCallback(() => {
+    setTextAlignment('text-center');
+  }, []);
+
+  const setTextLeft = useCallback(() => {
+    setTextAlignment('text-left');
+  }, []);
+
+  const setTextRight = useCallback(() => {
+    setTextAlignment('text-right');
+  }, []);
+
+  const setTextJustify = useCallback(() => {
+    setTextAlignment('text-justify');
   }, []);
 
   const toggleQuote = useCallback(() => {
@@ -301,7 +314,10 @@ export function Paragraph({
   }, [onDelete]);
 
   const buttons_actions = [
-    { icon: <TextAlignCenter color="#fff" size={20} />, description: 'Toggle Text Center', action: toggleTextCenter },
+    { icon: <TextAlignCenter color="#fff" size={20} />, description: 'Toggle Text Center', action: setTextCenter },
+    { icon: <TextAlignEnd color="#fff" size={20} />, description: 'Toggle Text Right', action: setTextRight },
+    { icon: <TextAlignStart color="#fff" size={20} />, description: 'Toggle Text Left', action: setTextLeft },
+    { icon: <TextAlignJustify color="#fff" size={20} />, description: 'Toggle Text Justify', action: setTextJustify },
     { icon: <Quote color="#fff" size={20} />, description: 'Toggle Quote', action: toggleQuote },
     { icon: <Star color="#fff" size={20} />, description: 'Toggle Highlight', action: toggleHighlight },
     { icon: <Eraser color="#fff" size={20} />, description: 'Delete Paragraph', action: handleDeleteAction },
@@ -364,7 +380,7 @@ export function Paragraph({
               isEditing, 
               characterCount, 
               isQuote, 
-              isTextCenter
+              textAlignment
             )}
           ></div>
 
