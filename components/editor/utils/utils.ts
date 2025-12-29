@@ -126,33 +126,110 @@ export const handleDeleteQuestion = (text: string | undefined, what?: string): b
 }
 
 /**
- * Gets the selected text and its start and end positions within the contentEditable element.
+ * Gets the selected text and its start and end positions within a contentEditable div.
  * @param event The mouse click event on the div
- * @returns An object with text, start, and end positions, or null if no text is selected
+ * @returns Information about the selected text and its positions, or null if no selection 
  */
-export function getSelectedTextAndPositions(event: React.MouseEvent<HTMLDivElement>): TextSelectedInfo | null {
+export function getSelection(event: React.MouseEvent<HTMLDivElement>): Selection | null {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return null;
 
     const range = selection.getRangeAt(0);
     if (range.collapsed) return null; // No selection
 
-    const selectedText = range.toString().trim();
-    if (!selectedText) return null;
-
-    const element = event.currentTarget;
-
-    // Calculate start position
-    const startRange = document.createRange();
-    startRange.setStart(element, 0);
-    startRange.setEnd(range.startContainer, range.startOffset);
-    const startPosition = startRange.toString().length;
-
-    // Calculate end position
-    const endRange = document.createRange();
-    endRange.setStart(element, 0);
-    endRange.setEnd(range.endContainer, range.endOffset);
-    const endPosition = endRange.toString().length;
-
-    return { selectedText, startPosition, endPosition };
+    return selection
 }
+
+//     const selectedText = range.toString().trim();
+//     if (!selectedText) return null;
+
+//     const element = event.currentTarget;
+
+//     // Calculate start position
+//     const startRange = document.createRange();
+//     startRange.setStart(element, 0);
+//     startRange.setEnd(range.startContainer, range.startOffset);
+//     const startPosition = startRange.toString().length;
+
+//     // Calculate end position
+//     const endRange = document.createRange();
+//     endRange.setStart(element, 0);
+//     endRange.setEnd(range.endContainer, range.endOffset);
+//     const endPosition = endRange.toString().length;
+
+//     return { selectedText, startPosition, endPosition };
+// }
+
+type FormatTag = 'strong' | 'i' | 'u';
+
+const removeFormat = (formatElement: HTMLElement): void => {
+  const parent = formatElement.parentNode;
+  if (!parent) return;
+  
+  // Cria um fragment para preservar a estrutura dos filhos
+  const fragment = document.createDocumentFragment();
+  
+  // Move todos os filhos para o fragment (preservando elementos aninhados)
+  while (formatElement.firstChild) {
+    fragment.appendChild(formatElement.firstChild);
+  }
+  
+  // Substitui o elemento pelo fragment com seus filhos
+  parent.replaceChild(fragment, formatElement);
+  
+  // Normaliza para juntar nós de texto adjacentes
+  parent.normalize();
+}
+
+const removeFormattingFromSelection = (selection: Selection | null, tag: FormatTag): boolean => {
+  if (!selection || selection.rangeCount === 0) return false;
+  
+  const range = selection.getRangeAt(0);
+  let currentNode: Node | null = range.commonAncestorContainer;
+  
+  // Se for um nó de texto, pega o elemento pai
+  if (currentNode.nodeType === Node.TEXT_NODE) {
+    currentNode = currentNode.parentElement;
+  }
+  
+  // Procura o elemento de formatação subindo na árvore
+  let formatElement: HTMLElement | null = null;
+  
+  while (currentNode && currentNode !== document.body) {
+    if (currentNode instanceof HTMLElement && 
+        currentNode.tagName.toLowerCase() === tag) {
+      formatElement = currentNode;
+      break;
+    }
+    currentNode = currentNode.parentElement;
+  }
+  
+  // Se encontrou o elemento, remove apenas ele
+  if (formatElement) {
+    removeFormat(formatElement);
+    return true;
+  }
+  
+  return false;
+}
+
+const applyFormattingToSelection = (selection: Selection, tag: FormatTag): void => {
+    const rangeSelected = selection.getRangeAt(0);
+    const selectedText = rangeSelected.extractContents();
+
+    const element = document.createElement(tag);
+    element.appendChild(selectedText);
+
+    rangeSelected.insertNode(element);
+    
+    selection.removeAllRanges();
+    const newRange = document.createRange();
+    newRange.selectNodeContents(element);
+    newRange.collapse(false);
+    selection.addRange(newRange);
+}
+
+export const toggleFormattingOnSelection = (selection: Selection, tag: FormatTag): void => {
+  if (removeFormattingFromSelection(selection, tag)) return; // Se removeu, para
+  applyFormattingToSelection(selection, tag); // Senão, aplica
+};

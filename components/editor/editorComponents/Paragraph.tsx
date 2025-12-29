@@ -12,7 +12,8 @@ import {
   setCursorAt,
   handleDeleteQuestion,
   updateCursorPosition,
-  getSelectedTextAndPositions
+  getSelection,
+  toggleFormattingOnSelection
 } from '@/components/editor/utils/utils';
 import { Bold, Eraser, Italic, Quote, Star, TextAlignCenter, TextAlignEnd, TextAlignJustify, TextAlignStart, Underline } from 'lucide-react';
 
@@ -45,7 +46,7 @@ export function Paragraph({
   const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
   const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);
   const [textAlignment, setTextAlignment] = useState<textAlignmentType>(paragraph.textAlignment || 'text-justify');
-  const [textSelected, setTextSelected] = useState<TextSelectedInfo | null>(null);
+  const [selection, setSelection] = useState<Selection | null>(null);
   const [horizontalPosition, setHorizontalPosition] = useState(0);
 
   const [characterCount, setCharacterCount] = useState(paragraph.text?.trim().length || 0);
@@ -102,9 +103,9 @@ export function Paragraph({
   // Handle functions ----------------------
 
   const handleFinishEditing = useCallback(async () => {
-    if(textSelected) return;
+    if(selection) return;
     setIsEditing(false);
-    setTextSelected(null);
+    setSelection(null);
     setIsCursorAtFirstPosition(false);
     setIsCursorAtLastPosition(false);
 
@@ -112,11 +113,11 @@ export function Paragraph({
     if (text.length === 0) paragraphRef.current!.textContent = EMPTY_TEXT_PLACEHOLDER;
     await triggerLocalSave();
     paragraphRef.current?.blur();
-  }, [triggerLocalSave, isEditing, textSelected]);
+  }, [triggerLocalSave, isEditing, selection]);
 
 
   const handleParagraphClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    setTextSelected(null);
+    setSelection(null);
     if (!paragraphRef.current) return;
 
     const text = paragraphRef.current?.textContent?.trim() || '';
@@ -132,9 +133,9 @@ export function Paragraph({
     event.preventDefault();
 
     if( event.button !== 2 ) return;
-    const selected_text = getSelectedTextAndPositions(event);
+    const curent_selection = getSelection(event);
     
-    if(selected_text) {
+    if(curent_selection) {
       // Should open popup menu on the mouse position clicked
       const max_right_position = 200;
       const targetBounds = event.currentTarget.getBoundingClientRect();
@@ -143,7 +144,7 @@ export function Paragraph({
         xRelative = targetBounds.width - max_right_position;
       }
       setHorizontalPosition(xRelative);
-      setTextSelected(selected_text);
+      setSelection(curent_selection);
     }
   }, [isEditing]);
 
@@ -332,6 +333,26 @@ export function Paragraph({
     deleteParagraph(paragraph.id);
   }, [onDelete]);
 
+  // --------------------------------------
+
+  const handleTextBold = useCallback(() => {
+    if (!selection) return;
+    toggleFormattingOnSelection(selection, 'strong');
+    setSelection(null);
+  }, [selection]);
+
+  const handleTextUnderline = useCallback(() => {
+    if (!selection) return;
+    toggleFormattingOnSelection(selection, 'u');
+    setSelection(null);
+  }, [selection]);
+
+  const handleTextItalic = useCallback(() => {
+    if (!selection) return;
+    toggleFormattingOnSelection(selection, 'i');
+    setSelection(null);
+  }, [selection]);
+
   const vertical_buttons_actions = [
     { icon: <TextAlignCenter color="#fff" size={20} />, description: 'Toggle Text Center', action: setTextCenter },
     { icon: <TextAlignEnd color="#fff" size={20} />, description: 'Toggle Text Right', action: setTextRight },
@@ -343,9 +364,9 @@ export function Paragraph({
   ];
 
   const context_buttons_actions = [
-    { icon: <Bold color="#fff" size={20} />, description: 'Set Text Bold', action: () => {}},
-    { icon: <Italic color="#fff" size={20} />, description: 'Set Text Italic', action: () => {}},
-    { icon: <Underline color="#fff" size={20} />, description: 'Set Text Underline', action: () => {}},
+    { icon: <Bold color="#fff" size={20} />, description: 'Set Text Bold', action: handleTextBold},
+    { icon: <Italic color="#fff" size={20} />, description: 'Set Text Italic', action: handleTextItalic},
+    { icon: <Underline color="#fff" size={20} />, description: 'Set Text Underline', action: handleTextUnderline},
   ];
 
   // --------------------------------------
@@ -379,7 +400,7 @@ export function Paragraph({
         </div>
 
         {/* Botões horizontais posicionáveis */}
-        {isEditing && textSelected && <div className="absolute top-[-1.9rem] w-full h-[30px] select-none">
+        {isEditing && selection && <div className="absolute top-[-1.9rem] w-full h-[30px] select-none">
         <div className="absolute bg-slate-800 focus:outline-none flex gap-[5px] p-1" style={{ left: `${horizontalPosition}px` }}>
             {context_buttons_actions.map(({icon, description, action}) => (
               <button key={description} className={styles.contextButtonStyle} onClick={action}>
