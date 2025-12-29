@@ -295,9 +295,9 @@ export function Paragraph({
   }, [onDelete]);
 
   const buttons_actions = [
-    { icon: <Quote color="#fff" />, description: 'Toggle Quote', action: toggleQuote, style: '' },
-    { icon: <Star color="#fff" />, description: 'Toggle Highlight', action: toggleHighlight, style: '' },
-    { icon: <Eraser color="#fff" />, description: 'Delete Paragraph', action: handleDeleteAction, style: '' },
+    { icon: <Quote color="#fff" />, description: 'Toggle Quote', action: toggleQuote },
+    { icon: <Star color="#fff" />, description: 'Toggle Highlight', action: toggleHighlight },
+    { icon: <Eraser color="#fff" />, description: 'Delete Paragraph', action: handleDeleteAction },
   ];
 
   // --------------------------------------
@@ -315,12 +315,12 @@ export function Paragraph({
         <div
           className={styles.toggleButtonsStyle(isEditing)}
         >
-          {buttons_actions.map(({ icon, description, action, style }) => (
+          {buttons_actions.map(({ icon, description, action }) => (
             <button
               key={description}
               tabIndex={-1}
               aria-label={description}
-              className={styles.toggleButtonStyle(isEditing, style)}
+              className={styles.toggleButtonStyle(isEditing)}
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={action}
