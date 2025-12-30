@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { NavigationDirection, ParagraphInterface, textAlignmentType } from '@/components/editor/utils/interfaces';
+import {  useCallback, useEffect, useRef, useState } from 'react';
+import { NavigationDirection, ParagraphInterface } from '@/components/editor/utils/interfaces';
 import SyncIndicator from '@/components/editor/SyncIndicator';
 import { countWords } from '@/components/editor/utils/helpers';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
@@ -10,14 +10,14 @@ import { paragraphStyles as styles } from '@/components/editor/utils/paragraphSt
 import {
   handleClick,
   setCursorAt,
-  handleDeleteQuestion,
   updateCursorPosition,
   getSelection,
-  toggleFormattingOnSelection,
-  clearFormattingOnSelection
 } from '@/components/editor/utils/utils';
-import { Bold, Eraser, Italic, Quote, RemoveFormatting, Star, TextAlignCenter, TextAlignEnd, TextAlignJustify, TextAlignStart, Underline } from 'lucide-react';
+import { Quote } from 'lucide-react';
+import { useActionButtons } from '@/hooks/editor/paragraphs/useActionButtons';
 
+const ICON_SIZE = 20;
+const ICON_COLOR = "#fff";
 const DEBOUNCE_DELAY_MS = 700;
 const EMPTY_TEXT_PLACEHOLDER = 'Clique para editar este parágrafo...';
 
@@ -43,13 +43,9 @@ export function Paragraph({
 
   const paragraphRef = useRef<HTMLDivElement>(null);
   const previousTextRef = useRef(paragraph.text);
-
   const [isEditing, setIsEditing] = useState(false);
-  const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
-  const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);
-  const [isTextFormatting, setIsTextFormatting] = useState(false);
-  const [textAlignment, setTextAlignment] = useState<textAlignmentType>(paragraph.textAlignment || 'text-justify');
-  const [selection, setSelection] = useState<Selection | null>(null);
+  const [shouldForceLocalSave, setForceLocalSave] = useState(false);
+  const [shouldForceLocalDelete, setForceLocalDelete] = useState(false);
   const [horizontalPosition, setHorizontalPosition] = useState(0);
 
   const [characterCount, setCharacterCount] = useState(paragraph.text?.trim().length || 0);
@@ -59,19 +55,21 @@ export function Paragraph({
   // Custom hooks
   const { paragraphLocalSave, deleteParagraph } = useLocalStorage();
   const [setDebounce, clearDebounceTimer] = useDebounceTimer();
-
-  // Effect to set initial content
-  useEffect(() => {
-    if (!paragraphRef.current) return;
-    let content = paragraph.text
-    if (paragraph.text.length === 0) {
-      content = EMPTY_TEXT_PLACEHOLDER;
-    }
-    paragraphRef.current.innerHTML = content
-  }, [paragraph.text]);
+  const {
+    isQuote,
+    isHighlighted,
+    textAlignment,
+    selection,
+    vertical_buttons_actions,
+    context_buttons_actions,
+    setSelection,
+  } = useActionButtons(
+    paragraph,
+    setForceLocalSave,
+    setForceLocalDelete,
+  );
 
   // Local Storage Functions --------------
-
   const triggerLocalSave = useCallback(async (forceUpdate = false) => {
     let newText = paragraphRef.current?.innerText?.trim() || '';
     
@@ -100,10 +98,8 @@ export function Paragraph({
   }, [clearDebounceTimer, setDebounce, triggerLocalSave]);
 
   const onCreateNewParagraphAbove = useCallback(() => {
-    onCreateNewParagraph && onCreateNewParagraph(paragraph.index);
+    onCreateNewParagraph?.(paragraph.index);
   }, [paragraph.index, onCreateNewParagraph]);
-
-  // Handle functions ----------------------
 
   const handleFinishEditing = useCallback(async () => {
     if(selection) return;
@@ -119,17 +115,7 @@ export function Paragraph({
     paragraphRef.current?.blur();
   }, [triggerLocalSave, isEditing, selection, onRemoteSync]);
 
-
-  const handleParagraphClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    setSelection(null);
-    if (!paragraphRef.current) return;
-
-    const text = paragraphRef.current?.textContent?.trim() || '';
-    if (text === EMPTY_TEXT_PLACEHOLDER) paragraphRef.current.textContent = '';
-
-    handleClick(event, paragraphRef, isEditing, setIsEditing);
-  }, [isEditing]);
-
+  // Navigation ------------------------
 
   const handleRightClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
 
@@ -151,9 +137,17 @@ export function Paragraph({
       setHorizontalPosition(xRelative);
       setSelection(curent_selection);
     }
-  }, [isEditing]);
+  }, [isEditing, setSelection]);
 
-  // Navigation ------------------------
+  const handleParagraphClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    setSelection(null);
+    if (!paragraphRef.current) return;
+
+    const text = paragraphRef.current?.textContent?.trim() || '';
+    if (text === EMPTY_TEXT_PLACEHOLDER) paragraphRef.current.textContent = '';
+
+    handleClick(event, paragraphRef, isEditing, setIsEditing);
+  }, [isEditing, setSelection]);
 
   const handleFinishEditingAndNavigate = useCallback((
     event: React.KeyboardEvent<HTMLDivElement>,
@@ -248,15 +242,22 @@ export function Paragraph({
         handleFinishEditingAndNavigate(event, direction);
       }
 
-      handleDeleteAction();
+      deleteParagraph(paragraphRef, paragraph, EMPTY_TEXT_PLACEHOLDER, onDelete);
       return;
     }
   }, [
+    isEditing,
     isCursorAtFirstPosition,
     isCursorAtLastPosition,
-    navigation.canNavigateNext,
-    navigation.canNavigatePrevious,
-    handleFinishEditingAndNavigate
+    navigation,
+    paragraph.index,
+    handleFinishEditing,
+    onCreateNewParagraph,
+    handleFinishEditingAndNavigate,
+    deleteParagraph,
+    onReorder,
+    onNavigate,
+    onDelete,
   ]);
 
   const handleOnFocus = useCallback(() => {
@@ -289,6 +290,19 @@ export function Paragraph({
     );
   }, [isEditing, handleOnFocus]);
 
+  // Effects --------------------------------
+
+  // Effect to set initial content
+  useEffect(() => {
+    if (!paragraphRef.current) return;
+    let content = paragraph.text
+    if (paragraph.text.length === 0) {
+      content = EMPTY_TEXT_PLACEHOLDER;
+    }
+    paragraphRef.current.innerHTML = content
+  }, [paragraph.text]);
+
+  // Effect to handle focus activation
   useEffect(() => {
     if (!focusActivation) return;
     if (focusActivation.direction === 'Up') {
@@ -298,100 +312,24 @@ export function Paragraph({
     }
   }, [focusActivation]);
 
-  // Toggles Buttons ------------------------------
-
+  // Effect to trigger local save when flagged
   useEffect(() => {
+    if (!shouldForceLocalSave) return;
     triggerLocalSave(true);
+    setForceLocalSave(false);
+  }, [shouldForceLocalSave, triggerLocalSave]);
+
+  // Effect to trigger local delete when flagged
+  useEffect(() => {
+    if (!shouldForceLocalDelete) return;
+    deleteParagraph(paragraphRef, paragraph, EMPTY_TEXT_PLACEHOLDER, onDelete);
+    setForceLocalDelete(false);
+  }, [shouldForceLocalDelete, deleteParagraph]);
+
+  // Effect to trigger local save on style changes
+  useEffect(() => {
+      triggerLocalSave(true);
   }, [isQuote, isHighlighted, textAlignment]);
-
-   useEffect(() => {
-    if(!isTextFormatting) return;
-    setIsTextFormatting(false);
-    triggerLocalSave(true);
-  }, [isTextFormatting]);
-
-  const setTextCenter = useCallback(() => {
-    setTextAlignment('text-center');
-  }, []);
-
-  const setTextLeft = useCallback(() => {
-    setTextAlignment('text-left');
-  }, []);
-
-  const setTextRight = useCallback(() => {
-    setTextAlignment('text-right');
-  }, []);
-
-  const setTextJustify = useCallback(() => {
-    setTextAlignment('text-justify');
-  }, []);
-
-  const toggleQuote = useCallback(() => {
-    setIsQuote(prev => !prev);
-  }, []);
-
-  const toggleHighlight = useCallback(() => {
-    setIsHighlighted(prev => !prev);
-  }, []);
-
-  const handleDeleteAction = useCallback(() => {
-    if (!onDelete) return;
-    let text = paragraphRef.current?.textContent?.trim() || '';
-    if (text === EMPTY_TEXT_PLACEHOLDER) text = '';
-    const result = handleDeleteQuestion(text, 'parágrafo');
-    if (!result) return;
-    onDelete();
-    deleteParagraph(paragraph.id);
-  }, [onDelete]);
-
-  // --------------------------------------
-
-  const handleTextBold = useCallback(() => {
-    if (!selection) return;
-    toggleFormattingOnSelection(selection, 'strong');
-    setIsTextFormatting(true);
-    setSelection(null);
-  }, [selection]);
-
-  const handleTextUnderline = useCallback(() => {
-    if (!selection) return;
-    toggleFormattingOnSelection(selection, 'u');
-    setIsTextFormatting(true);
-    setSelection(null);
-  }, [selection]);
-
-  const handleTextItalic = useCallback(() => {
-    if (!selection) return;
-    toggleFormattingOnSelection(selection, 'i');
-    setIsTextFormatting(true);
-    setSelection(null);
-  }, [selection]);
-
-  const handleClearFormatting = useCallback(() => {
-    if (!selection) return;
-    clearFormattingOnSelection(selection);
-    setIsTextFormatting(true);
-    setSelection(null);
-  }, [selection]);
-
-  const ICON_SIZE = 20;
-  const ICON_COLOR = "#fff";
-  const vertical_buttons_actions = [
-    { icon: <TextAlignCenter color={ICON_COLOR} size={ICON_SIZE} />, description: 'Toggle Text Center', action: setTextCenter },
-    { icon: <TextAlignEnd color={ICON_COLOR} size={ICON_SIZE} />, description: 'Toggle Text Right', action: setTextRight },
-    { icon: <TextAlignStart color={ICON_COLOR} size={ICON_SIZE} />, description: 'Toggle Text Left', action: setTextLeft },
-    { icon: <TextAlignJustify color={ICON_COLOR} size={ICON_SIZE} />, description: 'Toggle Text Justify', action: setTextJustify },
-    { icon: <Quote color={ICON_COLOR} size={ICON_SIZE} />, description: 'Toggle Quote', action: toggleQuote },
-    { icon: <Star color={ICON_COLOR} size={ICON_SIZE} />, description: 'Toggle Highlight', action: toggleHighlight },
-    { icon: <Eraser color={ICON_COLOR} size={ICON_SIZE} />, description: 'Delete Paragraph', action: handleDeleteAction },
-  ];
-
-  const context_buttons_actions = [
-    { icon: <Bold color={ICON_COLOR} size={ICON_SIZE} />, description: 'Set Text Bold', action: handleTextBold},
-    { icon: <Italic color={ICON_COLOR} size={ICON_SIZE} />, description: 'Set Text Italic', action: handleTextItalic},
-    { icon: <Underline color={ICON_COLOR} size={ICON_SIZE} />, description: 'Set Text Underline', action: handleTextUnderline},
-    { icon: <RemoveFormatting color={ICON_COLOR} size={ICON_SIZE} />, description: 'Clear Text Formatting', action: handleClearFormatting},
-  ];
 
   // --------------------------------------
 
@@ -408,7 +346,7 @@ export function Paragraph({
         <div
           className={styles.verticalButtonsStyle(isEditing)}
         >
-          {vertical_buttons_actions.map(({ icon, description, action }) => (
+          {vertical_buttons_actions.map(({ Icon, description, action }) => (
             <button
               key={description}
               tabIndex={-1}
@@ -418,7 +356,7 @@ export function Paragraph({
               onMouseDown={(e) => e.preventDefault()}
               onClick={action}
             >
-              {icon}
+              <Icon color={ICON_COLOR} size={ICON_SIZE} />
             </button>
           ))}
         </div>
@@ -426,9 +364,9 @@ export function Paragraph({
         {/* Botões horizontais posicionáveis */}
         {isEditing && selection && <div className={styles.contextButtonsContainerStyle}>
           <div className={styles.contextButtonsWrapper} style={{ left: `${horizontalPosition}px` }}>
-            {context_buttons_actions.map(({icon, description, action}) => (
+            {context_buttons_actions.map(({Icon, description, action}) => (
               <button key={description} className={styles.contextButtonStyle} onClick={action}>
-                {icon}
+                <Icon color={ICON_COLOR} size={ICON_SIZE} />
               </button>
             ))}
           </div>

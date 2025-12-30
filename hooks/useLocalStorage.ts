@@ -13,9 +13,11 @@ import {
   ParagraphUpdate
 } from '@/components/editor/utils/interfaces';
 import { TitleUpdateData } from '@/components/editor/editorComponents/Title';
+import { handleDeleteQuestion } from '@/components/editor/utils/utils';
 
 
 export function useLocalStorage() {
+
     const saveLocal = useCallback(
         async <T extends { id: string }>(
             type: 'document' | 'chapter' | 'paragraph',
@@ -82,7 +84,7 @@ export function useLocalStorage() {
           sync: false
         }
     
-        const { chapters, ...toSaveLocal } = toSave;
+        const { ...toSaveLocal } = toSave;
     
         try {
           await saveLocal('document', toSaveLocal);
@@ -165,21 +167,36 @@ export function useLocalStorage() {
       }, [saveLocal]);
 
     /**
-       * Delete a paragraph locally: removes it from the local document state
-       * and deletes the unsynced entry from local storage / IndexedDB.
-       *
-       * @param localDocument - the current document object
-       * @param paragraphId - id of the paragraph to delete
-       * @param setLocalDocument - function to update the local document state
-       */
-      const deleteParagraph = useCallback( async ( paragraphId: string ) => {
-        await deleteLocal('paragraph', paragraphId);
-      }, [deleteLocal]);
+     * Delete a paragraph locally: removes it from the local document state
+     * and deletes the unsynced entry from local storage / IndexedDB.
+     *
+     * @param localDocument - the current document object
+     * @param paragraphId - id of the paragraph to delete
+     * @param setLocalDocument - function to update the local document state
+     */
+    const handleDeleteParagraph = useCallback( async ( paragraphId: string ) => {
+      await deleteLocal('paragraph', paragraphId);
+    }, [deleteLocal]);
 
+    const deleteParagraph = useCallback((
+      paragraphRef: React.RefObject<HTMLDivElement | null>,
+      paragraph: ParagraphInterface,
+      text_placeholder: string,
+      onDelete?: () => void
+    ) => {
+        if (!onDelete) return;
+        let text = paragraphRef.current?.textContent?.trim() || '';
+        if (text === text_placeholder) text = '';
+        const result = handleDeleteQuestion(text, 'parágrafo');
+        if (!result) return;
+        onDelete();
+        handleDeleteParagraph(paragraph.id);
+      }, [handleDeleteParagraph]);
+    
     return {
         documentLocalSave,
         chapterLocalSave,
         paragraphLocalSave,
-        deleteParagraph
+        deleteParagraph,
     };
 }
