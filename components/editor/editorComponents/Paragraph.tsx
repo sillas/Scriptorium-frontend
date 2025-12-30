@@ -53,8 +53,8 @@ export function Paragraph({
   const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
   const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
   // Custom hooks
-  const { paragraphLocalSave, deleteParagraph } = useLocalStorage();
-  const [setDebounce, clearDebounceTimer] = useDebounceTimer();
+  const { saveLocalParagraph, deleteLocalParagraph } = useLocalStorage();
+  const [ setDebounce, clearDebounceTimer ] = useDebounceTimer();
   const {
     isQuote,
     isHighlighted,
@@ -70,23 +70,18 @@ export function Paragraph({
   );
 
   // Local Storage Functions --------------
-  const triggerLocalSave = useCallback(async (forceUpdate = false) => {
-    let newText = paragraphRef.current?.innerText?.trim() || '';
-    
-    if (newText === EMPTY_TEXT_PLACEHOLDER) newText = ''
-    if (!forceUpdate && newText === previousTextRef.current) return;
-    previousTextRef.current = newText;
-
-    await paragraphLocalSave(paragraph, {
-      text: paragraphRef.current?.innerHTML || '',
-      characterCount: newText.length,
-      wordCount: countWords(newText),
-      isQuote: isQuote || false,
-      isHighlighted: isHighlighted || false,
-      textAlignment: textAlignment,
-      updatedAt: new Date(),
-    });
-  }, [paragraph, isQuote, isHighlighted, textAlignment]);
+  const triggerLocalSave = useCallback( async (forceUpdate = false) => {
+    await saveLocalParagraph(
+      paragraphRef,
+      previousTextRef,
+      paragraph,
+      isQuote,
+      isHighlighted,
+      textAlignment,
+      EMPTY_TEXT_PLACEHOLDER,
+      forceUpdate
+    );
+  }, [paragraph, isQuote, isHighlighted, textAlignment, saveLocalParagraph]);
 
   const scheduleLocalAutoSave = useCallback(() => {
     clearDebounceTimer();
@@ -120,7 +115,6 @@ export function Paragraph({
   const handleRightClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
 
     if(!isEditing) return;
-
     event.preventDefault();
 
     if( event.button !== 2 ) return;
@@ -157,6 +151,74 @@ export function Paragraph({
     onNavigate?.(event, direction);
   }, [handleFinishEditing, onNavigate]);
 
+  // -------------------------------------------
+
+  const goToParagraphOnArrows = useCallback((
+    event: React.KeyboardEvent<HTMLDivElement>,
+    direction: NavigationDirection
+  ) => {
+    const canNavigate = direction === 'Down'
+        ? navigation.canNavigateNext
+        : navigation.canNavigatePrevious;
+    if (!canNavigate) return;
+
+    // Navegar apenas se o cursor estiver na extremidade
+    const isAtEdge = direction === 'Up'
+      ? isCursorAtFirstPosition
+      : isCursorAtLastPosition;
+
+    if (isAtEdge) {
+      event.preventDefault();
+      handleFinishEditingAndNavigate(event, direction);
+    }
+  }, [
+    navigation,
+    isCursorAtFirstPosition,
+    isCursorAtLastPosition,
+    handleFinishEditingAndNavigate,
+  ]);
+
+  const goToParagraphOnTab = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    const direction: NavigationDirection = event.shiftKey ? 'Up' : 'Down';
+    const shouldNavigate =
+      (direction === 'Down' && navigation.canNavigateNext) ||
+      (direction === 'Up' && navigation.canNavigatePrevious)
+
+    if (shouldNavigate) {
+      handleFinishEditingAndNavigate(event, direction);
+    }
+    return;
+  }, [navigation, handleFinishEditingAndNavigate]);
+
+  const handleEnterKeyPress = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    // Allow line break with Shift+Enter
+    if (event.shiftKey) return;
+
+    event.preventDefault();
+
+    // Create new paragraph at end of chapter
+    if (navigation.isTheLastParagraphInChapter) {
+      handleFinishEditing();
+      onCreateNewParagraph?.(null);
+      return;
+    }
+
+    // Create new paragraph in between with Ctrl+Enter
+    if (event.ctrlKey) {
+      handleFinishEditing();
+      onCreateNewParagraph?.(paragraph.index + 1);
+      return;
+    }
+
+    handleFinishEditingAndNavigate(event, 'Down');
+  }, [
+    navigation,
+    paragraph.index,
+    handleFinishEditing,
+    onCreateNewParagraph,
+    handleFinishEditingAndNavigate
+  ]);
+
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     const pressedKey = event.key;
 
@@ -170,58 +232,19 @@ export function Paragraph({
         return;
       }
 
-      const canNavigate = direction === 'Down'
-        ? navigation.canNavigateNext
-        : navigation.canNavigatePrevious;
-
-      if (!canNavigate) return;
-
-      // Navegar apenas se o cursor estiver na extremidade
-      const isAtEdge = direction === 'Up'
-        ? isCursorAtFirstPosition
-        : isCursorAtLastPosition;
-
-      if (isAtEdge) {
-        event.preventDefault();
-        handleFinishEditingAndNavigate(event, direction);
-      }
-
+      goToParagraphOnArrows(event, direction);
       return;
     }
 
     // Go to previous or next paragraph on Tab
     if (pressedKey === 'Tab' && isEditing) {
-      const direction: NavigationDirection = event.shiftKey ? 'Up' : 'Down';
-      const shouldNavigate =
-        (direction === 'Down' && navigation.canNavigateNext) ||
-        (direction === 'Up' && navigation.canNavigatePrevious)
-
-      if (shouldNavigate) {
-        handleFinishEditingAndNavigate(event, direction);
-      }
+      goToParagraphOnTab(event);
       return;
     }
 
     if (pressedKey === 'Enter' && isEditing) {
-      // Allow line break with Shift+Enter
-      if (event.shiftKey) return;
-
-      event.preventDefault();
-      // Create new paragraph at end of chapter
-      if (navigation.isTheLastParagraphInChapter) {
-        handleFinishEditing();
-        onCreateNewParagraph && onCreateNewParagraph(null);
-        return;
-      }
-
-      // Create new paragraph in between with Ctrl+Enter
-      if (event.ctrlKey) {
-        handleFinishEditing();
-        onCreateNewParagraph && onCreateNewParagraph(paragraph.index + 1);
-        return;
-      }
-
-      handleFinishEditingAndNavigate(event, 'Down');
+      handleEnterKeyPress(event);
+      return;
     }
 
     const currentText = paragraphRef.current?.textContent?.trim() || '';
@@ -242,22 +265,21 @@ export function Paragraph({
         handleFinishEditingAndNavigate(event, direction);
       }
 
-      deleteParagraph(paragraphRef, paragraph, EMPTY_TEXT_PLACEHOLDER, onDelete);
+      deleteLocalParagraph(paragraphRef, paragraph, EMPTY_TEXT_PLACEHOLDER, onDelete);
       return;
     }
   }, [
     isEditing,
-    isCursorAtFirstPosition,
-    isCursorAtLastPosition,
     navigation,
     paragraph.index,
     handleFinishEditing,
-    onCreateNewParagraph,
     handleFinishEditingAndNavigate,
-    deleteParagraph,
+    deleteLocalParagraph,
     onReorder,
-    onNavigate,
     onDelete,
+    goToParagraphOnArrows,
+    goToParagraphOnTab,
+    handleEnterKeyPress
   ]);
 
   const handleOnFocus = useCallback(() => {
@@ -322,9 +344,9 @@ export function Paragraph({
   // Effect to trigger local delete when flagged
   useEffect(() => {
     if (!shouldForceLocalDelete) return;
-    deleteParagraph(paragraphRef, paragraph, EMPTY_TEXT_PLACEHOLDER, onDelete);
+    deleteLocalParagraph(paragraphRef, paragraph, EMPTY_TEXT_PLACEHOLDER, onDelete);
     setForceLocalDelete(false);
-  }, [shouldForceLocalDelete, deleteParagraph]);
+  }, [shouldForceLocalDelete, deleteLocalParagraph]);
 
   // Effect to trigger local save on style changes
   useEffect(() => {

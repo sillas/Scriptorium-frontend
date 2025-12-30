@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { countWords } from '@/components/editor/utils/helpers';
 
 import {
   initDB,
@@ -10,7 +11,8 @@ import {
   DocumentInterface, 
   ChapterInterface,
   ParagraphInterface,
-  ParagraphUpdate
+  ParagraphUpdate,
+  textAlignmentType
 } from '@/components/editor/utils/interfaces';
 import { TitleUpdateData } from '@/components/editor/editorComponents/Title';
 import { handleDeleteQuestion } from '@/components/editor/utils/utils';
@@ -143,7 +145,7 @@ export function useLocalStorage() {
        * @param paragraph - the paragraph to save
        * @param textData - optional text update information (text, counts, updatedAt)
        */
-      const paragraphLocalSave = useCallback(async (
+      const HandleSaveLocalParagraph = useCallback(async (
         paragraph: ParagraphInterface,
         textData: ParagraphUpdate | {} = {},
       ): Promise<boolean> => {
@@ -178,7 +180,7 @@ export function useLocalStorage() {
       await deleteLocal('paragraph', paragraphId);
     }, [deleteLocal]);
 
-    const deleteParagraph = useCallback((
+    const deleteLocalParagraph = useCallback((
       paragraphRef: React.RefObject<HTMLDivElement | null>,
       paragraph: ParagraphInterface,
       text_placeholder: string,
@@ -193,10 +195,37 @@ export function useLocalStorage() {
         handleDeleteParagraph(paragraph.id);
       }, [handleDeleteParagraph]);
     
+    const saveLocalParagraph = useCallback(async (
+      paragraphRef: React.RefObject<HTMLDivElement | null>,
+      previousTextRef: React.RefObject<string>,
+      paragraph: ParagraphInterface,
+      isQuote: boolean,
+      isHighlighted: boolean,
+      textAlignment: textAlignmentType,
+      text_placeholder: string,
+      forceUpdate = false,
+    ) => {
+      let newText = paragraphRef.current?.innerText?.trim() || '';
+      
+      if (newText === text_placeholder) newText = ''
+      if (!forceUpdate && newText === previousTextRef.current) return;
+      previousTextRef.current = newText;
+  
+      await HandleSaveLocalParagraph(paragraph, {
+        text: paragraphRef.current?.innerHTML || '',
+        characterCount: newText.length,
+        wordCount: countWords(newText),
+        isQuote: isQuote || false,
+        isHighlighted: isHighlighted || false,
+        textAlignment: textAlignment,
+        updatedAt: new Date(),
+      });
+    }, [HandleSaveLocalParagraph]);
+    
     return {
         documentLocalSave,
         chapterLocalSave,
-        paragraphLocalSave,
-        deleteParagraph,
+        saveLocalParagraph,
+        deleteLocalParagraph,
     };
 }
