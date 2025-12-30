@@ -291,6 +291,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
               chapter={chapter}
               setChapters={setLocalChapters}
               onFocus={() => setActiveParagraph(null)}
+              onRemoteSync={() => {}}
             >
               {localParagraphs.filter(p => p.chapterId === chapter.id).map((paragraph) => (
                   <Paragraph 
@@ -303,6 +304,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
                     onDelete={() => handleDeleteParagraph(paragraph.index)}
                     onCreateNewParagraph={(paragraphIndex) => createParagraph(chapter.id, paragraphIndex)}
                     fontClass={localDocument.fontClass || "font-merriweather"}
+                    onRemoteSync={() => {}}
                   />
                 ))}
 

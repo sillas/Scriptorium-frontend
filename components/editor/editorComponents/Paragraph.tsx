@@ -33,12 +33,12 @@ interface ParagraphProps {
   onNavigate?: (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => void;
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
   onReorder?: (direction: NavigationDirection) => void;
-  // onRemoteSync?: () => void;
+  onRemoteSync?: () => void;
   fontClass?: string;
 }
 
 export function Paragraph({
-  paragraph, focusActivation, navigation, onNavigate, onDelete, onCreateNewParagraph, onReorder, fontClass = ''
+  paragraph, focusActivation, navigation, onNavigate, onDelete, onCreateNewParagraph, onReorder, onRemoteSync, fontClass = ''
 }: ParagraphProps) {
 
   const paragraphRef = useRef<HTMLDivElement>(null);
@@ -115,8 +115,9 @@ export function Paragraph({
     const text = paragraphRef.current!.textContent.trim() || '';
     if (text.length === 0) paragraphRef.current!.textContent = EMPTY_TEXT_PLACEHOLDER;
     await triggerLocalSave();
+    onRemoteSync?.();
     paragraphRef.current?.blur();
-  }, [triggerLocalSave, isEditing, selection]);
+  }, [triggerLocalSave, isEditing, selection, onRemoteSync]);
 
 
   const handleParagraphClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {

@@ -7,6 +7,7 @@ interface ChapterProps {
   chapter: ChapterInterface;
   setChapters?: React.Dispatch<React.SetStateAction<ChapterInterface[]>>;
   onFocus?: () => void;
+  onRemoteSync?: () => void;
   children?: ReactNode;
 }
 
@@ -20,7 +21,7 @@ const updateChapterInList = (currentChapter: ChapterInterface, updatedChapterId:
   };
 }
 
-export default function Chapter({ chapter, setChapters, onFocus, children }: ChapterProps) {
+export default function Chapter({ chapter, setChapters, onFocus, onRemoteSync, children }: ChapterProps) {
   const { chapterLocalSave } = useLocalStorage();
 
   const handleChapterLocalChange = useCallback( async (data: TitleUpdateData) => {
@@ -31,7 +32,8 @@ export default function Chapter({ chapter, setChapters, onFocus, children }: Cha
     setChapters?.( prevChapters => 
       prevChapters.map( ch => updateChapterInList(ch, chapter.id, data))
     );
-  }, []);
+    onRemoteSync?.();
+  }, [onRemoteSync, setChapters]);
   
   return (
     <div
