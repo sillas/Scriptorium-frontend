@@ -1,9 +1,5 @@
 export type textAlignmentType = 'text-justify'| 'text-right'|'text-left'|'text-center';
-export interface TextSelectedInfo {
-  selectedText: string;
-  startPosition: number;
-  endPosition: number;
-};
+
 export interface ParagraphUpdate {
   text: string;
   characterCount: number;

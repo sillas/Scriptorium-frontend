@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { NavigationDirection, ParagraphInterface, textAlignmentType, TextSelectedInfo } from '@/components/editor/utils/interfaces';
+import { NavigationDirection, ParagraphInterface, textAlignmentType } from '@/components/editor/utils/interfaces';
 import SyncIndicator from '@/components/editor/SyncIndicator';
 import { countWords } from '@/components/editor/utils/helpers';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
@@ -13,9 +13,10 @@ import {
   handleDeleteQuestion,
   updateCursorPosition,
   getSelection,
-  toggleFormattingOnSelection
+  toggleFormattingOnSelection,
+  clearFormattingOnSelection
 } from '@/components/editor/utils/utils';
-import { Bold, Eraser, Italic, Quote, Star, TextAlignCenter, TextAlignEnd, TextAlignJustify, TextAlignStart, Underline } from 'lucide-react';
+import { Bold, Eraser, Italic, Quote, RemoveFormatting, Star, TextAlignCenter, TextAlignEnd, TextAlignJustify, TextAlignStart, Underline } from 'lucide-react';
 
 const DEBOUNCE_DELAY_MS = 700;
 const EMPTY_TEXT_PLACEHOLDER = 'Clique para editar este parágrafo...';
@@ -353,20 +354,29 @@ export function Paragraph({
     setSelection(null);
   }, [selection]);
 
+  const handleClearFormatting = useCallback(() => {
+    if (!selection) return;
+    clearFormattingOnSelection(selection);
+    setSelection(null);
+  }, [selection]);
+
+  const ICON_SIZE = 20;
+  const ICON_COLOR = "#fff";
   const vertical_buttons_actions = [
-    { icon: <TextAlignCenter color="#fff" size={20} />, description: 'Toggle Text Center', action: setTextCenter },
-    { icon: <TextAlignEnd color="#fff" size={20} />, description: 'Toggle Text Right', action: setTextRight },
-    { icon: <TextAlignStart color="#fff" size={20} />, description: 'Toggle Text Left', action: setTextLeft },
-    { icon: <TextAlignJustify color="#fff" size={20} />, description: 'Toggle Text Justify', action: setTextJustify },
-    { icon: <Quote color="#fff" size={20} />, description: 'Toggle Quote', action: toggleQuote },
-    { icon: <Star color="#fff" size={20} />, description: 'Toggle Highlight', action: toggleHighlight },
-    { icon: <Eraser color="#fff" size={20} />, description: 'Delete Paragraph', action: handleDeleteAction },
+    { icon: <TextAlignCenter color={ICON_COLOR} size={ICON_SIZE} />, description: 'Toggle Text Center', action: setTextCenter },
+    { icon: <TextAlignEnd color={ICON_COLOR} size={ICON_SIZE} />, description: 'Toggle Text Right', action: setTextRight },
+    { icon: <TextAlignStart color={ICON_COLOR} size={ICON_SIZE} />, description: 'Toggle Text Left', action: setTextLeft },
+    { icon: <TextAlignJustify color={ICON_COLOR} size={ICON_SIZE} />, description: 'Toggle Text Justify', action: setTextJustify },
+    { icon: <Quote color={ICON_COLOR} size={ICON_SIZE} />, description: 'Toggle Quote', action: toggleQuote },
+    { icon: <Star color={ICON_COLOR} size={ICON_SIZE} />, description: 'Toggle Highlight', action: toggleHighlight },
+    { icon: <Eraser color={ICON_COLOR} size={ICON_SIZE} />, description: 'Delete Paragraph', action: handleDeleteAction },
   ];
 
   const context_buttons_actions = [
-    { icon: <Bold color="#fff" size={20} />, description: 'Set Text Bold', action: handleTextBold},
-    { icon: <Italic color="#fff" size={20} />, description: 'Set Text Italic', action: handleTextItalic},
-    { icon: <Underline color="#fff" size={20} />, description: 'Set Text Underline', action: handleTextUnderline},
+    { icon: <Bold color={ICON_COLOR} size={ICON_SIZE} />, description: 'Set Text Bold', action: handleTextBold},
+    { icon: <Italic color={ICON_COLOR} size={ICON_SIZE} />, description: 'Set Text Italic', action: handleTextItalic},
+    { icon: <Underline color={ICON_COLOR} size={ICON_SIZE} />, description: 'Set Text Underline', action: handleTextUnderline},
+    { icon: <RemoveFormatting color={ICON_COLOR} size={ICON_SIZE} />, description: 'Clear Text Formatting', action: handleClearFormatting},
   ];
 
   // --------------------------------------
