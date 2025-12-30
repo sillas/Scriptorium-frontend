@@ -9,74 +9,39 @@ import {
     toggleFormattingOnSelection,
     clearFormattingOnSelection
 } from '@/components/editor/utils/utils';
-import { ParagraphInterface, textAlignmentType } from '@/components/editor/utils/interfaces';
+import { ParagraphInterface, textAlignmentType, FormatTag } from '@/components/editor/utils/interfaces';
 
 export function useActionButtons(
     paragraph: ParagraphInterface,
     setForceLocalSave: React.Dispatch<React.SetStateAction<boolean>>,
     setForceLocalDelete: React.Dispatch<React.SetStateAction<boolean>>,
 ) {
-    const [isTextFormatting, setIsTextFormatting] = useState(false);
     const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
     const [selection, setSelection] = useState<Selection | null>(null);
     const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);
     const [textAlignment, setTextAlignment] = useState<textAlignmentType>(paragraph.textAlignment || 'text-justify');
+    const [isTextFormatting, setIsTextFormatting] = useState(false);
 
-    const setTextCenter = useCallback(() => {
-        setTextAlignment('text-center');
-    }, []);
+    const toggleQuote = () => setIsQuote(prev => !prev);
+    const setTextLeft = () => setTextAlignment('text-left');
+    const setTextRight = () => setTextAlignment('text-right');
+    const setTextCenter = () => setTextAlignment('text-center');
+    const setTextJustify = () => setTextAlignment('text-justify');
+    const toggleHighlight = () => setIsHighlighted(prev => !prev);
 
-    const setTextLeft = useCallback(() => {
-        setTextAlignment('text-left');
-    }, []);
-
-    const setTextRight = useCallback(() => {
-        setTextAlignment('text-right');
-    }, []);
-
-    const setTextJustify = useCallback(() => {
-        setTextAlignment('text-justify');
-    }, []);
-
-    const toggleQuote = useCallback(() => {
-        setIsQuote(prev => !prev);
-    }, []);
-
-    const toggleHighlight = useCallback(() => {
-        setIsHighlighted(prev => !prev);
-    }, []);
-
-    const handleTextBold = useCallback(() => {
+    const handleFormating = useCallback((tag: FormatTag | null) => {
         if (!selection) return;
-        toggleFormattingOnSelection(selection, 'strong');
+        if (tag) toggleFormattingOnSelection(selection, tag);
+        else clearFormattingOnSelection(selection);
         setIsTextFormatting(true);
         setSelection(null);
     }, [selection]);
 
-    const handleTextUnderline = useCallback(() => {
-        if (!selection) return;
-        toggleFormattingOnSelection(selection, 'u');
-        setIsTextFormatting(true);
-        setSelection(null);
-    }, [selection]);
-
-    const handleTextItalic = useCallback(() => {
-        if (!selection) return;
-        toggleFormattingOnSelection(selection, 'i');
-        setIsTextFormatting(true);
-        setSelection(null);
-    }, [selection]);
-
-    const handleClearFormatting = useCallback(() => {
-        if (!selection) return;
-        clearFormattingOnSelection(selection);
-        setIsTextFormatting(true);
-        setSelection(null);
-    }, [selection]);
-
-    const handleDeleteAction = useCallback(() => {
-        setForceLocalDelete(true);
-    }, [setForceLocalDelete]);
+    const handleTextBold = () => handleFormating('strong');
+    const handleTextUnderline = () => handleFormating('u');
+    const handleTextItalic = () => handleFormating('i');
+    const handleClearFormatting = () => handleFormating(null)
+    const handleDeleteAction = () => setForceLocalDelete(true);
     
     useEffect(() => {
         if(!isTextFormatting) return;

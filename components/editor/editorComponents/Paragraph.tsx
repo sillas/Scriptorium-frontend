@@ -92,9 +92,9 @@ export function Paragraph({
     setWordCount(countWords(text));
   }, [clearDebounceTimer, setDebounce, triggerLocalSave]);
 
-  const onCreateNewParagraphAbove = useCallback(() => {
+  const onCreateNewParagraphAbove = () => {
     onCreateNewParagraph?.(paragraph.index);
-  }, [paragraph.index, onCreateNewParagraph]);
+  };
 
   const handleFinishEditing = useCallback(async () => {
     if(selection) return;

@@ -1,3 +1,5 @@
+import { FormatTag } from '@/components/editor/utils/interfaces';
+
 /**
  * Sets the cursor position at the clicked coordinates within a contentEditable element.
  * Should be called after the element becomes contentEditable.
@@ -137,8 +139,6 @@ export function getSelection(event: React.MouseEvent<HTMLDivElement>): Selection
 
     return selection
 }
-
-type FormatTag = 'strong' | 'i' | 'u';
 
 const hasConflictingTags = (selection: Selection, tag: FormatTag): boolean => {
 

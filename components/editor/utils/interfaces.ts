@@ -1,5 +1,5 @@
 export type textAlignmentType = 'text-justify'| 'text-right'|'text-left'|'text-center';
-
+export type FormatTag = 'strong' | 'i' | 'u';
 export interface ParagraphUpdate {
   text: string;
   characterCount: number;
