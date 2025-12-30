@@ -46,6 +46,7 @@ export function Paragraph({
   const [isEditing, setIsEditing] = useState(false);
   const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
   const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);
+  const [isTextFormatting, setIsTextFormatting] = useState(false);
   const [textAlignment, setTextAlignment] = useState<textAlignmentType>(paragraph.textAlignment || 'text-justify');
   const [selection, setSelection] = useState<Selection | null>(null);
   const [horizontalPosition, setHorizontalPosition] = useState(0);
@@ -65,20 +66,20 @@ export function Paragraph({
     if (paragraph.text.length === 0) {
       content = EMPTY_TEXT_PLACEHOLDER;
     }
-    paragraphRef.current.innerText = content
+    paragraphRef.current.innerHTML = content
   }, [paragraph.text]);
 
   // Local Storage Functions --------------
 
   const triggerLocalSave = useCallback(async (forceUpdate = false) => {
     let newText = paragraphRef.current?.innerText?.trim() || '';
+    
     if (newText === EMPTY_TEXT_PLACEHOLDER) newText = ''
-
     if (!forceUpdate && newText === previousTextRef.current) return;
     previousTextRef.current = newText;
 
     await paragraphLocalSave(paragraph, {
-      text: newText,
+      text: paragraphRef.current?.innerHTML || '',
       characterCount: newText.length,
       wordCount: countWords(newText),
       isQuote: isQuote || false,
@@ -126,6 +127,7 @@ export function Paragraph({
 
     handleClick(event, paragraphRef, isEditing, setIsEditing);
   }, [isEditing]);
+
 
   const handleRightClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
 
@@ -300,6 +302,12 @@ export function Paragraph({
     triggerLocalSave(true);
   }, [isQuote, isHighlighted, textAlignment]);
 
+   useEffect(() => {
+    if(!isTextFormatting) return;
+    setIsTextFormatting(false);
+    triggerLocalSave(true);
+  }, [isTextFormatting]);
+
   const setTextCenter = useCallback(() => {
     setTextAlignment('text-center');
   }, []);
@@ -339,24 +347,28 @@ export function Paragraph({
   const handleTextBold = useCallback(() => {
     if (!selection) return;
     toggleFormattingOnSelection(selection, 'strong');
+    setIsTextFormatting(true);
     setSelection(null);
   }, [selection]);
 
   const handleTextUnderline = useCallback(() => {
     if (!selection) return;
     toggleFormattingOnSelection(selection, 'u');
+    setIsTextFormatting(true);
     setSelection(null);
   }, [selection]);
 
   const handleTextItalic = useCallback(() => {
     if (!selection) return;
     toggleFormattingOnSelection(selection, 'i');
+    setIsTextFormatting(true);
     setSelection(null);
   }, [selection]);
 
   const handleClearFormatting = useCallback(() => {
     if (!selection) return;
     clearFormattingOnSelection(selection);
+    setIsTextFormatting(true);
     setSelection(null);
   }, [selection]);
 
