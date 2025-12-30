@@ -34,10 +34,11 @@ interface ParagraphProps {
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
   onReorder?: (direction: NavigationDirection) => void;
   // onRemoteSync?: () => void;
+  fontClass?: string;
 }
 
 export function Paragraph({
-  paragraph, focusActivation, navigation, onNavigate, onDelete, onCreateNewParagraph, onReorder
+  paragraph, focusActivation, navigation, onNavigate, onDelete, onCreateNewParagraph, onReorder, fontClass = ''
 }: ParagraphProps) {
 
   const paragraphRef = useRef<HTMLDivElement>(null);
@@ -433,7 +434,7 @@ export function Paragraph({
         </div>}
 
         {/* Parágrafo editável */}
-        <div className={styles.paragraphContainerStyle(isEditing, isHighlighted)}>
+        <div className={styles.paragraphContainerStyle(isEditing, isHighlighted, fontClass)}>
           {isCursorAtFirstPosition && navigation.canNavigatePrevious && (
             <span className={styles.isCursorAtFirstPositionStyle}>▲</span>
           )}

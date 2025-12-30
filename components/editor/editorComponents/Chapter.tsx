@@ -47,6 +47,7 @@ export default function Chapter({ chapter, setChapters, onFocus, children }: Cha
         updatedAt={chapter.updatedAt}
         onChange={handleChapterLocalChange}
         onRemoteSync={setLocalChapters}
+        fontClass="font-merriweather"
       />
       {children}
     </div>

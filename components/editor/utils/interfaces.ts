@@ -49,7 +49,7 @@ export interface DocumentInterface {
   updatedAt: Date;
   version: number;
   sync: boolean;
-  chapters?: ChapterInterface[];
+  fontClass?: string;
   metadata?: {
     tags?: string[];
     status?: 'draft' | 'active' | 'archived';

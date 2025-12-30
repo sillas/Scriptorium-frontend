@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+// import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ObjectId } from 'mongodb';
 import { getDatabase } from '@/app/lib/mongodb';
@@ -34,16 +34,7 @@ interface EditorProps {
 //   };
 // }
 
-/**
- * Converts a kebab-case slug to Title Case
- * @example "hello-world" -> "Hello World"
- */
-// function formatSlugToTitle(slug: string): string {
-//   return slug
-//     .split('-')
-//     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-//     .join(' ');
-// }
+
 
 // Database collection names
 const COLLECTIONS = {

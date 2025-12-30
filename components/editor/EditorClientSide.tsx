@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import EditorHeader from '@/components/editor/Header';
-import SideColumn from '@/components/editor/columns/SideColumn';
+import SideColumn from '@/components/editor/editorComponents/SideColumn';
 import Contents from '@/components/editor/editorComponents/Contents';
 import AddButton from '@/components/editor/editorComponents/AddButton';
 import Chapter from '@/components/editor/editorComponents/Chapter';
@@ -281,6 +281,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
             onRemoteSync={() => {}}
             onChange={(data) => true}
             onFocus={() => setActiveParagraph(null)}
+            fontClass={localDocument.fontClass || "font-merriweather"}
           />
           
           {/* Chapters with Titles and Paragraphs */}
@@ -301,6 +302,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
                     onReorder={(direction) => handleReorderParagraphs(direction, paragraph.index, chapterIndex)}
                     onDelete={() => handleDeleteParagraph(paragraph.index)}
                     onCreateNewParagraph={(paragraphIndex) => createParagraph(chapter.id, paragraphIndex)}
+                    fontClass={localDocument.fontClass || "font-merriweather"}
                   />
                 ))}
 

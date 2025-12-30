@@ -1,9 +1,4 @@
-import { 
-  DocumentInterface, 
-  ChapterInterface, 
-  ParagraphInterface,
-  ActiveParagraphInterface
-} from '@/components/editor/utils/interfaces';
+import { ParagraphInterface } from '@/components/editor/utils/interfaces';
 
 /**
  * Conta o número de palavras em um texto.

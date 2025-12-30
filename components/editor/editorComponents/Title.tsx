@@ -23,6 +23,7 @@ interface TitleProps {
   onRemoteSync?: (data: TitleUpdateData) => void;
   onChange?: (data: TitleUpdateData) => void;
   onFocus?: () => void;
+  fontClass?: string;
 }
 
 interface TitleMetadataProps {
@@ -63,7 +64,8 @@ export function Title({
   isDocumentLevel,
   onRemoteSync,
   onChange,
-  onFocus
+  onFocus,
+  fontClass = '',
 }: TitleProps) {
   const previousContentSnapshot = useRef<string>(title + (subtitle || ''));
   const titleRef = useRef<EditableHeadingHandle>(null);
@@ -133,7 +135,7 @@ export function Title({
         isDocumentLevel
           ? 'px-8 mb-6 rounded-lg'
           : 'px-3 mb-3 rounded-md'
-      } bg-gray-100 relative`}
+      } bg-gray-100 relative ${fontClass}`}
     >
       <div className={`absolute top-0 right-0 ${isDocumentLevel ? 'mr-3' : ''}`}>
         <SyncIndicator isSynced={isSynced ?? false} />
@@ -147,6 +149,7 @@ export function Title({
           isDocumentLevel={isDocumentLevel ?? false}
           onInput={handleInputWithDebounce}
           onFinishEditing={handleEditingComplete}
+          className={fontClass}
         />
       </div>
       <div className="flex items-center gap-2 pl-[5px] border-l-2 border-gray-300">
@@ -157,6 +160,7 @@ export function Title({
           isDocumentLevel={isDocumentLevel ?? false}
           onInput={handleInputWithDebounce}
           onFinishEditing={handleEditingComplete}
+          className={fontClass}
         />
       </div>
 
