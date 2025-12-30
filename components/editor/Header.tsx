@@ -13,4 +13,4 @@ export default function EditorHeader({ slug }: EditorHeaderProps) {
   return (<header className="w-full h-14 bg-gray-800 flex items-center px-4 z-10">
       <div className="text-white text-sm">{slug}{mounted && isOnline === false ? ' - Offline' : ''}</div>
     </header>);
-}``
+}
