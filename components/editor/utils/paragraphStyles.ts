@@ -1,6 +1,8 @@
 export const paragraphStyles = {
-    toggleButtonsStyle: (isEditing: boolean) => `flex flex-col items-center justify-center z-100 select-none transition-opacity duration-200 absolute -left-[2rem] top-1/2 -translate-y-1/2 h-fit min-w-[2rem] bg-gray-800 py-2 ${isEditing ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`,
-    toggleButtonStyle: (isEditing: boolean) => `${isEditing ? 'pointer-events-auto' : 'pointer-events-none'} my-0.5 w-6 h-6 shadow-sm focus:outline-none cursor-pointer hover:transform hover:translate-x-1 m-1 transition-transform duration-150`,
+    verticalButtonsStyle: (isEditing: boolean) => `flex flex-col items-center justify-center z-100 select-none transition-opacity duration-200 absolute -left-[2rem] top-1/2 -translate-y-1/2 h-fit min-w-[2rem] bg-gray-800 py-2 ${isEditing ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`,
+    verticalButtonStyle: (isEditing: boolean) => `${isEditing ? 'pointer-events-auto' : 'pointer-events-none'} my-0.5 w-6 h-6 shadow-sm focus:outline-none cursor-pointer hover:transform hover:translate-x-1 m-1 transition-transform duration-150`,
+    contextButtonsContainerStyle: 'absolute top-[-1.9rem] w-full h-[30px] select-none',
+    contextButtonsWrapper: 'absolute bg-slate-800 focus:outline-none flex gap-[5px] p-1',
     contextButtonStyle: 'p-[2px] hover:transform hover:translate-y-1 px-[8px] text-[12px] cursor-pointer transition-transform duration-150',
     paragraphContainerStyle: (isEditing: boolean, isHighlighted: boolean) => `${isEditing ? 'border-t-2 border-slate-800 ' : ''}${isHighlighted ? 'bg-yellow-100 ' : ''}${isEditing || isHighlighted ? 'shadow-sm ' : ''}px-3 mb-1 text-slate-800 relative flex-1`,
     paragraphStyle: (isEditing: boolean, characterCount: number, isQuote: boolean, textAlignment: string) => `${isEditing ? 'rounded':( characterCount === 0 ? 'bg-red-50' : '')} ${isQuote ? 'pl-[4rem] italic text-gray-600' : 'border-b-2 border-slate-300 border-dotted'} pr-2 pb-4 cursor-text min-h-[1.5rem] outline-none ${textAlignment}`,

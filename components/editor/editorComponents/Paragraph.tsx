@@ -392,14 +392,14 @@ export function Paragraph({
       <div className={styles.mainContainerStyle}>
         {/* Botões laterais à esquerda, fora do fluxo do texto */}
         <div
-          className={styles.toggleButtonsStyle(isEditing)}
+          className={styles.verticalButtonsStyle(isEditing)}
         >
           {vertical_buttons_actions.map(({ icon, description, action }) => (
             <button
               key={description}
               tabIndex={-1}
               aria-label={description}
-              className={styles.toggleButtonStyle(isEditing)}
+              className={styles.verticalButtonStyle(isEditing)}
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={action}
@@ -410,8 +410,8 @@ export function Paragraph({
         </div>
 
         {/* Botões horizontais posicionáveis */}
-        {isEditing && selection && <div className="absolute top-[-1.9rem] w-full h-[30px] select-none">
-        <div className="absolute bg-slate-800 focus:outline-none flex gap-[5px] p-1" style={{ left: `${horizontalPosition}px` }}>
+        {isEditing && selection && <div className={styles.contextButtonsContainerStyle}>
+          <div className={styles.contextButtonsWrapper} style={{ left: `${horizontalPosition}px` }}>
             {context_buttons_actions.map(({icon, description, action}) => (
               <button key={description} className={styles.contextButtonStyle} onClick={action}>
                 {icon}
