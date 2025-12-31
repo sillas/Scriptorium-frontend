@@ -115,6 +115,8 @@ export function Paragraph({
 
   const handleCursorPositionUpdate = useCallback((event: React.FocusEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>) => {
     
+    // isNavigatingRef: True - allow scrolling on focusing after keys navigation.
+    // False - block scrolling when focusing due to mouse click.
     handleStartEditing(isNavigatingRef?.current || false );
     if(isNavigatingRef) isNavigatingRef.current = false;
 
