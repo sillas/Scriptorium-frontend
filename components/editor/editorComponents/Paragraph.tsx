@@ -8,7 +8,6 @@ import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { paragraphStyles as styles } from '@/components/editor/utils/paragraphStyles';
 import {
-  setCursorAt,
   updateCursorPosition,
   getSelection,
 } from '@/components/editor/utils/utils';
@@ -16,6 +15,7 @@ import { Quote } from 'lucide-react';
 import { useActionButtons } from '@/hooks/editor/paragraphs/useActionButtons';
 import { useParagraphEditing } from '@/hooks/editor/paragraphs/useParagraphEditing';
 import { useParagraphNavigation } from '@/hooks/editor/paragraphs/useParagraphNavigation';
+import { useParagraphCursor } from '@/hooks/editor/paragraphs/useParagraphCursor';
 
 const ICON_SIZE = 20;
 const ICON_COLOR = "#fff";
@@ -50,8 +50,6 @@ export function Paragraph({
 
   const [characterCount, setCharacterCount] = useState(paragraph.text?.trim().length || 0);
   const [wordCount, setWordCount] = useState(countWords(paragraph.text));
-  const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
-  const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
   
   // Custom hooks
   const { saveLocalParagraph, deleteLocalParagraph } = useLocalStorage();
@@ -85,6 +83,17 @@ export function Paragraph({
   }, [paragraph, isQuote, isHighlighted, textAlignment, saveLocalParagraph]);
 
   const {
+    isCursorAtFirstPosition,
+    isCursorAtLastPosition,
+    setIsCursorAtFirstPosition,
+    setIsCursorAtLastPosition,
+    resetCursorPosition,
+  } = useParagraphCursor({
+    paragraphRef,
+    focusActivation,
+  });
+
+  const {
     isEditing,
     handleStartEditing,
     handleFinishEditing,
@@ -94,11 +103,20 @@ export function Paragraph({
     emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
     selection,
     setSelection,
-    setIsCursorAtFirstPosition,
-    setIsCursorAtLastPosition,
+    resetCursorPosition,
     onSave: triggerLocalSave,
     onRemoteSync,
   });
+
+  const handleCursorPositionUpdate = useCallback(() => {
+    handleStartEditing();
+    updateCursorPosition(
+      paragraphRef,
+      isEditing,
+      setIsCursorAtFirstPosition,
+      setIsCursorAtLastPosition
+    );
+  }, [isEditing, handleStartEditing, paragraphRef, setIsCursorAtFirstPosition, setIsCursorAtLastPosition]);
 
   const { handleKeyDown } = useParagraphNavigation({
     paragraphRef,
@@ -152,16 +170,6 @@ export function Paragraph({
     }
   }, [isEditing, setSelection]);
 
-  const handleCursorPositionUpdate = useCallback(() => {
-    handleStartEditing();
-    updateCursorPosition(
-      paragraphRef,
-      isEditing,
-      setIsCursorAtFirstPosition,
-      setIsCursorAtLastPosition
-    );
-  }, [isEditing, handleStartEditing]);
-
   // Effects --------------------------------
 
   // Effect to set initial content
@@ -173,16 +181,6 @@ export function Paragraph({
     }
     paragraphRef.current.innerHTML = content
   }, [paragraph.text]);
-
-  // Effect to handle focus activation
-  useEffect(() => {
-    if (!focusActivation) return;
-    if (focusActivation.direction === 'Up') {
-      setCursorAt(paragraphRef, 'END');
-    } else {
-      setCursorAt(paragraphRef, 'START');
-    }
-  }, [focusActivation]);
 
   // Effect to trigger local save when flagged
   useEffect(() => {

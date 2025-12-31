@@ -6,8 +6,7 @@ interface UseParagraphEditingParams {
   emptyTextPlaceholder: string;
   selection: Selection | null;
   setSelection: (selection: Selection | null) => void;
-  setIsCursorAtFirstPosition: (value: boolean) => void;
-  setIsCursorAtLastPosition: (value: boolean) => void;
+  resetCursorPosition: () => void;
   onSave: () => Promise<void>;
   onRemoteSync?: () => void;
 }
@@ -28,8 +27,7 @@ export function useParagraphEditing({
   emptyTextPlaceholder,
   selection,
   setSelection,
-  setIsCursorAtFirstPosition,
-  setIsCursorAtLastPosition,
+  resetCursorPosition,
   onSave,
   onRemoteSync,
 }: UseParagraphEditingParams): UseParagraphEditingReturn {
@@ -62,8 +60,7 @@ export function useParagraphEditing({
 
     setIsEditing(false);
     setSelection(null);
-    setIsCursorAtFirstPosition(false);
-    setIsCursorAtLastPosition(false);
+    resetCursorPosition();
 
     // Add placeholder if text is empty
     const text = paragraphRef.current.textContent?.trim() || '';
@@ -81,8 +78,7 @@ export function useParagraphEditing({
     emptyTextPlaceholder,
     selection,
     setSelection,
-    setIsCursorAtFirstPosition,
-    setIsCursorAtLastPosition,
+    resetCursorPosition,
     onSave,
     onRemoteSync,
   ]);
