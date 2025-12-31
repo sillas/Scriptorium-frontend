@@ -8,13 +8,13 @@ import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { paragraphStyles as styles } from '@/components/editor/utils/paragraphStyles';
 import {
-  handleClick,
   setCursorAt,
   updateCursorPosition,
   getSelection,
 } from '@/components/editor/utils/utils';
 import { Quote } from 'lucide-react';
 import { useActionButtons } from '@/hooks/editor/paragraphs/useActionButtons';
+import { useParagraphEditing } from '@/hooks/editor/paragraphs/useParagraphEditing';
 
 const ICON_SIZE = 20;
 const ICON_COLOR = "#fff";
@@ -43,7 +43,6 @@ export function Paragraph({
 
   const paragraphRef = useRef<HTMLDivElement>(null);
   const previousTextRef = useRef(paragraph.text);
-  const [isEditing, setIsEditing] = useState(false);
   const [shouldForceLocalSave, setForceLocalSave] = useState(false);
   const [shouldForceLocalDelete, setForceLocalDelete] = useState(false);
   const [horizontalPosition, setHorizontalPosition] = useState(0);
@@ -52,6 +51,7 @@ export function Paragraph({
   const [wordCount, setWordCount] = useState(countWords(paragraph.text));
   const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
   const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
+  
   // Custom hooks
   const { saveLocalParagraph, deleteLocalParagraph } = useLocalStorage();
   const [ setDebounce, clearDebounceTimer ] = useDebounceTimer();
@@ -83,6 +83,22 @@ export function Paragraph({
     );
   }, [paragraph, isQuote, isHighlighted, textAlignment, saveLocalParagraph]);
 
+  const {
+    isEditing,
+    handleStartEditing,
+    handleFinishEditing,
+    handleParagraphClick,
+  } = useParagraphEditing({
+    paragraphRef,
+    emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
+    selection,
+    setSelection,
+    setIsCursorAtFirstPosition,
+    setIsCursorAtLastPosition,
+    onSave: triggerLocalSave,
+    onRemoteSync,
+  });
+
   const scheduleLocalAutoSave = useCallback(() => {
     clearDebounceTimer();
     setDebounce(triggerLocalSave, DEBOUNCE_DELAY_MS);
@@ -95,20 +111,6 @@ export function Paragraph({
   const onCreateNewParagraphAbove = () => {
     onCreateNewParagraph?.(paragraph.index);
   };
-
-  const handleFinishEditing = useCallback(async () => {
-    if(selection) return;
-    setIsEditing(false);
-    setSelection(null);
-    setIsCursorAtFirstPosition(false);
-    setIsCursorAtLastPosition(false);
-
-    const text = paragraphRef.current!.textContent.trim() || '';
-    if (text.length === 0) paragraphRef.current!.textContent = EMPTY_TEXT_PLACEHOLDER;
-    await triggerLocalSave();
-    onRemoteSync?.();
-    paragraphRef.current?.blur();
-  }, [triggerLocalSave, isEditing, selection, onRemoteSync]);
 
   // Navigation ------------------------
 
@@ -131,16 +133,6 @@ export function Paragraph({
       setHorizontalPosition(xRelative);
       setSelection(curent_selection);
     }
-  }, [isEditing, setSelection]);
-
-  const handleParagraphClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    setSelection(null);
-    if (!paragraphRef.current) return;
-
-    const text = paragraphRef.current?.textContent?.trim() || '';
-    if (text === EMPTY_TEXT_PLACEHOLDER) paragraphRef.current.textContent = '';
-
-    handleClick(event, paragraphRef, isEditing, setIsEditing);
   }, [isEditing, setSelection]);
 
   const handleFinishEditingAndNavigate = useCallback((
@@ -282,35 +274,15 @@ export function Paragraph({
     handleEnterKeyPress
   ]);
 
-  const handleOnFocus = useCallback(() => {
-    if (!paragraphRef.current) return
-
-    if (isEditing) return;
-    setIsEditing(true);
-    paragraphRef.current.focus();
-
-    // Scroll to ensure the element is visible in the center
-    paragraphRef.current.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center'
-    });
-
-    const currentText = paragraphRef.current.textContent?.trim() || '';
-
-    if (currentText === EMPTY_TEXT_PLACEHOLDER) {
-      paragraphRef.current.textContent = '';
-    }
-  }, [isEditing]);
-
   const handleCursorPositionUpdate = useCallback(() => {
-    handleOnFocus();
+    handleStartEditing();
     updateCursorPosition(
       paragraphRef,
       isEditing,
       setIsCursorAtFirstPosition,
       setIsCursorAtLastPosition
     );
-  }, [isEditing, handleOnFocus]);
+  }, [isEditing, handleStartEditing]);
 
   // Effects --------------------------------
 

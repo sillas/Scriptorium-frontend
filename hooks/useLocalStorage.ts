@@ -145,7 +145,7 @@ export function useLocalStorage() {
        * @param paragraph - the paragraph to save
        * @param textData - optional text update information (text, counts, updatedAt)
        */
-      const HandleSaveLocalParagraph = useCallback(async (
+      const SaveParagraphOnIndexedDB = useCallback(async (
         paragraph: ParagraphInterface,
         textData: ParagraphUpdate | {} = {},
       ): Promise<boolean> => {
@@ -157,6 +157,7 @@ export function useLocalStorage() {
         }
     
         // TODO: Add text validation.
+
         try {
           await saveLocal('paragraph', localParagraph);
           return true
@@ -211,7 +212,7 @@ export function useLocalStorage() {
       if (!forceUpdate && newText === previousTextRef.current) return;
       previousTextRef.current = newText;
   
-      await HandleSaveLocalParagraph(paragraph, {
+      await SaveParagraphOnIndexedDB(paragraph, {
         text: paragraphRef.current?.innerHTML || '',
         characterCount: newText.length,
         wordCount: countWords(newText),
@@ -220,12 +221,13 @@ export function useLocalStorage() {
         textAlignment: textAlignment,
         updatedAt: new Date(),
       });
-    }, [HandleSaveLocalParagraph]);
+    }, [SaveParagraphOnIndexedDB]);
     
     return {
         documentLocalSave,
         chapterLocalSave,
         saveLocalParagraph,
         deleteLocalParagraph,
+        SaveParagraphOnIndexedDB
     };
 }

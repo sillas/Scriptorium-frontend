@@ -44,7 +44,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
   const [localParagraphs, setLocalParagraphs] = useState<ParagraphInterface[]>(paragraphs);
   const [shouldAddNewChapter, setShouldAddNewChapter] = useState(false);
   const [activeParagraph, setActiveParagraph] = useState<ActiveParagraphInterface | null>(null);
-  const { paragraphLocalSave, chapterLocalSave } = useLocalStorage();
+  const { SaveParagraphOnIndexedDB, chapterLocalSave } = useLocalStorage();
   
   // Track pending IndexedDB save operations
   const pendingSavesRef = useRef<Set<Promise<any>>>(new Set());
@@ -96,10 +96,10 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
 
     // Parallelize all save operations in background and track them
     if (paragraphsToUpdate.length > 0) {
-      const savePromise = Promise.all(paragraphsToUpdate.map(p => paragraphLocalSave(p)));
+      const savePromise = Promise.all(paragraphsToUpdate.map(p => SaveParagraphOnIndexedDB(p)));
       trackSaveOperation(savePromise);
     }
-  }, [paragraphLocalSave, trackSaveOperation]);
+  }, [SaveParagraphOnIndexedDB, trackSaveOperation]);
 
 
   const handleReorderParagraphs = useCallback((
@@ -117,7 +117,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
         updatedParagraphs[paragraphIndex].chapterId = localChapters[chapterIndex + 1].id;
         setLocalParagraphs(updatedParagraphs);
         setActiveParagraph({ id: updatedParagraphs[paragraphIndex].id, direction: null });
-        const savePromise = paragraphLocalSave(updatedParagraphs[paragraphIndex]);
+        const savePromise = SaveParagraphOnIndexedDB(updatedParagraphs[paragraphIndex]);
         trackSaveOperation(savePromise); // Track the save operation
       }
       return
@@ -132,7 +132,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
 
       setLocalParagraphs(updatedParagraphs);
       setActiveParagraph({ id: currentParagraph.id, direction: null });
-      const savePromise = paragraphLocalSave(currentParagraph);
+      const savePromise = SaveParagraphOnIndexedDB(currentParagraph);
       trackSaveOperation(savePromise); // Track the save operation
       return
     }
@@ -226,7 +226,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     if(paragraphIndex === null) {
       setLocalParagraphs(prev => [...prev, newParagraph]);
       setActiveParagraph({ id: newParagraph.id, direction: null });
-      const savePromise = paragraphLocalSave(newParagraph);
+      const savePromise = SaveParagraphOnIndexedDB(newParagraph);
       trackSaveOperation(savePromise); // Track the save operation
       return;
     }
