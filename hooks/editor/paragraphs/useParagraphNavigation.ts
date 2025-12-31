@@ -18,12 +18,7 @@ interface UseParagraphNavigationParams {
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
   onReorder?: (direction: NavigationDirection) => void;
   onDelete?: () => void;
-  deleteLocalParagraph: (
-    ref: RefObject<HTMLDivElement | null>,
-    paragraph: ParagraphInterface,
-    placeholder: string,
-    onDelete?: () => void
-  ) => void;
+  deleteLocalParagraph: () => void;
 }
 
 interface UseParagraphNavigationReturn {
@@ -176,7 +171,7 @@ export function useParagraphNavigation({
           handleFinishEditingAndNavigate(event, direction);
         }
 
-        deleteLocalParagraph(paragraphRef, paragraph, emptyTextPlaceholder, onDelete);
+        deleteLocalParagraph();
         return;
       }
     },

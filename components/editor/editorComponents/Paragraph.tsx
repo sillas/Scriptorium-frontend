@@ -3,8 +3,6 @@
 import {  useCallback, useEffect, useRef, useState } from 'react';
 import { NavigationDirection, ParagraphInterface } from '@/components/editor/utils/interfaces';
 import SyncIndicator from '@/components/editor/SyncIndicator';
-import { useDebounceTimer } from '@/hooks/useDebounceTimer';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { paragraphStyles as styles } from '@/components/editor/utils/paragraphStyles';
 import {
   updateCursorPosition,
@@ -16,6 +14,7 @@ import { useParagraphEditing } from '@/hooks/editor/paragraphs/useParagraphEditi
 import { useParagraphNavigation } from '@/hooks/editor/paragraphs/useParagraphNavigation';
 import { useParagraphCursor } from '@/hooks/editor/paragraphs/useParagraphCursor';
 import { useParagraphContent } from '@/hooks/editor/paragraphs/useParagraphContent';
+import { useParagraphPersistence } from '@/hooks/editor/paragraphs/useParagraphPersistence';
 
 const ICON_SIZE = 20;
 const ICON_COLOR = "#fff";
@@ -44,17 +43,45 @@ export function Paragraph({
 
   const paragraphRef = useRef<HTMLDivElement>(null);
   const previousTextRef = useRef(paragraph.text);
-  const [shouldForceLocalSave, setForceLocalSave] = useState(false);
-  const [shouldForceLocalDelete, setForceLocalDelete] = useState(false);
   const [horizontalPosition, setHorizontalPosition] = useState(0);
   
   // Custom hooks
-  const { saveLocalParagraph, deleteLocalParagraph } = useLocalStorage();
-  const [ setDebounce, clearDebounceTimer ] = useDebounceTimer();
   const {
+    characterCount,
+    wordCount,
+    updateContentMetrics,
+  } = useParagraphContent({
+    paragraphRef,
+    initialText: paragraph.text,
+  });
+
+  // Initialize style states first before useParagraphPersistence needs them
+  const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
+  const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);
+  const [textAlignment, setTextAlignment] = useState(paragraph.textAlignment || 'text-justify');
+
+  const {
+    triggerLocalSave,
+    scheduleLocalAutoSave,
+    setForceLocalSave,
+    setForceLocalDelete,
+  } = useParagraphPersistence({
+    paragraphRef,
+    previousTextRef,
+    paragraph,
+    emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
+    debounceDelayMs: DEBOUNCE_DELAY_MS,
     isQuote,
     isHighlighted,
     textAlignment,
+    onDelete,
+    updateContentMetrics,
+  });
+
+  const {
+    isQuote: _isQuote,
+    isHighlighted: _isHighlighted,
+    textAlignment: _textAlignment,
     selection,
     vertical_buttons_actions,
     context_buttons_actions,
@@ -65,28 +92,18 @@ export function Paragraph({
     setForceLocalDelete,
   );
 
-  // Local Storage Functions --------------
-  const triggerLocalSave = useCallback( async (forceUpdate = false) => {
-    await saveLocalParagraph(
-      paragraphRef,
-      previousTextRef,
-      paragraph,
-      isQuote,
-      isHighlighted,
-      textAlignment,
-      EMPTY_TEXT_PLACEHOLDER,
-      forceUpdate
-    );
-  }, [paragraph, isQuote, isHighlighted, textAlignment, saveLocalParagraph]);
+  // Sync action button states with local states
+  useEffect(() => {
+    setIsQuote(_isQuote);
+  }, [_isQuote]);
 
-  const {
-    characterCount,
-    wordCount,
-    updateContentMetrics,
-  } = useParagraphContent({
-    paragraphRef,
-    initialText: paragraph.text,
-  });
+  useEffect(() => {
+    setIsHighlighted(_isHighlighted);
+  }, [_isHighlighted]);
+
+  useEffect(() => {
+    setTextAlignment(_textAlignment);
+  }, [_textAlignment]);
 
   const {
     isCursorAtFirstPosition,
@@ -137,14 +154,10 @@ export function Paragraph({
     onCreateNewParagraph,
     onReorder,
     onDelete,
-    deleteLocalParagraph,
+    deleteLocalParagraph: () => {
+      setForceLocalDelete(true);
+    },
   });
-
-  const scheduleLocalAutoSave = useCallback(() => {
-    clearDebounceTimer();
-    setDebounce(triggerLocalSave, DEBOUNCE_DELAY_MS);
-    updateContentMetrics();
-  }, [clearDebounceTimer, setDebounce, triggerLocalSave, updateContentMetrics]);
 
   const onCreateNewParagraphAbove = () => {
     onCreateNewParagraph?.(paragraph.index);
@@ -179,30 +192,12 @@ export function Paragraph({
   useEffect(() => {
     if (!paragraphRef.current) return;
     let content = paragraph.text
+    
     if (paragraph.text.length === 0) {
       content = EMPTY_TEXT_PLACEHOLDER;
     }
     paragraphRef.current.innerHTML = content
   }, [paragraph.text]);
-
-  // Effect to trigger local save when flagged
-  useEffect(() => {
-    if (!shouldForceLocalSave) return;
-    triggerLocalSave(true);
-    setForceLocalSave(false);
-  }, [shouldForceLocalSave, triggerLocalSave]);
-
-  // Effect to trigger local delete when flagged
-  useEffect(() => {
-    if (!shouldForceLocalDelete) return;
-    deleteLocalParagraph(paragraphRef, paragraph, EMPTY_TEXT_PLACEHOLDER, onDelete);
-    setForceLocalDelete(false);
-  }, [shouldForceLocalDelete, deleteLocalParagraph]);
-
-  // Effect to trigger local save on style changes
-  useEffect(() => {
-      triggerLocalSave(true);
-  }, [isQuote, isHighlighted, textAlignment]);
 
   // --------------------------------------
 
