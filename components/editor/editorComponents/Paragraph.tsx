@@ -3,7 +3,6 @@
 import {  useCallback, useEffect, useRef, useState } from 'react';
 import { NavigationDirection, ParagraphInterface } from '@/components/editor/utils/interfaces';
 import SyncIndicator from '@/components/editor/SyncIndicator';
-import { countWords } from '@/components/editor/utils/helpers';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { paragraphStyles as styles } from '@/components/editor/utils/paragraphStyles';
@@ -16,6 +15,7 @@ import { useActionButtons } from '@/hooks/editor/paragraphs/useActionButtons';
 import { useParagraphEditing } from '@/hooks/editor/paragraphs/useParagraphEditing';
 import { useParagraphNavigation } from '@/hooks/editor/paragraphs/useParagraphNavigation';
 import { useParagraphCursor } from '@/hooks/editor/paragraphs/useParagraphCursor';
+import { useParagraphContent } from '@/hooks/editor/paragraphs/useParagraphContent';
 
 const ICON_SIZE = 20;
 const ICON_COLOR = "#fff";
@@ -47,9 +47,6 @@ export function Paragraph({
   const [shouldForceLocalSave, setForceLocalSave] = useState(false);
   const [shouldForceLocalDelete, setForceLocalDelete] = useState(false);
   const [horizontalPosition, setHorizontalPosition] = useState(0);
-
-  const [characterCount, setCharacterCount] = useState(paragraph.text?.trim().length || 0);
-  const [wordCount, setWordCount] = useState(countWords(paragraph.text));
   
   // Custom hooks
   const { saveLocalParagraph, deleteLocalParagraph } = useLocalStorage();
@@ -81,6 +78,15 @@ export function Paragraph({
       forceUpdate
     );
   }, [paragraph, isQuote, isHighlighted, textAlignment, saveLocalParagraph]);
+
+  const {
+    characterCount,
+    wordCount,
+    updateContentMetrics,
+  } = useParagraphContent({
+    paragraphRef,
+    initialText: paragraph.text,
+  });
 
   const {
     isCursorAtFirstPosition,
@@ -137,11 +143,8 @@ export function Paragraph({
   const scheduleLocalAutoSave = useCallback(() => {
     clearDebounceTimer();
     setDebounce(triggerLocalSave, DEBOUNCE_DELAY_MS);
-
-    const text = paragraphRef.current?.innerText?.trim() || '';
-    setCharacterCount(text.length);
-    setWordCount(countWords(text));
-  }, [clearDebounceTimer, setDebounce, triggerLocalSave]);
+    updateContentMetrics();
+  }, [clearDebounceTimer, setDebounce, triggerLocalSave, updateContentMetrics]);
 
   const onCreateNewParagraphAbove = () => {
     onCreateNewParagraph?.(paragraph.index);
