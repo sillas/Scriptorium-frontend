@@ -20,14 +20,15 @@ export function useParagraphContent({
   paragraphRef,
   initialText,
 }: UseParagraphContentParams): UseParagraphContentReturn {
-  const [characterCount, setCharacterCount] = useState(initialText?.trim().length || 0);
+    
+  const [characterCount, setCharacterCount] = useState(initialText ? initialText.trim().length : 0);
   const [wordCount, setWordCount] = useState(countWords(initialText));
 
   const updateContentMetrics = useCallback(() => {
-    const text = paragraphRef.current?.innerText?.trim() || '';
+    const text = (paragraphRef.current?.innerText || '').trim();
     setCharacterCount(text.length);
     setWordCount(countWords(text));
-  }, [paragraphRef]);
+  }, []);
 
   return {
     characterCount,

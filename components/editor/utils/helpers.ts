@@ -6,6 +6,7 @@ import { ParagraphInterface } from '@/components/editor/utils/interfaces';
  * @returns 
  */
 export const countWords = (text: string) => {
+  if (!text) return 0;
   return text === '' ? 0 : text.split(/\s+/).length;
 }
 

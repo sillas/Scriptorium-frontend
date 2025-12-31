@@ -188,7 +188,7 @@ export function useLocalStorage() {
       onDelete?: () => void
     ) => {
         if (!onDelete) return;
-        let text = paragraphRef.current?.textContent?.trim() || '';
+        let text = (paragraphRef.current?.textContent || '').trim();
         if (text === text_placeholder) text = '';
         const result = handleDeleteQuestion(text, 'parágrafo');
         if (!result) return;
@@ -206,16 +206,25 @@ export function useLocalStorage() {
       text_placeholder: string,
       forceUpdate = false,
     ) => {
-      let newText = paragraphRef.current?.innerText?.trim() || '';
+
+      let characterCount = 0;
+      let wordCount = 0;
       
-      if (newText === text_placeholder) newText = ''
-      if (!forceUpdate && newText === previousTextRef.current) return;
-      previousTextRef.current = newText;
-  
+      let currentText = (paragraphRef.current?.innerText || '').trim();
+      if (currentText === text_placeholder) currentText = '';
+      else {
+        characterCount = currentText.length;
+        wordCount = countWords(currentText);
+        currentText = paragraphRef.current?.innerHTML || '';
+      }
+      
+      if (!forceUpdate && currentText === previousTextRef.current) return;
+      previousTextRef.current = currentText;
+
       await SaveParagraphOnIndexedDB(paragraph, {
-        text: paragraphRef.current?.innerHTML || '',
-        characterCount: newText.length,
-        wordCount: countWords(newText),
+        text: currentText,
+        characterCount: characterCount,
+        wordCount: wordCount,
         isQuote: isQuote || false,
         isHighlighted: isHighlighted || false,
         textAlignment: textAlignment,

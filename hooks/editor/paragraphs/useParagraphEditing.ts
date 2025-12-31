@@ -1,4 +1,4 @@
-import { RefObject, useCallback, useState } from 'react';
+import { RefObject, useCallback, useRef, useState } from 'react';
 import { handleClick } from '@/components/editor/utils/utils';
 
 interface UseParagraphEditingParams {
@@ -13,7 +13,7 @@ interface UseParagraphEditingParams {
 
 interface UseParagraphEditingReturn {
   isEditing: boolean;
-  handleStartEditing: () => void;
+  handleStartEditing: (setScroll: boolean) => void;
   handleFinishEditing: () => Promise<void>;
   handleParagraphClick: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
@@ -25,25 +25,26 @@ interface UseParagraphEditingReturn {
 export function useParagraphEditing({
   paragraphRef,
   emptyTextPlaceholder,
-  selection,
-  setSelection,
+  selection, setSelection,
   resetCursorPosition,
-  onSave,
-  onRemoteSync,
+  onSave, onRemoteSync,
 }: UseParagraphEditingParams): UseParagraphEditingReturn {
   const [isEditing, setIsEditing] = useState(false);
-
-  const handleStartEditing = useCallback(() => {
+  const localPreviousTextRef = useRef<string>(paragraphRef.current?.textContent || '');
+  
+  const handleStartEditing = useCallback((setScroll = true) => {
     if (!paragraphRef.current || isEditing) return;
 
     setIsEditing(true);
     paragraphRef.current.focus();
 
-    // Scroll to ensure the element is visible in the center
-    paragraphRef.current.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-    });
+    // Scroll to ensure the element is visible in the center    
+    if(setScroll) {
+      paragraphRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
 
     // Remove placeholder if present
     const currentText = paragraphRef.current.textContent?.trim() || '';
@@ -57,21 +58,22 @@ export function useParagraphEditing({
     if (selection) return;
 
     if (!paragraphRef.current) return;
-
     setIsEditing(false);
     setSelection(null);
     resetCursorPosition();
 
     // Add placeholder if text is empty
-    const text = paragraphRef.current.textContent?.trim() || '';
+    const text = (paragraphRef.current.textContent || '').trim();
     if (text.length === 0) {
       paragraphRef.current.textContent = emptyTextPlaceholder;
     }
 
     // Save and sync
+    if(localPreviousTextRef.current === text) return;
+    localPreviousTextRef.current = text;
+    
     await onSave();
     onRemoteSync?.();
-
     paragraphRef.current.blur();
   }, [
     paragraphRef,

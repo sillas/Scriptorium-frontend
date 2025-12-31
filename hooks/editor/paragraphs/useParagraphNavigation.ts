@@ -3,6 +3,7 @@ import { NavigationDirection, ParagraphInterface } from '@/components/editor/uti
 
 interface UseParagraphNavigationParams {
   paragraphRef: RefObject<HTMLDivElement | null>;
+  isNavigatingRef: RefObject<boolean>;
   paragraph: ParagraphInterface;
   emptyTextPlaceholder: string;
   isEditing: boolean;
@@ -31,6 +32,7 @@ interface UseParagraphNavigationReturn {
  */
 export function useParagraphNavigation({
   paragraphRef,
+  isNavigatingRef,
   paragraph,
   emptyTextPlaceholder,
   isEditing,
@@ -48,6 +50,7 @@ export function useParagraphNavigation({
   const handleFinishEditingAndNavigate = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => {
       handleFinishEditing();
+      isNavigatingRef.current = true;
       onNavigate?.(event, direction);
     },
     [handleFinishEditing, onNavigate]
@@ -156,7 +159,7 @@ export function useParagraphNavigation({
       const currentText = paragraphRef.current?.textContent?.trim() || '';
 
       // Finish editing on Escape
-      if (pressedKey === 'Escape' && currentText !== '') {
+      if (pressedKey === 'Escape' && currentText.length > 0) {
         event.preventDefault();
         handleFinishEditing();
         return;

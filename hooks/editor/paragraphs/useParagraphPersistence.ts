@@ -1,4 +1,4 @@
-import { RefObject, useCallback, useEffect, useState, Dispatch, SetStateAction } from 'react';
+import { RefObject, useCallback, useEffect, Dispatch, SetStateAction, useRef } from 'react';
 import { ParagraphInterface, textAlignmentType } from '@/components/editor/utils/interfaces';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -12,15 +12,17 @@ interface UseParagraphPersistenceParams {
   isQuote: boolean;
   isHighlighted: boolean;
   textAlignment: textAlignmentType;
+  shouldForceLocalSave: boolean;
+  shouldForceLocalDelete: boolean;
   onDelete?: () => void;
+  setForceLocalSave: Dispatch<SetStateAction<boolean>>;
+  setForceLocalDelete: Dispatch<SetStateAction<boolean>>;
   updateContentMetrics: () => void;
 }
 
 interface UseParagraphPersistenceReturn {
   triggerLocalSave: (forceUpdate?: boolean) => Promise<void>;
   scheduleLocalAutoSave: () => void;
-  setForceLocalSave: Dispatch<SetStateAction<boolean>>;
-  setForceLocalDelete: Dispatch<SetStateAction<boolean>>;
 }
 
 /**
@@ -36,27 +38,34 @@ export function useParagraphPersistence({
   isQuote,
   isHighlighted,
   textAlignment,
+  shouldForceLocalSave,
+  shouldForceLocalDelete,
   onDelete,
+  setForceLocalSave,
+  setForceLocalDelete,
   updateContentMetrics,
 }: UseParagraphPersistenceParams): UseParagraphPersistenceReturn {
-  const [shouldForceLocalSave, setForceLocalSave] = useState(false);
-  const [shouldForceLocalDelete, setForceLocalDelete] = useState(false);
 
+  const prevStylesRef = useRef({ isQuote, isHighlighted, textAlignment });
   const { saveLocalParagraph, deleteLocalParagraph } = useLocalStorage();
   const [setDebounce, clearDebounceTimer] = useDebounceTimer();
 
   const triggerLocalSave = useCallback(
     async (forceUpdate = false) => {
-      await saveLocalParagraph(
-        paragraphRef,
-        previousTextRef,
-        paragraph,
-        isQuote,
-        isHighlighted,
-        textAlignment,
-        emptyTextPlaceholder,
-        forceUpdate
-      );
+      try {        
+        await saveLocalParagraph(
+          paragraphRef,
+          previousTextRef,
+          paragraph,
+          isQuote,
+          isHighlighted,
+          textAlignment,
+          emptyTextPlaceholder,
+          forceUpdate
+        );
+      } catch (error) {
+        console.error('triggerLocalSave - Error saving paragraph locally:', error);
+      }
     },
     [
       paragraphRef,
@@ -79,26 +88,43 @@ export function useParagraphPersistence({
   // Effect to trigger local save when flagged
   useEffect(() => {
     if (!shouldForceLocalSave) return;
-    triggerLocalSave(true);
     setForceLocalSave(false);
-  }, [shouldForceLocalSave, triggerLocalSave]);
+    clearDebounceTimer();
+    triggerLocalSave(true);
+  }, [shouldForceLocalSave, clearDebounceTimer, triggerLocalSave, setForceLocalSave]);
 
   // Effect to trigger local delete when flagged
   useEffect(() => {
     if (!shouldForceLocalDelete) return;
     deleteLocalParagraph(paragraphRef, paragraph, emptyTextPlaceholder, onDelete);
     setForceLocalDelete(false);
-  }, [shouldForceLocalDelete, deleteLocalParagraph, paragraphRef, paragraph, emptyTextPlaceholder, onDelete]);
+  }, [
+    shouldForceLocalDelete, 
+    paragraph, emptyTextPlaceholder,
+    onDelete, deleteLocalParagraph,
+    setForceLocalDelete
+  ]);
 
   // Effect to trigger local save on style changes
   useEffect(() => {
+    const prev = prevStylesRef.current;
+    const hasChanged = prev.isQuote !== isQuote || 
+                     prev.isHighlighted !== isHighlighted || 
+                     prev.textAlignment !== textAlignment;
+    if (!hasChanged) return;
+
+    prevStylesRef.current = { isQuote, isHighlighted, textAlignment };
+    clearDebounceTimer();
     triggerLocalSave(true);
-  }, [isQuote, isHighlighted, textAlignment, triggerLocalSave]);
+  }, [isQuote, isHighlighted, textAlignment, clearDebounceTimer, triggerLocalSave]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => clearDebounceTimer();
+  }, [clearDebounceTimer]);
 
   return {
     triggerLocalSave,
     scheduleLocalAutoSave,
-    setForceLocalSave,
-    setForceLocalDelete,
   };
 }

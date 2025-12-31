@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { 
     Bold, Eraser, Italic, 
     Quote, RemoveFormatting, 
@@ -16,63 +16,42 @@ export function useActionButtons(
     setForceLocalSave: React.Dispatch<React.SetStateAction<boolean>>,
     setForceLocalDelete: React.Dispatch<React.SetStateAction<boolean>>,
 ) {
-    const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
+    const [isQuote, setIsQuote] = useState(paragraph?.isQuote || false);
     const [selection, setSelection] = useState<Selection | null>(null);
-    const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);
-    const [textAlignment, setTextAlignment] = useState<textAlignmentType>(paragraph.textAlignment || 'text-justify');
-    const [isTextFormatting, setIsTextFormatting] = useState(false);
+    const [isHighlighted, setIsHighlighted] = useState(paragraph?.isHighlighted || false);
+    const [textAlignment, setTextAlignment] = useState<textAlignmentType>(paragraph?.textAlignment || 'text-justify');
 
-    const toggleQuote = () => setIsQuote(prev => !prev);
-    const setTextLeft = () => setTextAlignment('text-left');
-    const setTextRight = () => setTextAlignment('text-right');
-    const setTextCenter = () => setTextAlignment('text-center');
-    const setTextJustify = () => setTextAlignment('text-justify');
-    const toggleHighlight = () => setIsHighlighted(prev => !prev);
+    const verticalButtonsActions = useMemo(() => [
+        { Icon: TextAlignStart, description: 'Toggle Text Left', action: () => setTextAlignment('text-left') },
+        { Icon: TextAlignCenter, description: 'Toggle Text Center', action: () => setTextAlignment('text-center') },
+        { Icon: TextAlignEnd, description: 'Toggle Text Right', action: () => setTextAlignment('text-right') },
+        { Icon: TextAlignJustify, description: 'Toggle Text Justify', action: () => setTextAlignment('text-justify') },
+        { Icon: Quote, description: 'Toggle Quote', action: () => setIsQuote(prev => !prev) },
+        { Icon: Star, description: 'Toggle Highlight', action: () => setIsHighlighted(prev => !prev) },
+        { Icon: Eraser, description: 'Delete Paragraph', action: () => setForceLocalDelete(true) },
+    ], [setTextAlignment, setIsQuote, setIsHighlighted, setForceLocalDelete]);
 
-    const handleFormating = useCallback((tag: FormatTag | null) => {
+    const handleFormatting = useCallback((tag: FormatTag | null) => {
         if (!selection) return;
         if (tag) toggleFormattingOnSelection(selection, tag);
         else clearFormattingOnSelection(selection);
-        setIsTextFormatting(true);
-        setSelection(null);
-    }, [selection]);
-
-    const handleTextBold = () => handleFormating('strong');
-    const handleTextUnderline = () => handleFormating('u');
-    const handleTextItalic = () => handleFormating('i');
-    const handleClearFormatting = () => handleFormating(null)
-    const handleDeleteAction = () => setForceLocalDelete(true);
-    
-    useEffect(() => {
-        if(!isTextFormatting) return;
-        setIsTextFormatting(false);
         setForceLocalSave(true);
-    }, [isTextFormatting]);
+        setSelection(null);
+    }, [selection, setForceLocalSave]);
 
-    const vertical_buttons_actions = [
-        { Icon: TextAlignCenter, description: 'Toggle Text Center', action: setTextCenter },
-        { Icon: TextAlignEnd, description: 'Toggle Text Right', action: setTextRight },
-        { Icon: TextAlignStart, description: 'Toggle Text Left', action: setTextLeft },
-        { Icon: TextAlignJustify, description: 'Toggle Text Justify', action: setTextJustify },
-        { Icon: Quote, description: 'Toggle Quote', action: toggleQuote },
-        { Icon: Star, description: 'Toggle Highlight', action: toggleHighlight },
-        { Icon: Eraser, description: 'Delete Paragraph', action: handleDeleteAction },
-    ];
-
-    const context_buttons_actions = [
-        { Icon: Bold, description: 'Set Text Bold', action: handleTextBold},
-        { Icon: Italic, description: 'Set Text Italic', action: handleTextItalic},
-        { Icon: Underline, description: 'Set Text Underline', action: handleTextUnderline},
-        { Icon: RemoveFormatting, description: 'Clear Text Formatting', action: handleClearFormatting},
-    ];
-
+    const contextButtonsActions = useMemo(() => [
+        { Icon: Bold, description: 'Toggle Bold', action: () => handleFormatting('strong')},
+        { Icon: Italic, description: 'Toggle Italic', action: () => handleFormatting('i')},
+        { Icon: Underline, description: 'Toggle Underline', action: () => handleFormatting('u')},
+        { Icon: RemoveFormatting, description: 'Clear Text Formatting', action: () => handleFormatting(null)},
+    ], [handleFormatting]);
     return {
         isQuote,
         isHighlighted,
         textAlignment,
+        verticalButtonsActions,
+        contextButtonsActions,
         selection,
-        vertical_buttons_actions,
-        context_buttons_actions,
         setSelection,
     }
 }

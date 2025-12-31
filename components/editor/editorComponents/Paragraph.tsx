@@ -1,28 +1,28 @@
 'use client';
 
-import {  useCallback, useEffect, useRef, useState } from 'react';
-import { NavigationDirection, ParagraphInterface } from '@/components/editor/utils/interfaces';
-import SyncIndicator from '@/components/editor/SyncIndicator';
-import { paragraphStyles as styles } from '@/components/editor/utils/paragraphStyles';
-import {
-  updateCursorPosition,
-  getSelection,
-} from '@/components/editor/utils/utils';
+import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { Quote } from 'lucide-react';
+import { NavigationDirection, ParagraphInterface } from '@/components/editor/utils/interfaces';
+import { paragraphStyles as styles } from '@/components/editor/utils/paragraphStyles';
+import { updateCursorPosition } from '@/components/editor/utils/utils';
 import { useActionButtons } from '@/hooks/editor/paragraphs/useActionButtons';
 import { useParagraphEditing } from '@/hooks/editor/paragraphs/useParagraphEditing';
 import { useParagraphNavigation } from '@/hooks/editor/paragraphs/useParagraphNavigation';
 import { useParagraphCursor } from '@/hooks/editor/paragraphs/useParagraphCursor';
 import { useParagraphContent } from '@/hooks/editor/paragraphs/useParagraphContent';
 import { useParagraphPersistence } from '@/hooks/editor/paragraphs/useParagraphPersistence';
+import { useParagraphContextMenu } from '@/hooks/editor/paragraphs/useParagraphContextMenu';
+import SyncIndicator from '@/components/editor/SyncIndicator';
+import { PARAGRAPH_CONFIG } from '@/components/editor/utils/constants';
 
-const ICON_SIZE = 20;
-const ICON_COLOR = "#fff";
-const DEBOUNCE_DELAY_MS = 700;
-const EMPTY_TEXT_PLACEHOLDER = 'Clique para editar este parágrafo...';
+const { 
+  ICON_SIZE, ICON_COLOR, 
+  DEBOUNCE_DELAY_MS, EMPTY_TEXT_PLACEHOLDER
+} = PARAGRAPH_CONFIG;
 
 interface ParagraphProps {
   paragraph: ParagraphInterface;
+  isNavigatingRef: RefObject<boolean>;
   focusActivation?: { direction: NavigationDirection } | null;
   navigation: {
     canNavigatePrevious: boolean;
@@ -38,168 +38,110 @@ interface ParagraphProps {
 }
 
 export function Paragraph({
-  paragraph, focusActivation, navigation, onNavigate, onDelete, onCreateNewParagraph, onReorder, onRemoteSync, fontClass = ''
+  paragraph, focusActivation, isNavigatingRef, navigation, 
+  onNavigate, onDelete, onCreateNewParagraph, onReorder, onRemoteSync,
+  fontClass = ''
 }: ParagraphProps) {
 
   const paragraphRef = useRef<HTMLDivElement>(null);
   const previousTextRef = useRef(paragraph.text);
-  const [horizontalPosition, setHorizontalPosition] = useState(0);
+  const [shouldForceLocalSave, setForceLocalSave] = useState(false);
+  const [shouldForceLocalDelete, setForceLocalDelete] = useState(false);
   
-  // Custom hooks
-  const {
-    characterCount,
-    wordCount,
-    updateContentMetrics,
+  // ============ Hooks Customizados ============
+  
+  // 1. Content Management
+  const { 
+    characterCount, wordCount, updateContentMetrics
   } = useParagraphContent({
-    paragraphRef,
-    initialText: paragraph.text,
+    paragraphRef, initialText: paragraph.text,
   });
 
-  // Initialize style states first before useParagraphPersistence needs them
-  const [isQuote, setIsQuote] = useState(paragraph.isQuote || false);
-  const [isHighlighted, setIsHighlighted] = useState(paragraph.isHighlighted || false);
-  const [textAlignment, setTextAlignment] = useState(paragraph.textAlignment || 'text-justify');
-
+  // 2. Action Buttons (formatting, styles, delete)
   const {
-    triggerLocalSave,
-    scheduleLocalAutoSave,
-    setForceLocalSave,
-    setForceLocalDelete,
-  } = useParagraphPersistence({
-    paragraphRef,
-    previousTextRef,
-    paragraph,
-    emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
-    debounceDelayMs: DEBOUNCE_DELAY_MS,
-    isQuote,
-    isHighlighted,
-    textAlignment,
-    onDelete,
-    updateContentMetrics,
-  });
-
-  const {
-    isQuote: _isQuote,
-    isHighlighted: _isHighlighted,
-    textAlignment: _textAlignment,
-    selection,
-    vertical_buttons_actions,
-    context_buttons_actions,
-    setSelection,
+    selection, verticalButtonsActions, contextButtonsActions,
+    isQuote, isHighlighted, textAlignment, setSelection,
   } = useActionButtons(
-    paragraph,
-    setForceLocalSave,
-    setForceLocalDelete,
+    paragraph, setForceLocalSave, setForceLocalDelete
   );
 
-  // Sync action button states with local states
-  useEffect(() => {
-    setIsQuote(_isQuote);
-  }, [_isQuote]);
-
-  useEffect(() => {
-    setIsHighlighted(_isHighlighted);
-  }, [_isHighlighted]);
-
-  useEffect(() => {
-    setTextAlignment(_textAlignment);
-  }, [_textAlignment]);
-
-  const {
-    isCursorAtFirstPosition,
-    isCursorAtLastPosition,
-    setIsCursorAtFirstPosition,
-    setIsCursorAtLastPosition,
-    resetCursorPosition,
-  } = useParagraphCursor({
-    paragraphRef,
-    focusActivation,
-  });
-
-  const {
-    isEditing,
-    handleStartEditing,
-    handleFinishEditing,
-    handleParagraphClick,
-  } = useParagraphEditing({
-    paragraphRef,
+  // 3. Persistence
+  const { 
+    triggerLocalSave, scheduleLocalAutoSave,
+  } = useParagraphPersistence({
+    paragraphRef, previousTextRef, paragraph,
     emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
-    selection,
-    setSelection,
-    resetCursorPosition,
-    onSave: triggerLocalSave,
-    onRemoteSync,
+    debounceDelayMs: DEBOUNCE_DELAY_MS,
+    isQuote, isHighlighted, textAlignment, 
+    shouldForceLocalSave, shouldForceLocalDelete,
+    onDelete, updateContentMetrics, 
+    setForceLocalSave, setForceLocalDelete
   });
 
-  const handleCursorPositionUpdate = useCallback(() => {
-    handleStartEditing();
+
+  // 5. Cursor Position Tracking
+  const {
+    isCursorAtFirstPosition, isCursorAtLastPosition,
+    setIsCursorAtFirstPosition, setIsCursorAtLastPosition,
+    resetCursorPosition,
+  } = useParagraphCursor({ paragraphRef, focusActivation });
+
+  // 6. Editing State & Transitions
+  const {
+    isEditing, 
+    handleStartEditing, handleFinishEditing, handleParagraphClick,
+  } = useParagraphEditing({
+    paragraphRef, selection, emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
+    setSelection, onRemoteSync, resetCursorPosition, onSave: triggerLocalSave,
+  });
+
+  // 7. Context Menu (right-click)
+  const { 
+    horizontalPosition, handleRightClick
+  } = useParagraphContextMenu({ isEditing, setSelection });
+
+  // 8. Keyboard Navigation
+  const { handleKeyDown } = useParagraphNavigation({
+    paragraphRef, isNavigatingRef, paragraph, isEditing,
+    isCursorAtFirstPosition, isCursorAtLastPosition,
+    navigation, emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
+    handleFinishEditing, onNavigate,
+    onCreateNewParagraph,
+    onReorder, onDelete,
+    deleteLocalParagraph: () => setForceLocalDelete(true),
+  });
+
+  // ============ Helper Functions ============
+
+  const handleCursorPositionUpdate = useCallback((event: React.FocusEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>) => {
+    
+    handleStartEditing(isNavigatingRef?.current || false );
+    if(isNavigatingRef) isNavigatingRef.current = false;
+
     updateCursorPosition(
-      paragraphRef,
-      isEditing,
+      paragraphRef, isEditing,
       setIsCursorAtFirstPosition,
       setIsCursorAtLastPosition
     );
-  }, [isEditing, handleStartEditing, paragraphRef, setIsCursorAtFirstPosition, setIsCursorAtLastPosition]);
-
-  const { handleKeyDown } = useParagraphNavigation({
-    paragraphRef,
-    paragraph,
-    emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
-    isEditing,
-    isCursorAtFirstPosition,
-    isCursorAtLastPosition,
-    navigation,
-    handleFinishEditing,
-    onNavigate,
-    onCreateNewParagraph,
-    onReorder,
-    onDelete,
-    deleteLocalParagraph: () => {
-      setForceLocalDelete(true);
-    },
-  });
-
-  const onCreateNewParagraphAbove = () => {
-    onCreateNewParagraph?.(paragraph.index);
-  };
-
-  // Navigation ------------------------
-
-  const handleRightClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-
-    if(!isEditing) return;
-    event.preventDefault();
-
-    if( event.button !== 2 ) return;
-    const curent_selection = getSelection(event);
     
-    if(curent_selection) {
-      // Should open popup menu on the mouse position clicked
-      const max_right_position = 200;
-      const targetBounds = event.currentTarget.getBoundingClientRect();
-      let xRelative = event.clientX - targetBounds.left;
-      if(targetBounds.width - xRelative < max_right_position) {
-        xRelative = targetBounds.width - max_right_position;
-      }
-      setHorizontalPosition(xRelative);
-      setSelection(curent_selection);
-    }
-  }, [isEditing, setSelection]);
+  }, [
+    isEditing, paragraphRef, 
+    handleStartEditing, 
+    setIsCursorAtFirstPosition, setIsCursorAtLastPosition
+  ]);
 
-  // Effects --------------------------------
+  const onCreateNewParagraphAbove = () => onCreateNewParagraph?.(paragraph.index);
 
-  // Effect to set initial content
+  // ============ Effects ============
+
+  // Initialize paragraph content on mount
   useEffect(() => {
     if (!paragraphRef.current) return;
-    let content = paragraph.text
-    
-    if (paragraph.text.length === 0) {
-      content = EMPTY_TEXT_PLACEHOLDER;
-    }
-    paragraphRef.current.innerHTML = content
+    const content = paragraph.text.length === 0 ? EMPTY_TEXT_PLACEHOLDER : paragraph.text;
+    paragraphRef.current.innerHTML = content;
   }, [paragraph.text]);
 
-  // --------------------------------------
+  // ============ Render ============
 
   return (
     <>
@@ -214,7 +156,7 @@ export function Paragraph({
         <div
           className={styles.verticalButtonsStyle(isEditing)}
         >
-          {vertical_buttons_actions.map(({ Icon, description, action }) => (
+          {verticalButtonsActions.map(({ Icon, description, action }) => (
             <button
               key={description}
               tabIndex={-1}
@@ -232,7 +174,7 @@ export function Paragraph({
         {/* Botões horizontais posicionáveis */}
         {isEditing && selection && <div className={styles.contextButtonsContainerStyle}>
           <div className={styles.contextButtonsWrapper} style={{ left: `${horizontalPosition}px` }}>
-            {context_buttons_actions.map(({Icon, description, action}) => (
+            {contextButtonsActions.map(({Icon, description, action}) => (
               <button key={description} className={styles.contextButtonStyle} onClick={action}>
                 <Icon color={ICON_COLOR} size={ICON_SIZE} />
               </button>
@@ -258,10 +200,10 @@ export function Paragraph({
             suppressContentEditableWarning
             onClick={handleParagraphClick}
             onContextMenu={handleRightClick}
-            onFocus={handleCursorPositionUpdate}
             onBlur={handleFinishEditing}
             onInput={scheduleLocalAutoSave}
             onKeyDown={handleKeyDown}
+            onFocus={handleCursorPositionUpdate}
             onKeyUp={handleCursorPositionUpdate}
             className={styles.paragraphStyle(
               isEditing, 

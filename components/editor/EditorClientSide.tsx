@@ -39,6 +39,7 @@ interface EditorClientSideProps {
  */
 export function EditorClientSide({ id, document, chapters, paragraphs }: EditorClientSideProps) {
 
+  const isNavigatingRef = useRef(false);
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(document);
   const [localChapters, setLocalChapters] = useState<ChapterInterface[]>(chapters);
   const [localParagraphs, setLocalParagraphs] = useState<ParagraphInterface[]>(paragraphs);
@@ -305,6 +306,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
                     onCreateNewParagraph={(paragraphIndex) => createParagraph(chapter.id, paragraphIndex)}
                     fontClass={localDocument.fontClass || "font-merriweather"}
                     onRemoteSync={() => {}}
+                    isNavigatingRef={isNavigatingRef}
                   />
                 ))}
 
