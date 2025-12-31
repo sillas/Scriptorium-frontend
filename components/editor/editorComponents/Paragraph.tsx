@@ -15,6 +15,7 @@ import {
 import { Quote } from 'lucide-react';
 import { useActionButtons } from '@/hooks/editor/paragraphs/useActionButtons';
 import { useParagraphEditing } from '@/hooks/editor/paragraphs/useParagraphEditing';
+import { useParagraphNavigation } from '@/hooks/editor/paragraphs/useParagraphNavigation';
 
 const ICON_SIZE = 20;
 const ICON_COLOR = "#fff";
@@ -99,6 +100,22 @@ export function Paragraph({
     onRemoteSync,
   });
 
+  const { handleKeyDown } = useParagraphNavigation({
+    paragraphRef,
+    paragraph,
+    emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
+    isEditing,
+    isCursorAtFirstPosition,
+    isCursorAtLastPosition,
+    navigation,
+    handleFinishEditing,
+    onNavigate,
+    onCreateNewParagraph,
+    onReorder,
+    onDelete,
+    deleteLocalParagraph,
+  });
+
   const scheduleLocalAutoSave = useCallback(() => {
     clearDebounceTimer();
     setDebounce(triggerLocalSave, DEBOUNCE_DELAY_MS);
@@ -134,145 +151,6 @@ export function Paragraph({
       setSelection(curent_selection);
     }
   }, [isEditing, setSelection]);
-
-  const handleFinishEditingAndNavigate = useCallback((
-    event: React.KeyboardEvent<HTMLDivElement>,
-    direction: NavigationDirection
-  ) => {
-    handleFinishEditing();
-    onNavigate?.(event, direction);
-  }, [handleFinishEditing, onNavigate]);
-
-  // -------------------------------------------
-
-  const goToParagraphOnArrows = useCallback((
-    event: React.KeyboardEvent<HTMLDivElement>,
-    direction: NavigationDirection
-  ) => {
-    const canNavigate = direction === 'Down'
-        ? navigation.canNavigateNext
-        : navigation.canNavigatePrevious;
-    if (!canNavigate) return;
-
-    // Navegar apenas se o cursor estiver na extremidade
-    const isAtEdge = direction === 'Up'
-      ? isCursorAtFirstPosition
-      : isCursorAtLastPosition;
-
-    if (isAtEdge) {
-      event.preventDefault();
-      handleFinishEditingAndNavigate(event, direction);
-    }
-  }, [
-    navigation,
-    isCursorAtFirstPosition,
-    isCursorAtLastPosition,
-    handleFinishEditingAndNavigate,
-  ]);
-
-  const goToParagraphOnTab = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
-    const direction: NavigationDirection = event.shiftKey ? 'Up' : 'Down';
-    const shouldNavigate =
-      (direction === 'Down' && navigation.canNavigateNext) ||
-      (direction === 'Up' && navigation.canNavigatePrevious)
-
-    if (shouldNavigate) {
-      handleFinishEditingAndNavigate(event, direction);
-    }
-    return;
-  }, [navigation, handleFinishEditingAndNavigate]);
-
-  const handleEnterKeyPress = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
-    // Allow line break with Shift+Enter
-    if (event.shiftKey) return;
-
-    event.preventDefault();
-
-    // Create new paragraph at end of chapter
-    if (navigation.isTheLastParagraphInChapter) {
-      handleFinishEditing();
-      onCreateNewParagraph?.(null);
-      return;
-    }
-
-    // Create new paragraph in between with Ctrl+Enter
-    if (event.ctrlKey) {
-      handleFinishEditing();
-      onCreateNewParagraph?.(paragraph.index + 1);
-      return;
-    }
-
-    handleFinishEditingAndNavigate(event, 'Down');
-  }, [
-    navigation,
-    paragraph.index,
-    handleFinishEditing,
-    onCreateNewParagraph,
-    handleFinishEditingAndNavigate
-  ]);
-
-  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
-    const pressedKey = event.key;
-
-    // Go to previous or next paragraph on Arrow Up/Down
-    if (['ArrowUp', 'ArrowDown'].includes(pressedKey)) {
-      const direction = pressedKey === 'ArrowUp' ? 'Up' : 'Down';
-
-      if (event.ctrlKey) {
-        event.preventDefault();
-        onReorder?.(direction);
-        return;
-      }
-
-      goToParagraphOnArrows(event, direction);
-      return;
-    }
-
-    // Go to previous or next paragraph on Tab
-    if (pressedKey === 'Tab' && isEditing) {
-      goToParagraphOnTab(event);
-      return;
-    }
-
-    if (pressedKey === 'Enter' && isEditing) {
-      handleEnterKeyPress(event);
-      return;
-    }
-
-    const currentText = paragraphRef.current?.textContent?.trim() || '';
-
-    // Finish editing on Escape
-    if (pressedKey === 'Escape' && currentText !== '') {
-      event.preventDefault();
-      handleFinishEditing();
-      return;
-    }
-
-    // Delete paragraph on Escape if it's empty
-    if (['Backspace', 'Escape'].includes(pressedKey) && currentText === '') {
-      event.preventDefault();
-
-      if (pressedKey === 'Backspace') {
-        const direction: NavigationDirection = navigation.canNavigatePrevious ? 'Up' : null;
-        handleFinishEditingAndNavigate(event, direction);
-      }
-
-      deleteLocalParagraph(paragraphRef, paragraph, EMPTY_TEXT_PLACEHOLDER, onDelete);
-      return;
-    }
-  }, [
-    isEditing,
-    navigation,
-    paragraph.index,
-    handleFinishEditing,
-    handleFinishEditingAndNavigate,
-    deleteLocalParagraph,
-    onReorder,
-    onDelete,
-    goToParagraphOnArrows,
-    goToParagraphOnTab,
-    handleEnterKeyPress
-  ]);
 
   const handleCursorPositionUpdate = useCallback(() => {
     handleStartEditing();
