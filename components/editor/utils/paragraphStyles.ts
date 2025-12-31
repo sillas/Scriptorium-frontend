@@ -7,7 +7,7 @@ export const paragraphStyles = {
     paragraphContainerStyle: (isEditing: boolean, isHighlighted: boolean, fontClass?: string) => `${isEditing ? 'border-t-2 border-slate-800 ' : ''}${isHighlighted ? 'bg-yellow-100 ' : ''}${isEditing || isHighlighted ? 'shadow-sm ' : ''}px-3 mb-1 text-slate-800 relative flex-1 ${fontClass || ''}`,
     paragraphStyle: (isEditing: boolean, characterCount: number, isQuote: boolean, textAlignment: string) => `${isEditing ? 'rounded':( characterCount === 0 ? 'bg-red-50' : '')} ${isQuote ? 'pl-[4rem] italic text-gray-600' : 'border-b-2 border-slate-300 border-dotted'} pr-2 pb-4 cursor-text min-h-[1.5rem] outline-none ${textAlignment}`,
     characterCountStyle: (isEditing: boolean) => `absolute right-0 bottom-0 text-gray-400 bg-slate-100 rounded px-2 translate-y-1/2 ${isEditing ? 'visible':'invisible group-hover:visible'}`,
-    mainContainerStyle: 'relative flex flex-row items-stretch group',
+    mainContainerStyle: 'relative flex flex-row items-stretch group is-paragraph',
     createNewParagraphAboveStyle: 'relative flex items-center justify-center box-border w-full cursor-pointer border-2 border-transparent hover:border-dashed hover:border-slate-400/30 hover:rounded-t-md hover:text-gray-400 transition-colors duration-200',
     isCursorAtFirstPositionStyle: 'absolute left-0 top-0 text-gray-400 -translate-y-1/2',
     isCursorAtLastPositionStyle: 'absolute left-0 bottom-0 text-gray-400 translate-y-1/2',

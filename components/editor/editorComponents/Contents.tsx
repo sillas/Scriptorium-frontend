@@ -31,7 +31,7 @@ export default function Contents({ chapters }: ContentsProps) {
             title={chapter.title}
           >
             <div className="flex items-start gap-2 text-gray-800">
-              <span className="text-gray-500 font-medium min-w-[1.5rem] group-hover:text-gray-700">
+              <span className="text-gray-500 font-medium min-w-[5px] group-hover:text-gray-700">
                 {idx + 1}
               </span>
               <span className="flex-1 truncate text-sm group-hover:text-gray-900">
