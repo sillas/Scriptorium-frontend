@@ -19,7 +19,7 @@ interface UseParagraphNavigationParams {
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
   onReorder?: (direction: NavigationDirection) => void;
   onDelete?: () => void;
-  deleteLocalParagraph: () => void;
+  setForceLocalDelete: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface UseParagraphNavigationReturn {
@@ -44,7 +44,7 @@ export function useParagraphNavigation({
   onCreateNewParagraph,
   onReorder,
   onDelete,
-  deleteLocalParagraph,
+  setForceLocalDelete,
 }: UseParagraphNavigationParams): UseParagraphNavigationReturn {
   
   const handleFinishEditingAndNavigate = useCallback(
@@ -174,7 +174,7 @@ export function useParagraphNavigation({
           handleFinishEditingAndNavigate(event, direction);
         }
 
-        deleteLocalParagraph();
+        setForceLocalDelete(true);
         return;
       }
     },
@@ -188,7 +188,7 @@ export function useParagraphNavigation({
       isCursorAtLastPosition,
       handleFinishEditing,
       handleFinishEditingAndNavigate,
-      deleteLocalParagraph,
+      setForceLocalDelete,
       onReorder,
       onDelete,
       goToParagraphOnArrows,

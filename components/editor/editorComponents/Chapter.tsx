@@ -1,14 +1,14 @@
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useRef } from 'react';
 import { ChapterInterface } from '@/components/editor/utils/interfaces';
 import { Title, TitleUpdateData } from '@/components/editor/editorComponents/Title';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { on } from 'events';
 
 interface ChapterProps {
   chapter: ChapterInterface;
-  setChapters?: React.Dispatch<React.SetStateAction<ChapterInterface[]>>;
+  setLocalChapters?: React.Dispatch<React.SetStateAction<ChapterInterface[]>>;
   onFocus?: () => void;
   onRemoteSync?: () => void;
+  oneDelete?: () => void;
   children?: ReactNode;
 }
 
@@ -18,55 +18,63 @@ const updateChapterInList = (currentChapter: ChapterInterface, updatedChapterId:
     ...currentChapter,
     title: data.title,
     subtitle: data.subtitle,
-    updatedAt: data.updatedAt || new Date(),
+    updatedAt: new Date(),
   };
 }
 
-export default function Chapter({ chapter, setChapters, onFocus, onRemoteSync, children }: ChapterProps) {
+export default function Chapter({ chapter, setLocalChapters, onFocus, onRemoteSync, oneDelete, children }: ChapterProps) {
   const chapterRef = useRef<HTMLDivElement>(null);
-  const [canDelete, setCanDelete] = useState(false);
-  const { chapterLocalSave } = useLocalStorage();
+  const { SaveItemOnIndexedDB } = useLocalStorage();
 
-  const handleChapterLocalChange = useCallback( async (data: TitleUpdateData) => {
-    await chapterLocalSave(chapter, data);
-  }, [chapter, chapterLocalSave]);
+  const handleChapterLocalChange = useCallback((data: TitleUpdateData) => {
+    SaveItemOnIndexedDB(chapter, data, 'chapter')
+  }, [chapter, SaveItemOnIndexedDB]);
 
-  const setLocalChapters = useCallback((data: TitleUpdateData)  => {
-    setChapters?.( prevChapters => 
+  const syncChapters = useCallback((data: TitleUpdateData)  => {
+    console.log('##### ????');
+    
+    setLocalChapters?.( prevChapters => 
       prevChapters.map( ch => updateChapterInList(ch, chapter.id, data))
     );
     onRemoteSync?.();
-  }, [onRemoteSync, setChapters]);
+  }, [onRemoteSync, setLocalChapters]);
 
-  const onFocusCheckCanDelete = useCallback(() => {
-    onFocus?.();
+  const checkCanDelete = useCallback(() => {
     if(!chapterRef.current) return;
     const paragraphElements = chapterRef.current.querySelectorAll('.is-paragraph');
-    setCanDelete(paragraphElements.length === 0);
-  }, [onFocus]);
+    if(paragraphElements.length === 0) {
+      oneDelete?.();
+      return;
+    }
+    alert('Chapter cannot be deleted while it contains paragraphs.');
+  }, []);
   
   return (
     <div
       ref={chapterRef}
-      onFocus={onFocusCheckCanDelete} 
+      onFocus={onFocus} 
       className="bg-gray-100 rounded-lg p-4 mb-4 shadow-sm" id={`chapter-${chapter.id}`}>
+      
+      <div className='flex flex-row w-full'>
+        <button
+          onClick={checkCanDelete}
+          className='text-sm text-gray-400 mb-3 p-2 rounded cursor-pointer hover:bg-red-200 hover:text-slate-800 mr-0 border-r-2 border-gray-300 hover:border-slate-800'>
+          x
+        </button>
 
-      {canDelete && <div className='bg-white text-sm text-gray-500 mb-2 p-2 rounded'>
-        Can Delete Chapter - No paragraphs inside
-      </div>}
-
-      <Title
-        title={chapter.title}
-        subtitle={chapter.subtitle}
-        isSynced={chapter.sync}
-        isDocumentLevel={false}
-        version={chapter.version}
-        createdAt={chapter.createdAt}
-        updatedAt={chapter.updatedAt}
-        onChange={handleChapterLocalChange}
-        onRemoteSync={setLocalChapters}
-        fontClass="font-merriweather"
-      />
+        <Title
+          title={chapter.title}
+          subtitle={chapter.subtitle}
+          isSynced={chapter.sync}
+          isDocumentLevel={false}
+          version={chapter.version}
+          createdAt={chapter.createdAt}
+          updatedAt={chapter.updatedAt}
+          onChange={handleChapterLocalChange}
+          onRemoteSync={syncChapters}
+          fontClass="font-merriweather"
+        />
+      </div>
       {children}
     </div>
   );

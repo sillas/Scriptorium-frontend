@@ -2,6 +2,8 @@ import { RefObject, useCallback, useEffect, Dispatch, SetStateAction, useRef } f
 import { ParagraphInterface, textAlignmentType } from '@/components/editor/utils/interfaces';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { handleDeleteQuestion } from '@/components/editor/utils/utils';
+import { countWords } from '@/components/editor/utils/helpers';
 
 interface UseParagraphPersistenceParams {
   paragraphRef: RefObject<HTMLDivElement | null>;
@@ -47,8 +49,64 @@ export function useParagraphPersistence({
 }: UseParagraphPersistenceParams): UseParagraphPersistenceReturn {
 
   const prevStylesRef = useRef({ isQuote, isHighlighted, textAlignment });
-  const { saveLocalParagraph, deleteLocalParagraph } = useLocalStorage();
-  const [setDebounce, clearDebounceTimer] = useDebounceTimer();
+  const { deleteLocal, SaveItemOnIndexedDB } = useLocalStorage();
+  const [ setDebounce, clearDebounceTimer ] = useDebounceTimer();
+
+  const saveLocalParagraph = useCallback((
+    paragraphRef: React.RefObject<HTMLDivElement | null>,
+    previousTextRef: React.RefObject<string>,
+    paragraph: ParagraphInterface,
+    isQuote: boolean,
+    isHighlighted: boolean,
+    textAlignment: textAlignmentType,
+    text_placeholder: string,
+    forceUpdate = false,
+  ) => {
+
+    let characterCount = 0;
+    let wordCount = 0;
+
+    let currentText = (paragraphRef.current?.innerText || '').trim();
+    if (currentText === text_placeholder) currentText = '';
+    else {
+      characterCount = currentText.length;
+      wordCount = countWords(currentText);
+      currentText = paragraphRef.current?.innerHTML || '';
+    }
+
+    if (!forceUpdate && currentText === previousTextRef.current) return;
+    previousTextRef.current = currentText;
+
+    /// Build updated paragraph data
+    const newData = {
+      text: currentText,
+      characterCount: characterCount,
+      wordCount: wordCount,
+      isQuote: isQuote || false,
+      isHighlighted: isHighlighted || false,
+      textAlignment: textAlignment,
+    };
+
+    SaveItemOnIndexedDB(paragraph, newData, 'paragraph');
+  }, [SaveItemOnIndexedDB]);
+
+  const deleteLocalParagraph = useCallback((
+    paragraphRef: React.RefObject<HTMLDivElement | null>,
+    paragraph: ParagraphInterface,
+    text_placeholder: string,
+  ) => {
+    if (!onDelete) return;
+
+    let text = (paragraphRef.current?.textContent || '').trim();
+    if (text === text_placeholder) text = '';
+
+    const result = handleDeleteQuestion(text, 'parágrafo');
+    if (!result) return;
+
+    onDelete();
+    deleteLocal('paragraph', paragraph.id);
+
+  }, [deleteLocal]);
 
   const triggerLocalSave = useCallback(
     async (forceUpdate = false) => {
@@ -96,12 +154,12 @@ export function useParagraphPersistence({
   // Effect to trigger local delete when flagged
   useEffect(() => {
     if (!shouldForceLocalDelete) return;
-    deleteLocalParagraph(paragraphRef, paragraph, emptyTextPlaceholder, onDelete);
+    deleteLocalParagraph(paragraphRef, paragraph, emptyTextPlaceholder);
     setForceLocalDelete(false);
   }, [
     shouldForceLocalDelete, 
     paragraph, emptyTextPlaceholder,
-    onDelete, deleteLocalParagraph,
+    deleteLocalParagraph,
     setForceLocalDelete
   ]);
 

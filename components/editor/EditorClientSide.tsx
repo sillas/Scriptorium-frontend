@@ -45,63 +45,17 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
   const [localParagraphs, setLocalParagraphs] = useState<ParagraphInterface[]>(paragraphs);
   const [shouldAddNewChapter, setShouldAddNewChapter] = useState(false);
   const [activeParagraph, setActiveParagraph] = useState<ActiveParagraphInterface | null>(null);
-  const { SaveParagraphOnIndexedDB, chapterLocalSave } = useLocalStorage();
+  const { 
+    SaveItemOnIndexedDB,
+    handleDeleteAndReindex, 
+    reindexAndSave,
+  } = useLocalStorage();
   
   // Track pending IndexedDB save operations
-  const pendingSavesRef = useRef<Set<Promise<any>>>(new Set());
   const {
     navigateToAdjacentParagraph,
     getNavigationAvailability,
   } = useNavigation();
-
-  /**
-   * Helper to track save operations and ensure they complete
-   */
-  const trackSaveOperation = useCallback((savePromise: Promise<any>) => {
-
-    pendingSavesRef.current.add(savePromise);
-    savePromise
-      .finally(() => {
-        pendingSavesRef.current.delete(savePromise);
-      });
-    
-    return savePromise;
-  }, []);
-
-  /**
-   * Wait for all pending save operations to complete
-   */
-  const waitForPendingSaves = useCallback(async () => {
-    if (pendingSavesRef.current.size > 0) 
-    {
-      await Promise.allSettled(Array.from(pendingSavesRef.current));
-    }
-  }, []);
-
-  /**
-   * Re-indexes paragraphs from a specific position and saves them
-   * @param paragraphs - Array of paragraphs to update
-   * @param fromIndex - Starting index for re-indexation
-   */
-  const reindexAndSaveParagraphs = useCallback((paragraphs: ParagraphInterface[], fromIndex: number) => {
-    const paragraphsToUpdate: ParagraphInterface[] = [];
-    
-    for (let i = fromIndex; i < paragraphs.length; i++) {
-      const updated = { ...paragraphs[i], index: i };
-      paragraphs[i] = updated;
-      paragraphsToUpdate.push(updated);
-    }
-
-    // Update UI immediately (optimistic update)
-    setLocalParagraphs(paragraphs);
-
-    // Parallelize all save operations in background and track them
-    if (paragraphsToUpdate.length > 0) {
-      const savePromise = Promise.all(paragraphsToUpdate.map(p => SaveParagraphOnIndexedDB(p)));
-      trackSaveOperation(savePromise);
-    }
-  }, [SaveParagraphOnIndexedDB, trackSaveOperation]);
-
 
   const handleReorderParagraphs = useCallback((
     direction: NavigationDirection,
@@ -118,8 +72,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
         updatedParagraphs[paragraphIndex].chapterId = localChapters[chapterIndex + 1].id;
         setLocalParagraphs(updatedParagraphs);
         setActiveParagraph({ id: updatedParagraphs[paragraphIndex].id, direction: null });
-        const savePromise = SaveParagraphOnIndexedDB(updatedParagraphs[paragraphIndex]);
-        trackSaveOperation(savePromise); // Track the save operation
+        SaveItemOnIndexedDB(updatedParagraphs[paragraphIndex], null, 'paragraph');
       }
       return
     }
@@ -133,8 +86,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
 
       setLocalParagraphs(updatedParagraphs);
       setActiveParagraph({ id: currentParagraph.id, direction: null });
-      const savePromise = SaveParagraphOnIndexedDB(currentParagraph);
-      trackSaveOperation(savePromise); // Track the save operation
+      SaveItemOnIndexedDB(currentParagraph, null, 'paragraph');
       return
     }
 
@@ -143,9 +95,14 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
       [updatedParagraphs[targetIndex], updatedParagraphs[paragraphIndex]];
     
     // Re-index and save affected paragraphs
-    reindexAndSaveParagraphs(updatedParagraphs, Math.min(paragraphIndex, targetIndex));
+    reindexAndSave(
+      updatedParagraphs, 
+      Math.min(paragraphIndex, targetIndex), 
+      'paragraph',
+      setLocalParagraphs
+    );
     setActiveParagraph({ id: updatedParagraphs[targetIndex].id, direction: null });
-  }, [localParagraphs, reindexAndSaveParagraphs]);
+  }, [localParagraphs, localChapters, reindexAndSave, SaveItemOnIndexedDB]);
 
   // // Load unsynced data from IndexedDB on mount
   useEffect(() => {
@@ -159,29 +116,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     );
   }, [document, chapters, paragraphs]);
 
-  // Handle beforeunload to ensure all IndexedDB operations complete
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // If there are pending saves, prevent immediate unload
-      if (pendingSavesRef.current.size > 0) {
-        e.preventDefault();
-        // e.returnValue = ''; // deprecated
-        
-        // Attempt to wait for pending saves (may not complete if user forces close)
-        waitForPendingSaves().catch(err => {
-          console.error('Error completing pending saves:', err);
-        });
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [waitForPendingSaves]);
-
-
+  
   // Add new chapter when shouldAddNewChapter is set
   useEffect(() => {
     if (!shouldAddNewChapter) return;
@@ -206,9 +141,8 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     setLocalChapters(prev => [...prev, newChapterData]);
     setShouldAddNewChapter(false);
 
-    // save new chapter to IndexedDB in background
-    const savePromise = chapterLocalSave(newChapterData);
-    trackSaveOperation(savePromise); // Track the save operation
+    // save new chapter to IndexedDB in backgroun
+    SaveItemOnIndexedDB(newChapterData, null, 'chapter')
   }, [
     shouldAddNewChapter, 
     localDocument.id,
@@ -227,8 +161,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     if(paragraphIndex === null) {
       setLocalParagraphs(prev => [...prev, newParagraph]);
       setActiveParagraph({ id: newParagraph.id, direction: null });
-      const savePromise = SaveParagraphOnIndexedDB(newParagraph);
-      trackSaveOperation(savePromise); // Track the save operation
+      SaveItemOnIndexedDB(newParagraph, null, 'paragraph');
       return;
     }
 
@@ -237,17 +170,23 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     updatedParagraphs.splice(paragraphIndex, 0, newParagraph);
     
     // Re-index and save affected paragraphs
-    reindexAndSaveParagraphs(updatedParagraphs, paragraphIndex);
+    reindexAndSave(updatedParagraphs, paragraphIndex, 'paragraph', setLocalParagraphs);
     setActiveParagraph({ id: updatedParagraphs[paragraphIndex].id, direction: null});
-  }, [localDocument.id, localParagraphs, reindexAndSaveParagraphs, trackSaveOperation]);
+  }, [localDocument.id, localParagraphs, reindexAndSave]);
+
+  const handleDeleteChapter = useCallback((chapterIndex: number) => {
+    handleDeleteAndReindex<ChapterInterface>(localChapters, 'chapter', chapterIndex, setLocalChapters);
+  }, [handleDeleteAndReindex, localChapters]);
 
   const handleDeleteParagraph = useCallback((paragraphIndex: number) => {
-    // Remove paragraph at specified index
-    const updatedParagraphs = localParagraphs.filter(p => p.index !== paragraphIndex);
-    
-    // Re-index and save all paragraphs from deletion point onwards
-    reindexAndSaveParagraphs(updatedParagraphs, paragraphIndex);
-  }, [localParagraphs, reindexAndSaveParagraphs]);
+    handleDeleteAndReindex<ParagraphInterface>(localParagraphs, 'paragraph', paragraphIndex, setLocalParagraphs);
+  }, [handleDeleteAndReindex, localParagraphs]);
+
+  // TODO: implement actual sync logic
+  const syncAll = useCallback((origin: string) => {
+    // Placeholder for future sync logic
+    console.log('Sync all items triggered from:', origin);
+  }, []);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
@@ -279,7 +218,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
             updatedAt={localDocument.updatedAt}
             createdAt={localDocument.createdAt}
             isSynced={localDocument.sync}
-            onRemoteSync={() => {}}
+            onRemoteSync={() => syncAll('document')}
             onChange={(data) => true}
             onFocus={() => setActiveParagraph(null)}
             fontClass={localDocument.fontClass || "font-merriweather"}
@@ -290,9 +229,10 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
             <Chapter
               key={chapter.id}
               chapter={chapter}
-              setChapters={setLocalChapters}
+              setLocalChapters={setLocalChapters}
               onFocus={() => setActiveParagraph(null)}
-              onRemoteSync={() => {}}
+              oneDelete={() => handleDeleteChapter(chapterIndex)}
+              onRemoteSync={() => syncAll('chapter')}
             >
               {localParagraphs.filter(p => p.chapterId === chapter.id).map((paragraph) => (
                   <Paragraph 
@@ -305,7 +245,7 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
                     onDelete={() => handleDeleteParagraph(paragraph.index)}
                     onCreateNewParagraph={(paragraphIndex) => createParagraph(chapter.id, paragraphIndex)}
                     fontClass={localDocument.fontClass || "font-merriweather"}
-                    onRemoteSync={() => {}}
+                    onRemoteSync={() => syncAll('paragraph')}
                     isNavigatingRef={isNavigatingRef}
                   />
                 ))}

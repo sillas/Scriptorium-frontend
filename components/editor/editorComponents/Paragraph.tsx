@@ -108,7 +108,7 @@ export function Paragraph({
     handleFinishEditing, onNavigate,
     onCreateNewParagraph,
     onReorder, onDelete,
-    deleteLocalParagraph: () => setForceLocalDelete(true),
+    setForceLocalDelete,
   });
 
   // ============ Helper Functions ============

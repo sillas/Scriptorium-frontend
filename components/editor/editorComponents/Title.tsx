@@ -124,7 +124,9 @@ export function Title({
    */
   const handleEditingComplete = useCallback(() => {
     clearDebounceTimer();
-    const data = persistLocalChanges(true);    
+    const data = persistLocalChanges(true);
+    console.log("E ai?");
+       
     if(data) onRemoteSync?.(data);
   }, [persistLocalChanges, onRemoteSync]);
 
@@ -135,13 +137,13 @@ export function Title({
         isDocumentLevel
           ? 'px-8 mb-6 rounded-lg'
           : 'px-3 mb-3 rounded-md'
-      } bg-gray-100 relative ${fontClass}`}
+      } bg-gray-100 relative flex-grow ${fontClass}`}
     >
       <div className={`absolute top-0 right-0 ${isDocumentLevel ? 'mr-3' : ''}`}>
         <SyncIndicator isSynced={isSynced ?? false} />
       </div>
 
-      <div className="flex items-center gap-2 pl-[5px] border-l-2 border-gray-300">
+      <div className="flex items-center gap-2 pl-[5px]">
         <EditableHeading
           ref={titleRef}
           content={title}
@@ -152,7 +154,7 @@ export function Title({
           className={fontClass}
         />
       </div>
-      <div className="flex items-center gap-2 pl-[5px] border-l-2 border-gray-300">
+      <div className="flex items-center gap-2 pl-[5px]">
         <EditableHeading
           ref={subtitleRef}
           content={subtitle}

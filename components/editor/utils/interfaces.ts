@@ -1,13 +1,14 @@
 export type textAlignmentType = 'text-justify'| 'text-right'|'text-left'|'text-center';
 export type FormatTag = 'strong' | 'i' | 'u';
+
 export interface ParagraphUpdate {
   text: string;
   characterCount: number;
   wordCount: number;
   isQuote: boolean;
   isHighlighted: boolean;
-  updatedAt: Date;
   textAlignment: textAlignmentType;
+  updatedAt?: Date;
 }
 export interface ParagraphInterface {
   id: string;
@@ -30,7 +31,6 @@ export interface ChapterInterface {
   documentId: string;
   index: number;
   title: string;
-  paragraphs?: ParagraphInterface[];
   subtitle: string;
   createdAt: Date;
   updatedAt: Date;
@@ -102,3 +102,5 @@ export interface ActiveParagraphInterface {
 }
 
 export type NavigationDirection = 'Up' | 'Down' | null;
+export type DocumentComponentsItems = ParagraphInterface | ChapterInterface;
+export type DocumentComponentsItemsType = 'paragraph' | 'chapter';
