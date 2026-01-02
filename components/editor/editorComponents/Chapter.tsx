@@ -30,9 +30,7 @@ export default function Chapter({ chapter, setLocalChapters, onFocus, onRemoteSy
     SaveItemOnIndexedDB(chapter, data, 'chapter')
   }, [chapter, SaveItemOnIndexedDB]);
 
-  const syncChapters = useCallback((data: TitleUpdateData)  => {
-    console.log('##### ????');
-    
+  const syncChapters = useCallback((data: TitleUpdateData)  => {    
     setLocalChapters?.( prevChapters => 
       prevChapters.map( ch => updateChapterInList(ch, chapter.id, data))
     );

@@ -124,9 +124,7 @@ export function Title({
    */
   const handleEditingComplete = useCallback(() => {
     clearDebounceTimer();
-    const data = persistLocalChanges(true);
-    console.log("E ai?");
-       
+    const data = persistLocalChanges(true);       
     if(data) onRemoteSync?.(data);
   }, [persistLocalChanges, onRemoteSync]);
 
