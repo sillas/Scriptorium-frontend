@@ -114,6 +114,7 @@ export function useParagraphNavigation({
         return;
       }
 
+      // Default: navigate to next paragraph
       handleFinishEditingAndNavigate(event, 'Down');
     },
     [
@@ -179,7 +180,6 @@ export function useParagraphNavigation({
       }
     },
     [
-      paragraphRef,
       paragraph,
       emptyTextPlaceholder,
       isEditing,

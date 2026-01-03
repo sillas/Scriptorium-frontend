@@ -16,10 +16,10 @@ interface UseParagraphPersistenceParams {
   textAlignment: textAlignmentType;
   shouldForceLocalSave: boolean;
   shouldForceLocalDelete: boolean;
-  onDelete?: () => void;
   setForceLocalSave: Dispatch<SetStateAction<boolean>>;
   setForceLocalDelete: Dispatch<SetStateAction<boolean>>;
   updateContentMetrics: () => void;
+  onDelete?: () => void;
 }
 
 interface UseParagraphPersistenceReturn {
@@ -42,10 +42,10 @@ export function useParagraphPersistence({
   textAlignment,
   shouldForceLocalSave,
   shouldForceLocalDelete,
-  onDelete,
   setForceLocalSave,
   setForceLocalDelete,
   updateContentMetrics,
+  onDelete,
 }: UseParagraphPersistenceParams): UseParagraphPersistenceReturn {
 
   const prevStylesRef = useRef({ isQuote, isHighlighted, textAlignment });
@@ -105,11 +105,10 @@ export function useParagraphPersistence({
 
     onDelete();
     deleteLocal('paragraph', paragraph.id);
-
-  }, [deleteLocal]);
+  }, [deleteLocal, onDelete]);
 
   const triggerLocalSave = useCallback(
-    (forceUpdate = false) => {
+    (forceUpdate: boolean = false) => {
       try {        
         saveLocalParagraph(
           paragraphRef,
@@ -126,13 +125,10 @@ export function useParagraphPersistence({
       }
     },
     [
-      paragraphRef,
-      previousTextRef,
       paragraph,
       isQuote,
       isHighlighted,
       textAlignment,
-      emptyTextPlaceholder,
       saveLocalParagraph,
     ]
   );
