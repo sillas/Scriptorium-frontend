@@ -52,9 +52,16 @@ export default async function Editor({ params }: EditorProps) {
   const db = await getDatabase();
 
   // Fetch main document
-  const mongoDocument = await db
-    .collection(COLLECTIONS.DOCUMENTS)
-    .findOne({ _id: new ObjectId(id) });
+  let mongoDocument = null;
+  
+  try {
+    mongoDocument = await db
+      .collection(COLLECTIONS.DOCUMENTS)
+      .findOne({ _id: new ObjectId(id) });
+  } catch (error) {
+    console.error('Erro ao buscar o documento:', error);
+    notFound();
+  }
 
   if (!mongoDocument) notFound();
 
@@ -86,7 +93,6 @@ export default async function Editor({ params }: EditorProps) {
   
   return (
     <EditorClientSide 
-      id={id}
       document={document}
       chapters={chapters}
       paragraphs={paragraphs}

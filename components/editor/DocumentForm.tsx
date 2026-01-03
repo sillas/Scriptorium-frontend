@@ -35,8 +35,8 @@ export default function DocumentForm() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        router.push(`/editor/${data.slug}`);
+        const data = await response.json();        
+        router.push(`/editor/${data.id}`);
       } else {
         alert('Erro ao criar documento');
       }
