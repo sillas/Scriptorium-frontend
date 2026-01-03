@@ -1,6 +1,6 @@
 'use client';
 
-import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { RefObject, use, useCallback, useEffect, useRef, useState } from 'react';
 import { Quote } from 'lucide-react';
 import { NavigationDirection, ParagraphInterface } from '@/components/editor/utils/interfaces';
 import { paragraphStyles as styles } from '@/components/editor/utils/paragraphStyles';
@@ -114,13 +114,7 @@ export function Paragraph({
 
   // ============ Helper Functions ============
   const handleCursorPositionUpdate = useCallback((event: FocusOrKeyboardEventType) => {
-    
-    // TODO: Improve logic of scrolling behavior
-    // isNavigatingRef: True - allow scrolling on focusing after keys navigation.
-    // False - block scrolling when focusing due to mouse click.
-    handleStartEditing(isNavigatingRef?.current || false );
-    if(isNavigatingRef) isNavigatingRef.current = false;
-
+    handleStartEditing();
     updateCursorPosition(
       paragraphRef, isEditing,
       setIsCursorAtFirstPosition,
@@ -133,6 +127,18 @@ export function Paragraph({
   ]);
 
   const onCreateNewParagraphAbove = () => onCreateNewParagraph?.(paragraph.index);
+
+  const handleScrolling = useCallback(() => {
+    if(!isNavigatingRef.current) return;
+    isNavigatingRef.current = false;
+    
+    // Scroll to ensure the element is visible in the center
+    paragraphRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+    
+  }, []);
 
   // ============ Effects ============
 
@@ -185,7 +191,9 @@ export function Paragraph({
         </div>}
 
         {/* Parágrafo editável */}
-        <div className={styles.paragraphContainerStyle(isEditing, isHighlighted, fontClass)}>
+        <div
+          onFocus={handleScrolling} 
+          className={styles.paragraphContainerStyle(isEditing, isHighlighted, fontClass)}>
           {isCursorAtFirstPosition && navigation.canNavigatePrevious && (
             <span className={styles.isCursorAtFirstPositionStyle}>▲</span>
           )}

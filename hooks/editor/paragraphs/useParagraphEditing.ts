@@ -13,7 +13,7 @@ interface UseParagraphEditingParams {
 
 interface UseParagraphEditingReturn {
   isEditing: boolean;
-  handleStartEditing: (setScroll: boolean) => void;
+  handleStartEditing: () => void;
   handleFinishEditing: () => void;
   handleParagraphClick: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
@@ -32,19 +32,11 @@ export function useParagraphEditing({
   const [isEditing, setIsEditing] = useState(false);
   const localPreviousTextRef = useRef<string>(paragraphRef.current?.textContent || '');
   
-  const handleStartEditing = useCallback((setScroll = true) => {
+  const handleStartEditing = useCallback(() => {
     if (!paragraphRef.current || isEditing) return;
 
     setIsEditing(true);
     paragraphRef.current.focus();
-
-    // Scroll to ensure the element is visible in the center    
-    if(setScroll) {
-      paragraphRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      });
-    }
 
     // Remove placeholder if present
     const currentText = paragraphRef.current.textContent?.trim() || '';

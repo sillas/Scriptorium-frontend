@@ -21,7 +21,6 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useNavigation } from '@/hooks/editor/useNavigation';
 
 interface EditorClientSideProps {
-  id: string;
   document: DocumentInterface;
   chapters: ChapterInterface[];
   paragraphs: ParagraphInterface[];
@@ -37,7 +36,7 @@ interface EditorClientSideProps {
  * @param slug - document slug (used in header routing)
  * @param theDocument - initial document data fetched from the server
  */
-export function EditorClientSide({ id, document, chapters, paragraphs }: EditorClientSideProps) {
+export function EditorClientSide({ document, chapters, paragraphs }: EditorClientSideProps) {
 
   const isNavigatingRef = useRef(false);
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(document);

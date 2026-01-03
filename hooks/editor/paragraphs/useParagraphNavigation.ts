@@ -49,8 +49,8 @@ export function useParagraphNavigation({
   
   const handleFinishEditingAndNavigate = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => {
-      handleFinishEditing();
       isNavigatingRef.current = true;
+      handleFinishEditing();
       onNavigate?.(event, direction);
     },
     [handleFinishEditing, onNavigate]
