@@ -1,3 +1,4 @@
+
 interface Chapter {
   id: string;
   index: number;
@@ -6,6 +7,10 @@ interface Chapter {
 
 interface ContentsProps {
   chapters: Chapter[];
+}
+
+const titleOrPlaceholder = (title: string | undefined) => {
+  return title && title.trim().length > 0 ? title : 'Untitled Chapter';
 }
 
 export default function Contents({ chapters }: ContentsProps) {
@@ -28,14 +33,14 @@ export default function Contents({ chapters }: ContentsProps) {
             key={chapter.id}
             onClick={() => scrollToChapter(chapter.id)}
             className="w-full text-left group rounded p-0 transition-colors cursor-pointer"
-            title={chapter.title}
+            title={titleOrPlaceholder(chapter.title)}
           >
             <div className="flex items-start gap-2 text-gray-800">
               <span className="text-gray-500 font-medium min-w-[5px] group-hover:text-gray-700">
                 {idx + 1}
               </span>
               <span className="flex-1 truncate text-sm group-hover:text-gray-900">
-                {chapter.title}
+                {titleOrPlaceholder(chapter.title)}
               </span>
             </div>
           </button>
