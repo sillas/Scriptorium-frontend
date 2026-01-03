@@ -14,7 +14,7 @@ interface UseParagraphNavigationParams {
     canNavigateNext: boolean;
     isTheLastParagraphInChapter: boolean;
   };
-  handleFinishEditing: () => Promise<void>;
+  handleFinishEditing: () => void;
   onNavigate?: (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => void;
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
   onReorder?: (direction: NavigationDirection) => void;

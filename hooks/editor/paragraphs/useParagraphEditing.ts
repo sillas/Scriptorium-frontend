@@ -7,14 +7,14 @@ interface UseParagraphEditingParams {
   selection: Selection | null;
   setSelection: (selection: Selection | null) => void;
   resetCursorPosition: () => void;
-  onSave: () => Promise<void>;
+  onSave: () => void;
   onRemoteSync?: () => void;
 }
 
 interface UseParagraphEditingReturn {
   isEditing: boolean;
   handleStartEditing: (setScroll: boolean) => void;
-  handleFinishEditing: () => Promise<void>;
+  handleFinishEditing: () => void;
   handleParagraphClick: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
@@ -53,29 +53,29 @@ export function useParagraphEditing({
     }
   }, [paragraphRef, emptyTextPlaceholder, isEditing]);
 
-  const handleFinishEditing = useCallback(async () => {
+  const handleFinishEditing = useCallback(() => {
     // Don't finish editing if text is selected (context menu open)
     if (selection) return;
     if (!paragraphRef.current) return;
 
-    
     setIsEditing(false);
     setSelection(null);
     resetCursorPosition();
-    
+
     // Add placeholder if text is empty
     const text = (paragraphRef.current.textContent || '').trim();
     if (text.length === 0) {
       paragraphRef.current.textContent = emptyTextPlaceholder;
     }
-    
+
     // Save and sync
     if(localPreviousTextRef.current !== text) {
       localPreviousTextRef.current = text;
-      await onSave();
+      onSave();
       onRemoteSync?.();
     }
-    paragraphRef.current.blur();
+
+    paragraphRef.current?.blur();
   }, [
     paragraphRef,
     emptyTextPlaceholder,

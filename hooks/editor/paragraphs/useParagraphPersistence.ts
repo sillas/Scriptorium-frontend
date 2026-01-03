@@ -23,7 +23,7 @@ interface UseParagraphPersistenceParams {
 }
 
 interface UseParagraphPersistenceReturn {
-  triggerLocalSave: (forceUpdate?: boolean) => Promise<void>;
+  triggerLocalSave: (forceUpdate?: boolean) => void;
   scheduleLocalAutoSave: () => void;
 }
 
@@ -109,9 +109,9 @@ export function useParagraphPersistence({
   }, [deleteLocal]);
 
   const triggerLocalSave = useCallback(
-    async (forceUpdate = false) => {
+    (forceUpdate = false) => {
       try {        
-        await saveLocalParagraph(
+        saveLocalParagraph(
           paragraphRef,
           previousTextRef,
           paragraph,
