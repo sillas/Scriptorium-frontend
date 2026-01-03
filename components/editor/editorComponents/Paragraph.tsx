@@ -20,6 +20,8 @@ const {
   DEBOUNCE_DELAY_MS, EMPTY_TEXT_PLACEHOLDER
 } = PARAGRAPH_CONFIG;
 
+type FocusOrKeyboardEventType = React.FocusEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>;
+
 interface ParagraphProps {
   paragraph: ParagraphInterface;
   isNavigatingRef: RefObject<boolean>;
@@ -78,7 +80,6 @@ export function Paragraph({
     setForceLocalSave, setForceLocalDelete
   });
 
-
   // 5. Cursor Position Tracking
   const {
     isCursorAtFirstPosition, isCursorAtLastPosition,
@@ -112,9 +113,9 @@ export function Paragraph({
   });
 
   // ============ Helper Functions ============
-
-  const handleCursorPositionUpdate = useCallback((event: React.FocusEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>) => {
+  const handleCursorPositionUpdate = useCallback((event: FocusOrKeyboardEventType) => {
     
+    // TODO: Improve logic of scrolling behavior
     // isNavigatingRef: True - allow scrolling on focusing after keys navigation.
     // False - block scrolling when focusing due to mouse click.
     handleStartEditing(isNavigatingRef?.current || false );
@@ -125,7 +126,6 @@ export function Paragraph({
       setIsCursorAtFirstPosition,
       setIsCursorAtLastPosition
     );
-    
   }, [
     isEditing, paragraphRef, 
     handleStartEditing, 
