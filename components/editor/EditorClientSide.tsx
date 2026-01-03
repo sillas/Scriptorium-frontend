@@ -104,18 +104,46 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     setActiveParagraph({ id: updatedParagraphs[targetIndex].id, direction: null });
   }, [localParagraphs, localChapters, reindexAndSave, SaveItemOnIndexedDB]);
 
-  // // Load unsynced data from IndexedDB on mount
-  useEffect(() => {
-    loadUnsyncedData(
-      document, 
-      chapters, 
-      paragraphs, 
-      setLocalDocument,
-      setLocalChapters,
-      setLocalParagraphs
-    );
-  }, [document, chapters, paragraphs]);
 
+  const createParagraph = useCallback((chapterId: string, paragraphIndex: number | null = null) => {
+    const newParagraph = createParagraphObject(
+      localDocument.id,
+      chapterId,
+      paragraphIndex !== null ? paragraphIndex : localParagraphs.length,
+    );
+
+    // Simple case: append to end
+    if(paragraphIndex === null) {
+      setLocalParagraphs(prev => [...prev, newParagraph]);
+      setActiveParagraph({ id: newParagraph.id, direction: null });
+      SaveItemOnIndexedDB(newParagraph, null, 'paragraph');
+      return;
+    }
+
+    // Insert at specific position
+    const updatedParagraphs = [...localParagraphs];
+    updatedParagraphs.splice(paragraphIndex, 0, newParagraph);
+    
+    // Re-index and save affected paragraphs
+    reindexAndSave(updatedParagraphs, paragraphIndex, 'paragraph', setLocalParagraphs);
+    setActiveParagraph({ id: updatedParagraphs[paragraphIndex].id, direction: null});
+  }, [localDocument.id, localParagraphs, reindexAndSave]);
+
+
+  const handleDeleteChapter = useCallback((chapterIndex: number) => {
+    handleDeleteAndReindex<ChapterInterface>(localChapters, 'chapter', chapterIndex, setLocalChapters);
+  }, [handleDeleteAndReindex, localChapters]);
+
+
+  const handleDeleteParagraph = useCallback((paragraphIndex: number) => {
+    handleDeleteAndReindex<ParagraphInterface>(localParagraphs, 'paragraph', paragraphIndex, setLocalParagraphs);
+  }, [handleDeleteAndReindex, localParagraphs]);
+
+  // TODO: implement actual sync logic
+  const syncAll = useCallback((origin: string) => {
+    // Placeholder for future sync logic
+    console.log('Sync all items triggered from:', origin);
+  }, []);
   
   // Add new chapter when shouldAddNewChapter is set
   useEffect(() => {
@@ -149,44 +177,17 @@ export function EditorClientSide({ id, document, chapters, paragraphs }: EditorC
     localChapters
   ]);
 
-
-  const createParagraph = useCallback((chapterId: string, paragraphIndex: number | null = null) => {
-    const newParagraph = createParagraphObject(
-      localDocument.id,
-      chapterId,
-      paragraphIndex !== null ? paragraphIndex : localParagraphs.length,
+  // Load unsynced data from IndexedDB on mount
+  useEffect(() => {
+    loadUnsyncedData(
+      document, 
+      chapters, 
+      paragraphs, 
+      setLocalDocument,
+      setLocalChapters,
+      setLocalParagraphs
     );
-
-    // Simple case: append to end
-    if(paragraphIndex === null) {
-      setLocalParagraphs(prev => [...prev, newParagraph]);
-      setActiveParagraph({ id: newParagraph.id, direction: null });
-      SaveItemOnIndexedDB(newParagraph, null, 'paragraph');
-      return;
-    }
-
-    // Insert at specific position
-    const updatedParagraphs = [...localParagraphs];
-    updatedParagraphs.splice(paragraphIndex, 0, newParagraph);
-    
-    // Re-index and save affected paragraphs
-    reindexAndSave(updatedParagraphs, paragraphIndex, 'paragraph', setLocalParagraphs);
-    setActiveParagraph({ id: updatedParagraphs[paragraphIndex].id, direction: null});
-  }, [localDocument.id, localParagraphs, reindexAndSave]);
-
-  const handleDeleteChapter = useCallback((chapterIndex: number) => {
-    handleDeleteAndReindex<ChapterInterface>(localChapters, 'chapter', chapterIndex, setLocalChapters);
-  }, [handleDeleteAndReindex, localChapters]);
-
-  const handleDeleteParagraph = useCallback((paragraphIndex: number) => {
-    handleDeleteAndReindex<ParagraphInterface>(localParagraphs, 'paragraph', paragraphIndex, setLocalParagraphs);
-  }, [handleDeleteAndReindex, localParagraphs]);
-
-  // TODO: implement actual sync logic
-  const syncAll = useCallback((origin: string) => {
-    // Placeholder for future sync logic
-    console.log('Sync all items triggered from:', origin);
-  }, []);
+  }, [document, chapters, paragraphs]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
