@@ -4,6 +4,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 interface UseParagraphEditingParams {
   paragraphRef: RefObject<HTMLDivElement | null>;
+  syncedText: string;
   emptyTextPlaceholder: string;
   selection: Selection | null;
   setSelection: (selection: Selection | null) => void;
@@ -15,7 +16,7 @@ interface UseParagraphEditingParams {
 interface UseParagraphEditingReturn {
   isEditing: boolean;
   handleStartEditing: () => void;
-  handleFinishEditing: () => Promise<void>;
+  handleFinishEditing: () => void;
   handleParagraphClick: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
@@ -24,7 +25,7 @@ interface UseParagraphEditingReturn {
  * Handles starting/finishing edit mode, placeholder management, and click events
  */
 export function useParagraphEditing({
-  paragraphRef,
+  paragraphRef, syncedText,
   emptyTextPlaceholder,
   selection, setSelection,
   resetCursorPosition,
@@ -32,7 +33,6 @@ export function useParagraphEditing({
 }: UseParagraphEditingParams): UseParagraphEditingReturn {
   const [isEditing, setIsEditing] = useState(false);
   const { waitForPendingSaves } = useLocalStorage();
-  const localPreviousTextRef = useRef<string>(paragraphRef.current?.textContent || '');
   
   const handleStartEditing = useCallback(() => {
     if (!paragraphRef.current || isEditing) return;
@@ -47,27 +47,31 @@ export function useParagraphEditing({
     }
   }, [paragraphRef, emptyTextPlaceholder, isEditing]);
 
-  const handleFinishEditing = useCallback(async () => {
+  const handleFinishEditing = useCallback(() => {
     // Don't finish editing if text is selected (context menu open)
     if (selection) return;
     if (!paragraphRef.current) return;
-
+    
     setIsEditing(false);
     setSelection(null);
     resetCursorPosition();
 
     // Add placeholder if text is empty
+    let textToCompare;
+
     const text = (paragraphRef.current.textContent || '').trim();
+
     if (text.length === 0) {
+      textToCompare = '';
       paragraphRef.current.textContent = emptyTextPlaceholder;
+    } else {
+      textToCompare = paragraphRef.current.innerHTML.replaceAll('&nbsp;', '').trim();
+      paragraphRef.current.innerHTML = textToCompare;
     }
 
-    // Save and sync
-    if(localPreviousTextRef.current !== text) {
-      localPreviousTextRef.current = text;
+    if(textToCompare !== syncedText) {
       onSave();
-      await waitForPendingSaves();
-      onRemoteSync?.();
+      waitForPendingSaves().then(onRemoteSync)
     }
 
     paragraphRef.current?.blur();
