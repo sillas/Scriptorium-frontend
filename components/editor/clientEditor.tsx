@@ -54,6 +54,7 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
     SaveItemOnIndexedDB,
     handleDeleteAndReindex, 
     reindexAndSave,
+    waitForPendingSaves,
   } = useLocalStorage();
   
   const { syncAllItems } = useSyncBackground();
@@ -134,16 +135,6 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
     setActiveParagraph({ id: updatedParagraphs[paragraphIndex].id, direction: null});
   }, [localDocument.id, localParagraphs, reindexAndSave]);
 
-
-  const handleDeleteChapter = useCallback((chapterIndex: number) => {
-    handleDeleteAndReindex<ChapterInterface>(localChapters, 'chapters', chapterIndex, setLocalChapters);
-  }, [handleDeleteAndReindex, localChapters]);
-
-
-  const handleDeleteParagraph = useCallback((paragraphIndex: number) => {    
-    handleDeleteAndReindex<ParagraphInterface>(localParagraphs, 'paragraphs', paragraphIndex, setLocalParagraphs);
-  }, [handleDeleteAndReindex, localParagraphs]);
-   
   const syncAllWithoutDebounce = useCallback(async () => {
     if(!isOnline) return;
     const {syncedDocument, syncedChapters, syncedParagraphs} = await syncAllItems(localDocument.id);
@@ -156,6 +147,18 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
     }
 
   }, [isOnline, localDocument.id, syncAllItems, updateLocalState]);
+
+  const handleDeleteChapter = useCallback((chapterIndex: number) => {
+    handleDeleteAndReindex<ChapterInterface>(localChapters, 'chapters', chapterIndex, setLocalChapters);
+    waitForPendingSaves().then(syncAllWithoutDebounce);
+  }, [handleDeleteAndReindex, localChapters]);
+
+
+  const handleDeleteParagraph = useCallback((paragraphIndex: number) => {    
+    handleDeleteAndReindex<ParagraphInterface>(localParagraphs, 'paragraphs', paragraphIndex, setLocalParagraphs);
+    waitForPendingSaves().then(syncAllWithoutDebounce);
+  }, [localParagraphs, handleDeleteAndReindex, waitForPendingSaves, syncAllWithoutDebounce]);
+   
 
   const handleDocumentHeadingChange = useCallback((data: TitleUpdateData) => {
     data.slug = generateSlug(data.title);
