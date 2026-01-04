@@ -115,7 +115,6 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
         contentEditable
         suppressContentEditableWarning
         onMouseDown={handleMouseDown}
-        onDoubleClick={handleMouseDown}
         onClick={handleHeadingClick}
         onInput={onInput}
         onFocus={handleOnFocus}
