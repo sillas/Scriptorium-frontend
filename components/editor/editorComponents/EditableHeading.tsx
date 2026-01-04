@@ -33,6 +33,7 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
 
     const ref = useRef<HTMLHeadingElement>(null);
     const focusByClick = useRef(false);
+    const mouseXPositionRef = useRef<number | null>(null);
 
     /**
      * Expose imperative methods to parent components
@@ -59,7 +60,27 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
       }
     }, [EMPTY_TEXT_PLACEHOLDER]);
 
+    const handleMouseDown = (event: React.MouseEvent<HTMLHeadingElement>) => {      
+      focusByClick.current = true
+      mouseXPositionRef.current = event.clientX;
+    }
+
     const handleHeadingClick = useCallback((event: React.MouseEvent<HTMLHeadingElement>) => {
+
+      if (event.detail === 2) {
+        mouseXPositionRef.current = null;
+        return;
+      }
+
+      if(mouseXPositionRef.current) {
+        const distance = Math.abs(event.clientX - mouseXPositionRef.current);
+        if(distance > 5) {
+          mouseXPositionRef.current = null;
+          return;
+        }
+      }
+
+      event.preventDefault();
       handlePlaceholderText();
       handleClick(event, ref);
       focusByClick.current = false;
@@ -78,22 +99,23 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
       }
     }, [handleOnBlur]);
 
-    useEffect(() => {
-      handlePlaceholderText(content === undefined || content === '');
-    }, [content, handlePlaceholderText]);
-
     const handleOnFocus = useCallback(() => {
       if(focusByClick.current) return;
       handlePlaceholderText();
       setCursorAt(ref, 'END');
     }, [handlePlaceholderText]);
 
+    useEffect(() => {
+      handlePlaceholderText(content === undefined || content === '');
+    }, [content, handlePlaceholderText]);
+
     return (
       <Component
         ref={ref}
         contentEditable
         suppressContentEditableWarning
-        onMouseDown={() => focusByClick.current = true}
+        onMouseDown={handleMouseDown}
+        onDoubleClick={handleMouseDown}
         onClick={handleHeadingClick}
         onInput={onInput}
         onFocus={handleOnFocus}

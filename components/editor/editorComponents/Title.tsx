@@ -67,7 +67,6 @@ export function Title({
   onFocus,
   fontClass = '',
 }: TitleProps) {
-
   const previousContentSnapshot = useRef<string>(title + (subtitle || ''));
   const titleRef = useRef<EditableHeadingHandle>(null);
   const subtitleRef = useRef<EditableHeadingHandle>(null);
