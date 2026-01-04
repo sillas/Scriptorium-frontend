@@ -47,7 +47,6 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(initialDocument);
   const [localChapters, setLocalChapters] = useState<ChapterInterface[]>(chapters);
   const [localParagraphs, setLocalParagraphs] = useState<ParagraphInterface[]>(paragraphs);
-  const [shouldAddNewChapter, setShouldAddNewChapter] = useState(false);
   const [activeParagraph, setActiveParagraph] = useState<ActiveParagraphInterface | null>(null);
   const [ setDebounce, clearDebounceTimer ] = useDebounceTimer();
   const { 
@@ -178,9 +177,7 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
   }, [syncAllWithoutDebounce, setDebounce, clearDebounceTimer]);
 
   // Add new chapter when shouldAddNewChapter is set
-  useEffect(() => {
-    if (!shouldAddNewChapter) return;
-
+  const addNewChapter = useCallback(() => {
     const chapterLength = localChapters.length;
     const newChapterIndex = chapterLength > 0
       ? localChapters[chapterLength - 1].index + 1
@@ -199,12 +196,10 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
     };
 
     setLocalChapters(prev => [...prev, newChapterData]);
-    setShouldAddNewChapter(false);
 
     // save new chapter to IndexedDB in backgroun
     SaveItemOnIndexedDB(newChapterData, null, 'chapters')
   }, [
-    shouldAddNewChapter, 
     localDocument.id,
     localChapters
   ]);
@@ -291,7 +286,7 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
           ))}
           
           {/* Add Chapter Button */}
-          <AddButton type="chapters" onClick={() => setShouldAddNewChapter(true)} />
+          <AddButton type="chapters" onClick={addNewChapter} />
         </main>
 
         {/* Coluna Lateral Direita */}

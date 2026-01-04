@@ -18,11 +18,13 @@ interface UseParagraphNavigationParams {
   onNavigate?: (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => void;
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
   onReorder?: (direction: NavigationDirection) => void;
+  setIsSynced: React.Dispatch<React.SetStateAction<boolean>>;
   setForceLocalDelete: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface UseParagraphNavigationReturn {
   handleKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => void;
+  handleScrolling: () => void;
 }
 
 /**
@@ -42,9 +44,21 @@ export function useParagraphNavigation({
   onNavigate,
   onCreateNewParagraph,
   onReorder,
+  setIsSynced,
   setForceLocalDelete,
 }: UseParagraphNavigationParams): UseParagraphNavigationReturn {
   
+  const handleScrolling = useCallback(() => {
+    if(!isNavigatingRef.current) return;
+      isNavigatingRef.current = false;
+      
+      // Scroll to ensure the element is visible in the center
+      paragraphRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }, []);
+
   const handleFinishEditingAndNavigate = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => {
       isNavigatingRef.current = true;
@@ -135,7 +149,14 @@ export function useParagraphNavigation({
         // Reorder paragraph with Ctrl+Arrow
         if (event.ctrlKey) {
           event.preventDefault();
+
+          setIsSynced(false);
           onReorder?.(direction);
+
+          setTimeout(() => {
+            isNavigatingRef.current = true;
+            handleScrolling();
+          }, 0);
           return;
         }
 
@@ -188,13 +209,16 @@ export function useParagraphNavigation({
       handleFinishEditingAndNavigate,
       setForceLocalDelete,
       onReorder,
+      setIsSynced,
       goToParagraphOnArrows,
       goToParagraphOnTab,
       handleEnterKeyPress,
+      handleScrolling
     ]
   );
 
   return {
     handleKeyDown,
+    handleScrolling,
   };
 }

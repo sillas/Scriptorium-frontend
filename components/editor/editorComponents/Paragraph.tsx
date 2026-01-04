@@ -103,13 +103,13 @@ export function Paragraph({
   } = useParagraphContextMenu({ isEditing, setSelection });
 
   // 8. Keyboard Navigation
-  const { handleKeyDown } = useParagraphNavigation({
+  const { handleKeyDown, handleScrolling } = useParagraphNavigation({
     paragraphRef, isNavigatingRef, paragraph, isEditing,
     isCursorAtFirstPosition, isCursorAtLastPosition,
     navigation, emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
     handleFinishEditing, onNavigate,
-    onCreateNewParagraph,
-    onReorder, setForceLocalDelete,
+    onCreateNewParagraph, setIsSynced,
+    onReorder, setForceLocalDelete
   });
 
   // ============ Helper Functions ============
@@ -128,18 +128,6 @@ export function Paragraph({
 
   const onCreateNewParagraphAbove = () => onCreateNewParagraph?.(paragraph.index);
 
-  const handleScrolling = useCallback(() => {
-    if(!isNavigatingRef.current) return;
-    isNavigatingRef.current = false;
-    
-    // Scroll to ensure the element is visible in the center
-    paragraphRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-    });
-    
-  }, []);
-
   // ============ Effects ============
 
   // Initialize paragraph content on mount
@@ -151,7 +139,7 @@ export function Paragraph({
 
   useEffect(() => {
     setIsSynced(paragraph.sync);
-  }, [paragraph.sync]);
+  }, [paragraph]);
 
   // ============ Render ============
 
