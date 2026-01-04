@@ -19,6 +19,7 @@ const updateChapterInList = (currentChapter: ChapterInterface, updatedChapterId:
     title: data.title,
     subtitle: data.subtitle,
     updatedAt: new Date(),
+    sync: false,
   };
 }
 
@@ -30,7 +31,8 @@ export default function Chapter({ chapter, setLocalChapters, onFocus, onRemoteSy
     SaveItemOnIndexedDB(chapter, data, 'chapters');
   }, [chapter, SaveItemOnIndexedDB]);
 
-  const syncChapters = useCallback((data: TitleUpdateData)  => {    
+  const syncChapter = useCallback((data: TitleUpdateData)  => {   
+    // To update side bar chapter index. 
     setLocalChapters?.( prevChapters => 
       prevChapters.map( ch => updateChapterInList(ch, chapter.id, data))
     );
@@ -69,7 +71,7 @@ export default function Chapter({ chapter, setLocalChapters, onFocus, onRemoteSy
           createdAt={chapter.createdAt}
           updatedAt={chapter.updatedAt}
           onChange={handleChapterLocalChange}
-          onRemoteSync={syncChapters}
+          onRemoteSync={syncChapter}
           fontClass="font-merriweather"
         />
       </div>

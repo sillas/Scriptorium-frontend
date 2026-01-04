@@ -100,7 +100,6 @@ export const syncChapters = async (
 ): Promise<ChapterInterface[]> => {
 
   if(unsyncedChapters.length === 0) {
-    console.log('ℹ️ Nenhum capítulo para sincronizar.');
     return [];
   }
 
@@ -131,7 +130,6 @@ export const syncChapters = async (
 
 export const syncParagraphs = async (unsyncedParagraphs: ParagraphInterface[]): Promise<ParagraphInterface[]> => {
   if(unsyncedParagraphs.length === 0) {
-    console.log('ℹ️ Nenhum parágrafo para sincronizar.');
     return [];
   }
 

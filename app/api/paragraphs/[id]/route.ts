@@ -25,7 +25,6 @@ export async function DELETE(
     }
 
     const db = await getDatabase();
-
     const result = await db.collection('paragraphs').deleteOne({
       _id: new ObjectId(id),
     });

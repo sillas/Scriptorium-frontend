@@ -1,11 +1,10 @@
-import { useIsOnline } from '@/components/OnlineStatusProvider';
 import { useState, useEffect } from 'react';
 interface EditorHeaderProps {
   slug: string;
+  isOnline?: boolean | null;
 }
 
-export default function EditorHeader({ slug }: EditorHeaderProps) {
-  const isOnline = useIsOnline();
+export default function EditorHeader({ slug, isOnline }: EditorHeaderProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);

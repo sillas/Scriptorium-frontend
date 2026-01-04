@@ -5,31 +5,21 @@ import { ObjectId } from 'mongodb';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, documentId, chapterId, index, text, metadata } = body;
+    const { id, ...paragraph } = body;
 
-    if (!documentId || !chapterId) {
+    if (!paragraph.documentId || !paragraph.chapterId) {
       return NextResponse.json(
         { error: 'DocumentId e chapterId são obrigatórios' },
         { status: 400 }
       );
     }
 
+    if(id && !id.startsWith('temp-')) {
+      paragraph._id = new ObjectId(id);
+    }
+    
     const db = await getDatabase();
-    const now = new Date();
-
-    const newParagraph = {
-      _id: id && id.startsWith('temp-') ? undefined : id ? new ObjectId(id) : undefined,
-      documentId,
-      chapterId,
-      index: index || 1,
-      text: text || '',
-      createdAt: now,
-      updatedAt: now,
-      version: 1,
-      metadata: metadata || { characterCount: 0 },
-    };
-
-    const result = await db.collection('paragraphs').insertOne(newParagraph);
+    const result = await db.collection('paragraphs').insertOne(paragraph);
 
     return NextResponse.json(
       {
@@ -50,7 +40,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, ...rest } = body;
+    const { id, ...paragraph } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -58,19 +48,17 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const db = await getDatabase();
     
     // Skip if it's a temp ID
     if (id.startsWith('temp-')) {
       // Convert temp paragraph to permanent
       return POST(request);
     }
-
-
+    
+    const db = await getDatabase();
     const result = await db.collection('paragraphs').updateOne(
       { _id: new ObjectId(id) },
-      { $set: rest }
+      { $set: paragraph }
     );
 
     if (result.matchedCount === 0) {

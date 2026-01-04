@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import SyncIndicator from '@/components/editor/SyncIndicator';
 import { EditableHeading, EditableHeadingHandle } from './EditableHeading';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
@@ -67,22 +67,24 @@ export function Title({
   onFocus,
   fontClass = '',
 }: TitleProps) {
+
   const previousContentSnapshot = useRef<string>(title + (subtitle || ''));
   const titleRef = useRef<EditableHeadingHandle>(null);
   const subtitleRef = useRef<EditableHeadingHandle>(null);
 
   const [localUpdatedAt, setLocalUpdatedAt] = useState(updatedAt);
+  const [localIsSynced, setLocalIsSynced] = useState(isSynced);
   const [setDebounce, clearDebounceTimer] = useDebounceTimer();
 
   /**
    * Retrieves the current text content from both title and subtitle elements.
    * @returns A tuple containing the current title and subtitle text content
    */
-  const getTitleAndSubtitleContent = useCallback((): [string, string] => {
+  const getTitleAndSubtitleContent = (): [string, string] => {
     const newTitle = titleRef.current?.getTextContent() || '';
     const newSubtitle = subtitleRef.current?.getTextContent() || '';
     return [newTitle, newSubtitle];
-  }, []);
+  }
 
   /**
    * Saves the current title and subtitle changes locally if they differ from the previous values.
@@ -106,7 +108,7 @@ export function Title({
     setLocalUpdatedAt(data.updatedAt);
     onChange?.(data);    
     return data;
-  }, [onChange, getTitleAndSubtitleContent]);
+  }, [onChange]);
 
 
   /**
@@ -114,9 +116,10 @@ export function Title({
    * Clears any existing debounce timer and sets a new one to trigger local save after the delay period.
    */
   const handleInputWithDebounce = useCallback(() => {
+    setLocalIsSynced(false);
     clearDebounceTimer();
     setDebounce(persistLocalChanges, DEBOUNCE_DELAY_MS);
-  }, [ persistLocalChanges ]);
+  }, [ persistLocalChanges, setDebounce, clearDebounceTimer ]);
 
   /**
    * Stops the editing process by clearing the debounce timer and immediately triggering synchronization.
@@ -126,7 +129,12 @@ export function Title({
     clearDebounceTimer();
     const data = persistLocalChanges(true);       
     if(data) onRemoteSync?.(data);
-  }, [persistLocalChanges, onRemoteSync]);
+  }, [persistLocalChanges, onRemoteSync, clearDebounceTimer]);
+
+  useEffect(() => {
+    console.log(`${isDocumentLevel ? 'Doc ': ''}isSynced? ${isSynced}`);
+    setLocalIsSynced(!!isSynced);
+  }, [isSynced]);
 
   return (
     <div
@@ -138,7 +146,7 @@ export function Title({
       } bg-gray-100 relative flex-grow ${fontClass}`}
     >
       <div className={`absolute top-0 right-0 ${isDocumentLevel ? 'mr-3' : ''}`}>
-        <SyncIndicator isSynced={isSynced ?? false} />
+        <SyncIndicator isSynced={localIsSynced ?? false} />
       </div>
 
       <div className="flex items-center gap-2 pl-[5px]">

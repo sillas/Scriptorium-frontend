@@ -5,35 +5,22 @@ import { ObjectId } from 'mongodb';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, documentId, index, title, subtitle, metadata } = body;
+    const { id, ...chapter } = body;
 
-    if (!documentId || !title) {
+    if (!chapter.documentId || !chapter.title) {
       return NextResponse.json(
         { error: 'DocumentId e título são obrigatórios' },
         { status: 400 }
       );
     }
 
-    const db = await getDatabase();
-    const now = new Date();
-
-    const newChapter: any = {
-      documentId,
-      index: index || 1,
-      title,
-      subtitle: subtitle || '',
-      createdAt: now,
-      updatedAt: now,
-      version: 1,
-      metadata: metadata || { wordCount: 0 },
-    };
-    
     // Apenas incluir _id se for fornecido e não for temporário
     if (id && !id.startsWith('temp-')) {
-      newChapter._id = new ObjectId(id);
+      chapter._id = new ObjectId(id);
     }
-
-    const result = await db.collection('chapters').insertOne(newChapter);
+    
+    const db = await getDatabase();
+    const result = await db.collection('chapters').insertOne(chapter);
 
     return NextResponse.json(
       {
@@ -54,7 +41,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, ...rest } = body;
+    const { id, ...chapter } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -62,18 +49,17 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const db = await getDatabase();
     
     // Skip if it's a temp ID
     if (id.startsWith('temp-')) {
       // Convert temp chapter to permanent
       return POST(request);
     }
-
+    
+    const db = await getDatabase();
     const result = await db.collection('chapters').updateOne(
       { _id: new ObjectId(id) },
-      { $set: rest }
+      { $set: chapter }
     );
 
     if (result.matchedCount === 0) {

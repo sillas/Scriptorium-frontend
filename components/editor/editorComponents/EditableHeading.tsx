@@ -71,6 +71,13 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
       ref?.current?.blur();
     }, [EMPTY_TEXT_PLACEHOLDER, handlePlaceholderText]);
 
+    const handleKeyUp = useCallback((event: React.KeyboardEvent<HTMLHeadingElement>) => {
+      if(event.key === 'Escape' || event.key === 'Enter') {
+        event.preventDefault();
+        handleOnBlur();
+      }
+    }, [handleOnBlur]);
+
     useEffect(() => {
       handlePlaceholderText(content === undefined || content === '');
     }, [content, handlePlaceholderText]);
@@ -90,6 +97,7 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
         onClick={handleHeadingClick}
         onInput={onInput}
         onFocus={handleOnFocus}
+        onKeyUp={handleKeyUp}
         onBlur={handleOnBlur}
         className={`${styles.baseStyles} ${styles.sizeStyles(IS_TITLE, isDocumentLevel)} ${className}`}
       >

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useIsOnline } from '@/components/OnlineStatusProvider';
 import EditorHeader from '@/components/editor/Header';
 import SideColumn from '@/components/editor/editorComponents/SideColumn';
 import Contents from '@/components/editor/editorComponents/Contents';
@@ -39,7 +40,7 @@ interface ClientEditorProps {
  * @param theDocument - initial document data fetched from the server
  */
 export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEditorProps) {
-
+  const isOnline = useIsOnline();
   const isNavigatingRef = useRef(false);
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(initialDocument);
   const [localChapters, setLocalChapters] = useState<ChapterInterface[]>(chapters);
@@ -53,10 +54,7 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
     reindexAndSave,
   } = useLocalStorage();
   
-  // Hook de sincronização em background
   const { syncAllItems } = useSyncBackground();
-  
-  // Track pending IndexedDB save operations
   const {
     navigateToAdjacentParagraph,
     getNavigationAvailability,
@@ -144,11 +142,12 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
     handleDeleteAndReindex<ParagraphInterface>(localParagraphs, 'paragraphs', paragraphIndex, setLocalParagraphs);
   }, [handleDeleteAndReindex, localParagraphs]);
    
-  const syncAllWWithoutDebounce = useCallback(async () => {
+  const syncAllWithoutDebounce = useCallback(async () => {
+    if(!isOnline) return;
     const {syncedChapters, syncedParagraphs} = await syncAllItems(localDocument.id);
     updateLocalState(syncedChapters, setLocalChapters);
     updateLocalState(syncedParagraphs, setLocalParagraphs);
-  }, [localDocument.id, syncAllItems, updateLocalState]);
+  }, [isOnline, localDocument.id, syncAllItems, updateLocalState]);
 
   const syncAll = useCallback(() => {
     clearDebounceTimer();
@@ -158,9 +157,10 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
       if (activeElement?.getAttribute('contenteditable') === 'true') {
         return;
       }
-      await syncAllWWithoutDebounce();
+
+      await syncAllWithoutDebounce();
     }, 3000); // prevent auto-sync for 3s after manual sync
-  }, [syncAllWWithoutDebounce]);
+  }, [syncAllWithoutDebounce, setDebounce, clearDebounceTimer]);
 
   // Add new chapter when shouldAddNewChapter is set
   useEffect(() => {
@@ -204,14 +204,14 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
       setLocalChapters,
       setLocalParagraphs
     ).finally(() => {
-      syncAllWWithoutDebounce();
+      syncAllWithoutDebounce();
     });
-  }, [initialDocument, chapters, paragraphs, syncAllWWithoutDebounce]);
+  }, [isOnline, initialDocument, chapters, paragraphs, syncAllWithoutDebounce]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
       {/* Barra Superior */}
-      <EditorHeader slug={localDocument.title} />
+      <EditorHeader slug={localDocument.title} isOnline={isOnline} />
 
       {/* Container Principal */}
       <div className="flex flex-1 overflow-hidden relative">
