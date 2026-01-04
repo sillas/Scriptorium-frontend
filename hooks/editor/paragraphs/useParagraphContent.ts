@@ -1,5 +1,5 @@
 import { RefObject, useState, useCallback } from 'react';
-import { countWords } from '@/lib/editor/text-utils';
+import { countWords, countCharacters } from '@/lib/editor/text-utils';
 
 interface UseParagraphContentParams {
   paragraphRef: RefObject<HTMLDivElement | null>;
@@ -21,12 +21,12 @@ export function useParagraphContent({
   initialText,
 }: UseParagraphContentParams): UseParagraphContentReturn {
     
-  const [characterCount, setCharacterCount] = useState(initialText ? initialText.trim().length : 0);
+  const [characterCount, setCharacterCount] = useState(countCharacters(initialText));
   const [wordCount, setWordCount] = useState(countWords(initialText));
 
   const updateContentMetrics = useCallback(() => {
     const text = (paragraphRef.current?.innerText || '').trim();
-    setCharacterCount(text.length);
+    setCharacterCount(countCharacters(text));
     setWordCount(countWords(text));
   }, []);
 

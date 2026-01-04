@@ -3,7 +3,7 @@ import { ParagraphInterface, textAlignmentType } from '@/components/editor/types
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { handleDeleteQuestion } from '@/components/editor/utils/utils';
-import { countWords } from '@/lib/editor/text-utils';
+import { countWords, countCharacters } from '@/lib/editor/text-utils';
 
 interface UseParagraphPersistenceParams {
   paragraphRef: RefObject<HTMLDivElement | null>;
@@ -69,7 +69,7 @@ export function useParagraphPersistence({
     let currentText = (paragraphRef.current?.innerText || '').trim();
     if (currentText === text_placeholder) currentText = '';
     else {
-      characterCount = currentText.length;
+      characterCount = countCharacters(currentText);
       wordCount = countWords(currentText);
       currentText = paragraphRef.current?.innerHTML || '';
     }
