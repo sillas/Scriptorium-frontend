@@ -1,4 +1,4 @@
-import { ChapterInterface, ParagraphInterface } from '@/components/editor/types';
+import { ContentEntity, DocumentInterface, ParagraphInterface } from '@/components/editor/types';
 
 /**
  * Handles delete action for a paragraph, prompting for confirmation if it contains text.
@@ -12,7 +12,7 @@ export const handleDeleteQuestion = (text: string | undefined, what?: string): b
     return true;
 }
 
-export const updateLocalState = <T extends ParagraphInterface | ChapterInterface>(
+export const updateLocalState = <T extends ContentEntity>(
   syncedItems: T[] | undefined,
   setLocalItems: React.Dispatch<React.SetStateAction<T[]>>
 ) => {

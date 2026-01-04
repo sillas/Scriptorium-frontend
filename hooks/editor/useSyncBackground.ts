@@ -1,10 +1,11 @@
 import { useCallback, useRef } from 'react';
 import { getUnsyncedItemsForDocument } from '@/lib/indexedDB';
-import { ChapterInterface, ParagraphInterface } from '@/components/editor/types';
-import { syncChapters, syncParagraphs } from '@/lib/sync';
+import { DocumentInterface, ChapterInterface, ParagraphInterface } from '@/components/editor/types';
+import { syncDocument, syncChapters, syncParagraphs } from '@/lib/sync';
 
 
 interface SyncAllItemsResult {
+  syncedDocument?: DocumentInterface | null;
   syncedChapters?: ChapterInterface[];
   syncedParagraphs?: ParagraphInterface[];
 }
@@ -43,12 +44,13 @@ export function useSyncBackground() {
       const unsyncedData = await getUnsyncedItemsForDocument(documentId.toString());
       const unsyncedChapters = unsyncedData.chapters
       const unsyncedParagraphs = unsyncedData.paragraphs
-      // const unsyncedDocument = unsyncedData.document
+      const unsyncedDocument = unsyncedData.document
 
+      const syncedDocument = await syncDocument(unsyncedDocument);
       const syncedChapters = await syncChapters(unsyncedChapters, unsyncedParagraphs);
       const syncedParagraphs = await syncParagraphs(unsyncedParagraphs);
       
-      return {syncedChapters, syncedParagraphs};
+      return {syncedDocument, syncedChapters, syncedParagraphs};
 
     } catch (error) {
       console.error('❌ Erro geral na sincronização de capítulos:', error);

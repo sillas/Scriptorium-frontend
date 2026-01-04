@@ -105,6 +105,7 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
       setCursorAt(ref, 'END');
     }, [handlePlaceholderText]);
 
+
     useEffect(() => {
       handlePlaceholderText(content === undefined || content === '');
     }, [content, handlePlaceholderText]);

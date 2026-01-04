@@ -14,6 +14,7 @@ import {
   ParagraphInterface,
   ActiveParagraphInterface,
   NavigationDirection,
+  TitleUpdateData,
 } from '@/components/editor/types';
 import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
 import { Paragraph } from '@/components/editor/editorComponents/Paragraph';
@@ -22,6 +23,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useNavigation } from '@/hooks/editor/useNavigation';
 import { useSyncBackground } from '@/hooks/editor/useSyncBackground';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
+import { generateSlug } from '@/lib/slug-helpers';
 
 interface ClientEditorProps {
   initialDocument: DocumentInterface;
@@ -144,10 +146,21 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
    
   const syncAllWithoutDebounce = useCallback(async () => {
     if(!isOnline) return;
-    const {syncedChapters, syncedParagraphs} = await syncAllItems(localDocument.id);
+    const {syncedDocument, syncedChapters, syncedParagraphs} = await syncAllItems(localDocument.id);
+
     updateLocalState(syncedChapters, setLocalChapters);
     updateLocalState(syncedParagraphs, setLocalParagraphs);
+    if(syncedDocument) {
+      console.log('syncedDocument?: ', syncedDocument.sync);
+      setLocalDocument(syncedDocument);
+    }
+
   }, [isOnline, localDocument.id, syncAllItems, updateLocalState]);
+
+  const handleDocumentHeadingChange = useCallback((data: TitleUpdateData) => {
+    data.slug = generateSlug(data.title);
+    SaveItemOnIndexedDB(localDocument, data, 'documents');
+  }, [SaveItemOnIndexedDB]);
 
   const syncAll = useCallback(() => {
     clearDebounceTimer();
@@ -157,7 +170,6 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
       if (activeElement?.getAttribute('contenteditable') === 'true') {
         return;
       }
-
       await syncAllWithoutDebounce();
     }, 3000); // prevent auto-sync for 3s after manual sync
   }, [syncAllWithoutDebounce, setDebounce, clearDebounceTimer]);
@@ -238,10 +250,10 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
             updatedAt={localDocument.updatedAt}
             createdAt={localDocument.createdAt}
             isSynced={localDocument.sync}
-            onRemoteSync={syncAll}
-            onChange={(data) => true}
-            onFocus={() => setActiveParagraph(null)}
             fontClass={localDocument.fontClass || "font-merriweather"}
+            onFocus={() => setActiveParagraph(null)}
+            onRemoteSync={syncAll}
+            onChange={handleDocumentHeadingChange}
           />
           
           {/* Chapters with Titles and Paragraphs */}

@@ -47,13 +47,13 @@ export interface ChapterInterface {
 export interface DocumentInterface {
   id: string;
   title: string;
-  slug: string;
   subtitle: string;
   author: string;
   createdAt: Date;
   updatedAt: Date;
   version: number;
   sync: boolean;
+  slug?: string;
   fontClass?: string;
   deleted?: boolean;
   metadata?: {
@@ -100,6 +100,13 @@ export interface MongoParagraphInterface {
   version: number;
   characterCount: number;
   wordCount: number;
+}
+
+export interface TitleUpdateData {
+  title: string;
+  subtitle: string;
+  updatedAt?: Date;
+  slug?: string;
 }
 
 export interface ActiveParagraphInterface {

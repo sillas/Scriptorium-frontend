@@ -1,15 +1,10 @@
 'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';
+import { TitleUpdateData } from '@/components/editor/types';
 import SyncIndicator from '@/components/editor/SyncIndicator';
-import { EditableHeading, EditableHeadingHandle } from './EditableHeading';
+import { EditableHeading, EditableHeadingHandle } from '@/components/editor/editorComponents/EditableHeading';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
-
-export interface TitleUpdateData {
-  title: string;
-  subtitle: string;
-  updatedAt?: Date;
-}
 
 const DEBOUNCE_DELAY_MS = 700;
 interface TitleProps {
@@ -103,6 +98,7 @@ export function Title({
       updatedAt: new Date(),
     };
     
+    setLocalIsSynced(false);
     setLocalUpdatedAt(data.updatedAt);
     onChange?.(data);    
     return data;
@@ -114,7 +110,6 @@ export function Title({
    * Clears any existing debounce timer and sets a new one to trigger local save after the delay period.
    */
   const handleInputWithDebounce = useCallback(() => {
-    setLocalIsSynced(false);
     clearDebounceTimer();
     setDebounce(persistLocalChanges, DEBOUNCE_DELAY_MS);
   }, [ persistLocalChanges, setDebounce, clearDebounceTimer ]);
@@ -131,7 +126,7 @@ export function Title({
 
   useEffect(() => {
     setLocalIsSynced(!!isSynced);
-  }, [isSynced]);
+  }, [isSynced, title, subtitle]);
 
   return (
     <div

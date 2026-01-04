@@ -170,7 +170,7 @@ export async function getUnsyncedItemsForDocument(documentId: string): Promise<{
     const documentRequest = documentStore.get(documentId);
     
     documentRequest.onsuccess = () => {
-      const doc = documentRequest.result;      
+      const doc = documentRequest.result;    
       if (doc && doc.sync === false) {
         document = doc;
       }

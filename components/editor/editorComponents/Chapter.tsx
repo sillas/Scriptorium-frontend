@@ -1,6 +1,7 @@
 import { ReactNode, useCallback, useRef } from 'react';
 import { ChapterInterface } from '@/components/editor/types';
-import { Title, TitleUpdateData } from '@/components/editor/editorComponents/Title';
+import { Title } from '@/components/editor/editorComponents/Title';
+import { TitleUpdateData } from '@/components/editor/types';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 interface ChapterProps {

@@ -1,4 +1,4 @@
-import { ChapterInterface, ParagraphInterface, ContentEntity } from '@/components/editor/types';
+import { ChapterInterface, ParagraphInterface, ContentEntity, DocumentEntity, DocumentEntityType, ContentEntityType, DocumentInterface } from '@/components/editor/types';
 import { saveToIndexedDB, replaceItem, deleteFromIndexedDB } from '@/lib/indexedDB';
 
 /**
@@ -37,16 +37,16 @@ const deleteItem = async <T extends ContentEntity>(
  * @param itemType - Tipo do item para mensagens de log ('capítulo' ou 'parágrafo')
  * @returns Tupla com [item sincronizado, ID anterior se foi alterado]
  */
-const syncItem = async <T extends ContentEntity>(
+const syncItem = async <T extends DocumentEntity>(
   item: T,
-  storeName: 'chapters' | 'paragraphs',
+  storeName: DocumentEntityType,
 ): Promise<T | null> => {
   const previousId = item.id;
   const isTemp = previousId.startsWith('temp-');
 
   // Se o item está marcado para deleção, remover do MongoDB e IndexedDB
   if ((item as any).deleted) {
-    await deleteItem(item, storeName);
+    await deleteItem(item as ContentEntity, storeName as ContentEntityType);
     return null;
   }
 
@@ -93,6 +93,15 @@ const syncItem = async <T extends ContentEntity>(
   }
   return syncedItem;
 };
+
+export const syncDocument = async (
+  unsyncedDocument: DocumentInterface
+): Promise<DocumentInterface | null> => {
+  if(!unsyncedDocument) return null;
+  const syncedDocument = await syncItem(unsyncedDocument, 'documents');
+  if(syncedDocument === null) return null;
+  return syncedDocument
+}
 
 export const syncChapters = async (
   unsyncedChapters: ChapterInterface[], 

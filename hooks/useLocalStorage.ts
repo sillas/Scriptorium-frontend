@@ -14,7 +14,7 @@ import {
   DocumentEntity, DocumentEntityType,
   DocumentInterface, ChapterInterface, ParagraphInterface,
 } from '@/components/editor/types';
-import { TitleUpdateData } from '@/components/editor/editorComponents/Title';
+import { TitleUpdateData } from '@/components/editor/types';
 
 export function useLocalStorage() {
   const pendingSavesRef = useRef<Set<Promise<any>>>(new Set());

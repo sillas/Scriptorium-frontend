@@ -1,63 +1,30 @@
 import { getDatabase } from '@/lib/mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
+import { generateSlug, ensureUniqueSlug } from '@/lib/slug-helpers';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, subtitle, author, metadata } = body;
-
-    // Validação básica
-    if (!title) {
-      return NextResponse.json(
-        { error: 'Título é obrigatório' },
-        { status: 400 }
-      );
-    }
-
-    // Gerar slug a partir do título
-    let slug = title
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
+    const document = body;
 
     const db = await getDatabase();
-    
-    // Verificar se o slug já existe e adicionar número se necessário
-    let finalSlug = slug;
-    let counter = 1;
-    
-    while (await db.collection('documents').findOne({ slug: finalSlug })) {
-      finalSlug = `${slug}-${counter}`;
-      counter++;
+
+    // Gerar slug a partir do título
+    if(!document.slug) {
+      const baseSlug = generateSlug(document.title);
+      const uniqueData = await ensureUniqueSlug(db, 'documents', document.title, baseSlug);
+      document.title = uniqueData.title;
+      document.slug = uniqueData.slug;
     }
 
-    // Criar novo documento
-    const now = new Date();
-    const newDocument = {
-      title,
-      slug: finalSlug,
-      subtitle: subtitle || '',
-      author: author || 'Usuário Padrão',
-      createdAt: now,
-      updatedAt: now,
-      version: 1,
-      metadata: {
-        tags: metadata?.tags || [],
-        status: metadata?.status || 'draft',
-      },
-    };
-
-    const result = await db.collection('documents').insertOne(newDocument);
+    const result = await db.collection('documents').insertOne(document);
 
     return NextResponse.json(
       {
         id: result.insertedId.toString(),
-        slug: newDocument.slug,
+        slug: document.slug,
+        title: document.title,
         message: 'Documento criado com sucesso',
       },
       { status: 201 }
@@ -74,7 +41,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, title, subtitle, updatedAt, metadata } = body;
+    const { id, ...document } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -83,19 +50,25 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    const slug = generateSlug(document.title);
     const db = await getDatabase();
+    
+    // Verificar se já existe outro documento com esse slug
+    const existingDoc = await db.collection('documents').findOne({
+      slug: slug,
+      _id: { $ne: new ObjectId(id) }
+    });
 
-    const updateData: any = {
-      updatedAt: updatedAt ? new Date(updatedAt) : new Date(),
-    };
-
-    if (title !== undefined) updateData.title = title;
-    if (subtitle !== undefined) updateData.subtitle = subtitle;
-    if (metadata !== undefined) updateData.metadata = metadata;
+    if (existingDoc) {
+      return NextResponse.json(
+        { error: 'Já existe um documento com este título' },
+        { status: 409 }
+      );
+    }
 
     const result = await db.collection('documents').updateOne(
       { _id: new ObjectId(id) },
-      { $set: updateData }
+      { $set: document }
     );
 
     if (result.matchedCount === 0) {
