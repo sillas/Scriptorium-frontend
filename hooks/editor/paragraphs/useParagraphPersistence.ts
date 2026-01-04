@@ -2,7 +2,7 @@ import { RefObject, useCallback, useEffect, Dispatch, SetStateAction, useRef } f
 import { ParagraphInterface, textAlignmentType } from '@/components/editor/types';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { handleDeleteQuestion } from '@/components/editor/utils/utils';
+import { handleDeleteQuestion } from '@/components/editor/utils';
 import { countWords, countCharacters } from '@/lib/editor/text-utils';
 
 interface UseParagraphPersistenceParams {
