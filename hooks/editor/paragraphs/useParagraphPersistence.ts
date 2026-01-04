@@ -99,9 +99,6 @@ export function useParagraphPersistence({
 
     const result = handleDeleteQuestion(text, 'parágrafo');
     if (!result) return false;
-    
-    console.log('deleteLocalParagraph -> RUN -> onDelete');
-    
     onDelete?.();
     return true;
   }, [onDelete]);
@@ -149,7 +146,6 @@ export function useParagraphPersistence({
   // Effect to trigger local delete when flagged
   useEffect(() => {
     if (!shouldForceLocalDelete) return;
-    console.log('useParagraphPersistence -> useEffect -> deleteLocalParagraph...');
     const deleted = deleteLocalParagraph(paragraphRef, emptyTextPlaceholder);
     if(deleted) setForceLocalDelete(false);
   }, [

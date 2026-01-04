@@ -125,7 +125,6 @@ export const loadUnsyncedData = async (
         const unsyncedChapters = unsyncedData.chapters
         const unsyncedParagraphs = unsyncedData.paragraphs
 
-        console.log('=== Unsynced data found in IndexedDB ===');
         if (unsyncedChapters.length > 0) {
             const updatedChapters = proccessChapters(chapters, unsyncedChapters);
             setChapters(updatedChapters);
@@ -144,9 +143,6 @@ export const loadUnsyncedData = async (
             };
             setDocument(updatedDocument);
         }
-        
-        console.log('=== end of unsynced data processing ===');
-        
     } catch (error) {
         console.error('Error loading unsynced data from IndexedDB:', error);
     }

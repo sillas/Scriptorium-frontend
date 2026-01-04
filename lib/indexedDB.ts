@@ -55,8 +55,6 @@ export async function saveToIndexedDB<T>(
   storeName: DocumentEntityType,
   data: T
 ): Promise<void> {
-  console.log('saveToIndexedDB |', data);
-  
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction([storeName], 'readwrite');

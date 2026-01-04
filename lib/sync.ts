@@ -23,11 +23,9 @@ const deleteItem = async <T extends ContentEntity>(
     const error = await response.json();
     throw new Error(`Erro ao deletar ${storeName} ${item.id}: ${error.error || response.statusText}`);
   }
-  console.log(`✅ ${storeName} ${item.id} deletado do MongoDB`);
 
   // Remover do IndexedDB
   await deleteFromIndexedDB(storeName, item.id);
-  console.log(`✅ ${storeName} ${item.id} removido do IndexedDB`);
 };
 
 /**
@@ -79,8 +77,6 @@ const syncItem = async <T extends ContentEntity>(
   // Se foi um POST, o servidor retorna o novo ObjectId gerado pelo MongoDB
   const savedId = isTemp ? result.id : item.id;
   
-  console.log(`✅ ${storeName} salvo no MongoDB com ID: ${savedId}`);
-
   // Criar item atualizado
   const syncedItem: T = {
     ...item,
@@ -95,8 +91,6 @@ const syncItem = async <T extends ContentEntity>(
   } else {
     await saveToIndexedDB(storeName, syncedItem);
   }
-  console.log(`✅ ${storeName} ${savedId} sincronizado com sucesso`);
-
   return syncedItem;
 };
 
@@ -110,7 +104,6 @@ export const syncChapters = async (
     return [];
   }
 
-  console.log(`🔄 Sincronizando ${unsyncedChapters.length} capítulo(s)...`);
   const syncedChapters: ChapterInterface[] = [];
   for (const chapter of unsyncedChapters) {
     try {
@@ -121,8 +114,7 @@ export const syncChapters = async (
       const previousId = syncedChapter.previousId;
       // Se o ID mudou, atualizar referências em parágrafos (se necessário)
       if (syncedChapter.id !== previousId && unsyncedParagraphs.length > 0) {
-        console.log(`🔄 Atualizar referências de parágrafos do capítulo ${previousId} para ${syncedChapter.id}`);
-        
+
         unsyncedParagraphs.forEach(p => {
           if (p.chapterId === previousId) {
             p.chapterId = syncedChapter.id;
@@ -134,8 +126,6 @@ export const syncChapters = async (
     }
   }
 
-  console.log(`✅ Sincronização de capítulos concluída: ${syncedChapters.length}/${unsyncedChapters.length} capítulo(s) sincronizados`);
-  
   return syncedChapters;
 }
 
@@ -145,7 +135,6 @@ export const syncParagraphs = async (unsyncedParagraphs: ParagraphInterface[]): 
     return [];
   }
 
-  console.log(`🔄 Sincronizando ${unsyncedParagraphs.length} parágrafo(s)...`);
   const syncedParagraphs: ParagraphInterface[] = [];
 
   for (const paragraph of unsyncedParagraphs) {
@@ -157,6 +146,5 @@ export const syncParagraphs = async (unsyncedParagraphs: ParagraphInterface[]): 
       console.error(`❌ Erro ao sincronizar parágrafo ${paragraph.id}:`, error);
     }
   }
-  console.log(`✅ Sincronização de parágrafos concluída: ${syncedParagraphs.length}/${unsyncedParagraphs.length} parágrafo(s) sincronizados`);
   return syncedParagraphs;
 }

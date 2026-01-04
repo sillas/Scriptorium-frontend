@@ -70,11 +70,8 @@ export function useLocalStorage() {
           
           // If id starts with 'temp-', completely remove from IndexedDB
           if (id.startsWith('temp-')) {
-            console.log('deleteLocal -> is TEMP!');
-            
             await deleteFromIndexedDB(storeName, id);
           } else {
-            console.log('deleteLocal -> MARK SYNC AND deleted: true!');
             // Otherwise, mark as deleted but keep for sync
             const deletedData = {
               ...itemToDelete,
@@ -154,10 +151,7 @@ export function useLocalStorage() {
     const updatedItens = [...localItens];
     const itemToDelete = updatedItens.splice(index, 1)[0];
 
-    console.log('handleDeleteAndReindex -> deleteLocal... [itemToDelete] ', itemToDelete);
-    
     if(!itemToDelete) {
-      console.error('handleDeleteAndReindex -> No item found to delete at index:', index);
       throw new Error('No item found to delete');
     }
 

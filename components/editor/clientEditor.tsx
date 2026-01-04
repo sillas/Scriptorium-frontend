@@ -140,9 +140,7 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
   }, [handleDeleteAndReindex, localChapters]);
 
 
-  const handleDeleteParagraph = useCallback((paragraphIndex: number) => {
-    console.log('onDelete -> ClientEditor -> handleDeleteParagraph -> handleDeleteAndReindex...');
-    
+  const handleDeleteParagraph = useCallback((paragraphIndex: number) => {    
     handleDeleteAndReindex<ParagraphInterface>(localParagraphs, 'paragraphs', paragraphIndex, setLocalParagraphs);
   }, [handleDeleteAndReindex, localParagraphs]);
    

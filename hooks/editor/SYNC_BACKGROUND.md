@@ -53,8 +53,6 @@ const syncAll = useCallback(async (origin: string) => {
       
       return updatedChapters;
     });
-    
-    console.log(`✅ Estado atualizado com ${syncedChapters.length} capítulo(s) sincronizado(s)`);
   }
 }, [syncChapters]);
 ```
