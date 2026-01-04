@@ -1,4 +1,4 @@
-import { getDatabase } from '@/app/lib/mongodb';
+import { getDatabase } from '@/lib/mongodb';
 import { revalidatePath } from 'next/cache';
 import UserForm from '@/components/UserForm';
 

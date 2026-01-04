@@ -1,5 +1,5 @@
-import { RefObject, useCallback, useState } from 'react';
-import { getSelection } from '@/components/editor/utils/utils';
+import { useCallback, useState } from 'react';
+import { getSelection } from '@/lib/editor/selection';
 
 interface UseParagraphContextMenuParams {
   isEditing: boolean;

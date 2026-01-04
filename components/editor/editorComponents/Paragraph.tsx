@@ -1,10 +1,10 @@
 'use client';
 
-import { RefObject, use, useCallback, useEffect, useRef, useState } from 'react';
+import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { Quote } from 'lucide-react';
-import { NavigationDirection, ParagraphInterface } from '@/components/editor/utils/interfaces';
-import { paragraphStyles as styles } from '@/components/editor/utils/paragraphStyles';
-import { updateCursorPosition } from '@/components/editor/utils/utils';
+import { NavigationDirection, ParagraphInterface } from '@/components/editor/types';
+import { styles } from '@/components/editor/styles/paragraph';
+import { updateCursorPosition } from '@/lib/editor/selection';
 import { useActionButtons } from '@/hooks/editor/paragraphs/useActionButtons';
 import { useParagraphEditing } from '@/hooks/editor/paragraphs/useParagraphEditing';
 import { useParagraphNavigation } from '@/hooks/editor/paragraphs/useParagraphNavigation';
@@ -13,7 +13,7 @@ import { useParagraphContent } from '@/hooks/editor/paragraphs/useParagraphConte
 import { useParagraphPersistence } from '@/hooks/editor/paragraphs/useParagraphPersistence';
 import { useParagraphContextMenu } from '@/hooks/editor/paragraphs/useParagraphContextMenu';
 import SyncIndicator from '@/components/editor/SyncIndicator';
-import { PARAGRAPH_CONFIG } from '@/components/editor/utils/constants';
+import { PARAGRAPH_CONFIG } from '@/lib/editor/constants';
 
 const { 
   ICON_SIZE, ICON_COLOR, 

@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
-import { handleClick, setCursorAt } from '@/components/editor/utils/utils';
-import { EditableHeadingStyles as styles } from '@/components/editor/utils/editableHeadingStyles';
+import { handleClick, setCursorAt } from '@/lib/editor/selection';
+import { styles } from '@/components/editor/styles/editable-heading';
 
 export interface EditableHeadingHandle {
   focus: () => void;

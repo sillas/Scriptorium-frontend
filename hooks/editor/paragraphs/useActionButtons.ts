@@ -8,8 +8,8 @@ import {
 import {
     toggleFormattingOnSelection,
     clearFormattingOnSelection
-} from '@/components/editor/utils/utils';
-import { ParagraphInterface, textAlignmentType, FormatTag } from '@/components/editor/utils/interfaces';
+} from '@/lib/editor/formatting';
+import { ParagraphInterface, textAlignmentType, FormatTag } from '@/components/editor/types';
 
 export function useActionButtons(
     paragraph: ParagraphInterface,

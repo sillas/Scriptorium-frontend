@@ -12,6 +12,7 @@ export interface ParagraphUpdate {
 }
 export interface ParagraphInterface {
   id: string;
+  previousId?: string;
   documentId: string;
   chapterId: string;
   index: number;
@@ -28,6 +29,7 @@ export interface ParagraphInterface {
 }
 export interface ChapterInterface {
   id: string;
+  previousId?: string;
   documentId: string;
   index: number;
   title: string;

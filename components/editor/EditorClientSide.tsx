@@ -13,12 +13,13 @@ import {
   ParagraphInterface,
   ActiveParagraphInterface,
   NavigationDirection,
-} from '@/components/editor/utils/interfaces';
+} from '@/components/editor/types';
 import { loadUnsyncedData } from '@/lib/loadUnsyncedData';
 import { Paragraph } from '@/components/editor/editorComponents/Paragraph';
-import { createParagraphObject } from '@/components/editor/utils/helpers';
+import { createParagraphObject, updateLocalState } from '@/lib/editor/paragraph-helpers';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useNavigation } from '@/hooks/editor/useNavigation';
+import { useSyncBackground } from '@/hooks/editor/useSyncBackground';
 
 interface EditorClientSideProps {
   document: DocumentInterface;
@@ -49,6 +50,9 @@ export function EditorClientSide({ document, chapters, paragraphs }: EditorClien
     handleDeleteAndReindex, 
     reindexAndSave,
   } = useLocalStorage();
+  
+  // Hook de sincronização em background
+  const { syncAllItems } = useSyncBackground();
   
   // Track pending IndexedDB save operations
   const {
@@ -137,12 +141,17 @@ export function EditorClientSide({ document, chapters, paragraphs }: EditorClien
   const handleDeleteParagraph = useCallback((paragraphIndex: number) => {
     handleDeleteAndReindex<ParagraphInterface>(localParagraphs, 'paragraph', paragraphIndex, setLocalParagraphs);
   }, [handleDeleteAndReindex, localParagraphs]);
-
-  // TODO: implement actual sync logic
-  const syncAll = useCallback((origin: string) => {
-    // Placeholder for future sync logic
+   
+  const syncAll = useCallback(async (origin: string) => {
     console.log('Sync all items triggered from:', origin);
-  }, []);
+    
+    // Sincronizar capítulos
+    const {syncedChapters, syncedParagraphs} = await syncAllItems(document.id);
+    
+    // Atualizar estado com capítulos sincronizados
+    updateLocalState(syncedChapters, setLocalChapters);
+    updateLocalState(syncedParagraphs, setLocalParagraphs);
+  }, [syncAllItems, updateLocalState]);
   
   // Add new chapter when shouldAddNewChapter is set
   useEffect(() => {

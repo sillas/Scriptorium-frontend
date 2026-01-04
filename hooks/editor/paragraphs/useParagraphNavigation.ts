@@ -1,5 +1,5 @@
 import { RefObject, useCallback } from 'react';
-import { NavigationDirection, ParagraphInterface } from '@/components/editor/utils/interfaces';
+import { NavigationDirection, ParagraphInterface } from '@/components/editor/types';
 
 interface UseParagraphNavigationParams {
   paragraphRef: RefObject<HTMLDivElement | null>;

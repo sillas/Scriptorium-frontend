@@ -3,7 +3,7 @@ import {
   ActiveParagraphInterface, 
   NavigationDirection, 
   ParagraphInterface
-} from "@/components/editor/utils/interfaces";
+} from "@/components/editor/types";
 
 export function useNavigation() {
     /**

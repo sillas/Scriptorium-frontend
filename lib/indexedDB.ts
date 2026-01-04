@@ -2,6 +2,8 @@
  * IndexedDB utilities for local storage and sync queue management
  */
 
+import { DocumentComponentsItems, DocumentComponentsItemsType, DocumentInterface } from "@/components/editor/types";
+
 const DB_NAME = 'EditorDB';
 const DB_VERSION = 1;
 
@@ -130,6 +132,7 @@ export async function getByIndex<T>(
   return new Promise((resolve, reject) => {
     const transaction = db.transaction([storeName], 'readonly');
     const store = transaction.objectStore(storeName);
+
     const index = store.index(indexName);
     const request = index.getAll(value);
 
@@ -202,6 +205,34 @@ export async function getUnsyncedItemsForDocument(documentId: string): Promise<{
     paragraphsRequest.onerror = () => reject(paragraphsRequest.error);
   });
 }
+
+/**
+ * Replace an item in IndexedDB by deleting the old one and creating a new one
+ * Useful for updating items with a new ID (since IDs are used as keys)
+ * Both operations are executed atomically within a single transaction
+ */
+export async function replaceItem (
+    storeName: 'paragraphs' | 'chapters' | 'documents',
+    idToDelete: string, 
+    newItem: DocumentComponentsItems | DocumentInterface,
+  ) : Promise<void> {
+
+    const db = await initDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([storeName], 'readwrite');
+      const store = transaction.objectStore(storeName);
+      
+      const deleteRequest = store.delete(idToDelete);
+      const putRequest = store.put(newItem);
+
+      // Handle individual operation errors
+      deleteRequest.onerror = () => reject(deleteRequest.error);
+      putRequest.onerror = () => reject(putRequest.error);
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
 
 /**
  * Clear all data (useful for testing)

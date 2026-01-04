@@ -1,4 +1,4 @@
-export const paragraphStyles = {
+export const styles = {
     verticalButtonsStyle: (isEditing: boolean) => `flex flex-col items-center justify-center z-100 select-none transition-opacity duration-200 absolute -left-[2rem] top-1/2 -translate-y-1/2 h-fit min-w-[2rem] bg-gray-800 py-2 ${isEditing ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`,
     verticalButtonStyle: (isEditing: boolean) => `${isEditing ? 'pointer-events-auto' : 'pointer-events-none'} my-0.5 w-6 h-6 shadow-sm focus:outline-none cursor-pointer hover:transform hover:translate-x-1 m-1 transition-transform duration-150`,
     contextButtonsContainerStyle: 'absolute top-[-1.9rem] w-full h-[30px] select-none',

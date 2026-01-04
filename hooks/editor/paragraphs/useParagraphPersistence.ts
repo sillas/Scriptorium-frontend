@@ -1,9 +1,9 @@
 import { RefObject, useCallback, useEffect, Dispatch, SetStateAction, useRef } from 'react';
-import { ParagraphInterface, textAlignmentType } from '@/components/editor/utils/interfaces';
+import { ParagraphInterface, textAlignmentType } from '@/components/editor/types';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { handleDeleteQuestion } from '@/components/editor/utils/utils';
-import { countWords } from '@/components/editor/utils/helpers';
+import { countWords } from '@/lib/editor/text-utils';
 
 interface UseParagraphPersistenceParams {
   paragraphRef: RefObject<HTMLDivElement | null>;

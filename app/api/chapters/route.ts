@@ -1,4 +1,4 @@
-import { getDatabase } from '@/app/lib/mongodb';
+import { getDatabase } from '@/lib/mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 
@@ -17,8 +17,7 @@ export async function POST(request: NextRequest) {
     const db = await getDatabase();
     const now = new Date();
 
-    const newChapter = {
-      _id: id && id.startsWith('temp-') ? undefined : id ? new ObjectId(id) : undefined,
+    const newChapter: any = {
       documentId,
       index: index || 1,
       title,
@@ -28,6 +27,11 @@ export async function POST(request: NextRequest) {
       version: 1,
       metadata: metadata || { wordCount: 0 },
     };
+    
+    // Apenas incluir _id se for fornecido e não for temporário
+    if (id && !id.startsWith('temp-')) {
+      newChapter._id = new ObjectId(id);
+    }
 
     const result = await db.collection('chapters').insertOne(newChapter);
 

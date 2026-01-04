@@ -1,5 +1,5 @@
 import { RefObject, useState, useCallback } from 'react';
-import { countWords } from '@/components/editor/utils/helpers';
+import { countWords } from '@/lib/editor/text-utils';
 
 interface UseParagraphContentParams {
   paragraphRef: RefObject<HTMLDivElement | null>;

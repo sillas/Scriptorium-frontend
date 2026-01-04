@@ -5,7 +5,7 @@ import {
   MongoDocumentInterface,
   MongoChapterInterface,
   MongoParagraphInterface
-} from '@/components/editor/utils/interfaces';
+} from '@/components/editor/types';
 
 
 export function convertMongoDocument(

@@ -1,6 +1,6 @@
 import { RefObject, useEffect, useState, Dispatch, SetStateAction } from 'react';
-import { NavigationDirection } from '@/components/editor/utils/interfaces';
-import { setCursorAt } from '@/components/editor/utils/utils';
+import { NavigationDirection } from '@/components/editor/types';
+import { setCursorAt } from '@/lib/editor/selection';
 
 interface UseParagraphCursorParams {
   paragraphRef: RefObject<HTMLDivElement | null>;

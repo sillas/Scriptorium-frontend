@@ -1,18 +1,18 @@
 // import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ObjectId } from 'mongodb';
-import { getDatabase } from '@/app/lib/mongodb';
+import { getDatabase } from '@/lib/mongodb';
 import { EditorClientSide } from '@/components/editor/EditorClientSide';
 import { 
   convertMongoDocument,
   convertMongoChapters,
   convertMongoParagraphs
-} from '@/components/editor/utils/conversions';
+} from '@/lib/editor/conversions';
 import { 
   MongoChapterInterface, 
   MongoDocumentInterface, 
   MongoParagraphInterface 
-} from '@/components/editor/utils/interfaces';
+} from '@/components/editor/types';
 
 interface EditorProps {
   params: Promise<{ id: string }>

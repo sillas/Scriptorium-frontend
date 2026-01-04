@@ -11,7 +11,7 @@ import {
   ParagraphUpdate,
   DocumentComponentsItems,
   DocumentComponentsItemsType
-} from '@/components/editor/utils/interfaces';
+} from '@/components/editor/types';
 import { TitleUpdateData } from '@/components/editor/editorComponents/Title';
 
 

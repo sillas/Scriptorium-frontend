@@ -1,4 +1,4 @@
-import { getDatabase } from '@/app/lib/mongodb';
+import { getDatabase } from '@/lib/mongodb';
 import DocumentForm from '@/components/editor/DocumentForm';
 
 export default async function Editor() {

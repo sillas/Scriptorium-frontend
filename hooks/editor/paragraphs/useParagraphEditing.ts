@@ -1,5 +1,5 @@
 import { RefObject, useCallback, useRef, useState } from 'react';
-import { handleClick } from '@/components/editor/utils/utils';
+import { handleClick } from '@/lib/editor/selection';
 
 interface UseParagraphEditingParams {
   paragraphRef: RefObject<HTMLDivElement | null>;
