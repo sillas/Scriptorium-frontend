@@ -83,7 +83,7 @@ Este sistema implementa sincronização automática entre o cliente (navegador) 
 ```typescript
 {
   id: string;              // ID único do item na fila
-  type: 'document' | 'chapter' | 'paragraph';
+  type: 'documents' | 'chapters' | 'paragraphs';
   action: 'create' | 'update' | 'delete';
   data: any;               // Dados completos do item
   timestamp: number;       // Quando foi criado

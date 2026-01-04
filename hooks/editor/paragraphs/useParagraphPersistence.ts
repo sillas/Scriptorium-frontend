@@ -87,7 +87,7 @@ export function useParagraphPersistence({
       textAlignment: textAlignment,
     };
 
-    SaveItemOnIndexedDB(paragraph, newData, 'paragraph');
+    SaveItemOnIndexedDB(paragraph, newData, 'paragraphs');
   }, [SaveItemOnIndexedDB]);
 
   const deleteLocalParagraph = useCallback((
@@ -104,7 +104,7 @@ export function useParagraphPersistence({
     if (!result) return;
 
     onDelete();
-    deleteLocal('paragraph', paragraph.id);
+    deleteLocal('paragraphs', paragraph);
   }, [deleteLocal, onDelete]);
 
   const triggerLocalSave = useCallback(

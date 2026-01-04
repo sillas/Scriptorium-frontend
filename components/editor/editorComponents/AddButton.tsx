@@ -1,5 +1,7 @@
+import { ContentEntityType } from "@/components/editor/types";
+
 interface AddButtonProps {
-  type: 'chapter' | 'paragraph';
+  type: ContentEntityType;
   onClick?: () => void;
 }
 
@@ -8,7 +10,7 @@ export default function AddButton({ type, onClick }: AddButtonProps) {
     <button
       onClick={onClick}
       className={`w-full cursor-pointer ${
-        type === 'chapter' ? 'py-4 mb-4' : 'py-3 mb-2'
+        type === 'chapters' ? 'py-4 mb-4' : 'py-3 mb-2'
       } border-2 border-dashed border-gray-400/30 rounded-lg 
       hover:border-gray-400/60 hover:bg-gray-400/10 
       transition-all duration-200 group`}

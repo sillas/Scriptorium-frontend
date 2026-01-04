@@ -75,7 +75,7 @@ Para testar a sincronização:
    - Será salvo no IndexedDB com `sync: false`
 
 2. **Acionar sincronização**: Clique no ícone de sincronização do capítulo
-   - A função `syncAll('chapter')` será chamada
+   - A função `syncAll('chapters')` será chamada
    - O hook `syncChapters()` processará o capítulo
 
 3. **Verificar resultado**:

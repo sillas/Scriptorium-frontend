@@ -1,54 +1,52 @@
-import { Dispatch, SetStateAction, useCallback, useEffect, useRef } from 'react';
+import { 
+  Dispatch, SetStateAction, 
+  useCallback, useEffect, 
+  useRef } from 'react';
 
 import {
-  initDB,
-  saveToIndexedDB,
+  initDB, saveToIndexedDB,
   deleteFromIndexedDB
 } from '@/lib/indexedDB';
 
 import {
-  DocumentInterface,
   ParagraphUpdate,
-  DocumentComponentsItems,
-  DocumentComponentsItemsType
+  ContentEntity, ContentEntityType,
+  DocumentEntity, DocumentEntityType,
+  DocumentInterface, ChapterInterface, ParagraphInterface,
 } from '@/components/editor/types';
 import { TitleUpdateData } from '@/components/editor/editorComponents/Title';
-
 
 export function useLocalStorage() {
   const pendingSavesRef = useRef<Set<Promise<any>>>(new Set());
   /**
  * Helper to track save operations and ensure they complete
  */
-  const trackSaveOperation = useCallback((savePromise: Promise<any>) => {
-
+  const trackSaveOperation = (savePromise: Promise<any>) => {
     pendingSavesRef.current.add(savePromise);
     savePromise
       .finally(() => {
         pendingSavesRef.current.delete(savePromise);
       });
-
     return savePromise;
-  }, []);
+  }
 
   /**
    * Wait for all pending save operations to complete
    */
-  const waitForPendingSaves = useCallback(async () => {
+  const waitForPendingSaves = async () => {
     if (pendingSavesRef.current.size > 0) {
       await Promise.allSettled(Array.from(pendingSavesRef.current));
     }
-  }, []);
+  }
 
   const saveLocal = useCallback(
     <T extends { id: string }>(
-      type: DocumentComponentsItemsType | 'document',
+      storeName: DocumentEntityType,
       data: T
     ) => {
       try {
         trackSaveOperation((async (): Promise<void> => {
           await initDB();
-          const storeName = `${type}s`;
           await saveToIndexedDB(storeName, data);
         })());
       } catch (error) {
@@ -59,23 +57,26 @@ export function useLocalStorage() {
     [trackSaveOperation]
   );
 
+  // TODO Document Entity Type
   const deleteLocal = useCallback(
     (
-      type: DocumentComponentsItemsType | 'document',
-      id: string
+      type: DocumentEntityType,
+      itemToDelete: ChapterInterface | ParagraphInterface | DocumentInterface
     ) => {
+      const { id } = itemToDelete;
+
       try {
         trackSaveOperation((async (): Promise<void> => {
           await initDB();
           const storeName = `${type}s`;
-
+          
           // If id starts with 'temp-', completely remove from IndexedDB
           if (id.startsWith('temp-')) {
             await deleteFromIndexedDB(storeName, id);
           } else {
             // Otherwise, mark as deleted but keep for sync
             const deletedData = {
-              id,
+              ...itemToDelete,
               deleted: true,
               sync: false
             };
@@ -97,12 +98,12 @@ export function useLocalStorage() {
    * @param textData - optional text update information (text, counts, updatedAt)
    */
   const SaveItemOnIndexedDB = useCallback((
-    currentItem: DocumentComponentsItems | DocumentInterface,
+    currentItem: DocumentEntity,
     newData: ParagraphUpdate | TitleUpdateData | null,
-    itemType: DocumentComponentsItemsType | 'document'
+    itemType: DocumentEntityType
   ): boolean => {
 
-    const setLocalItems: DocumentComponentsItems | DocumentInterface = {
+    const setLocalItems: DocumentEntity = {
       ...currentItem,
       ...(newData || {}),
       updatedAt: newData?.updatedAt ?? new Date(),
@@ -126,9 +127,9 @@ export function useLocalStorage() {
  * @param fromIndex - Starting index for re-indexation
  */
   const reindexAndSave = useCallback((
-    currentItems: DocumentComponentsItems[],
+    currentItems: ContentEntity[],
     fromIndex: number,
-    itemType: DocumentComponentsItemsType,
+    itemType: ContentEntityType,
     setLocalItems: Dispatch<SetStateAction<any[]>>
   ) => {
 
@@ -143,20 +144,20 @@ export function useLocalStorage() {
     setLocalItems(updatedItems);
   }, [SaveItemOnIndexedDB]);
 
-  const handleDeleteAndReindex = useCallback(<T extends DocumentComponentsItems>(
+  const handleDeleteAndReindex = useCallback(<T extends ContentEntity>(
     localItens: T[],
-    itemsType: DocumentComponentsItemsType,
+    itemsType: ContentEntityType,
     index: number,
     setItems: React.Dispatch<React.SetStateAction<T[]>>
   ) => {
     const updatedItens = [...localItens];
-    const { id } = updatedItens.splice(index, 1)[0];
-    deleteLocal(itemsType, id)
+    const itemToDelete = updatedItens.splice(index, 1)[0];
+    deleteLocal(itemsType, itemToDelete)
     reindexAndSave(
       updatedItens, 
       index, 
       itemsType, 
-      setItems as React.Dispatch<React.SetStateAction<DocumentComponentsItems[]>>
+      setItems as React.Dispatch<React.SetStateAction<ContentEntity[]>>
     );
   }, [deleteLocal, reindexAndSave]);
 
@@ -166,7 +167,6 @@ export function useLocalStorage() {
       // If there are pending saves, prevent immediate unload
       if (pendingSavesRef.current.size > 0) {
         e.preventDefault();
-        // e.returnValue = ''; // deprecated
 
         // Attempt to wait for pending saves (may not complete if user forces close)
         waitForPendingSaves().catch(err => {

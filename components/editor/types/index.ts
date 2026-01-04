@@ -1,6 +1,7 @@
 export type textAlignmentType = 'text-justify'| 'text-right'|'text-left'|'text-center';
 export type FormatTag = 'strong' | 'i' | 'u';
-
+export type DocumentStatus = 'draft' | 'active' | 'archived'
+export type NavigationDirection = 'Up' | 'Down' | null;
 export interface ParagraphUpdate {
   text: string;
   characterCount: number;
@@ -26,6 +27,7 @@ export interface ParagraphInterface {
   isQuote?: boolean;
   isHighlighted?: boolean;
   textAlignment?: textAlignmentType;
+  deleted?: boolean;
 }
 export interface ChapterInterface {
   id: string;
@@ -39,6 +41,7 @@ export interface ChapterInterface {
   version: number;
   sync: boolean;
   wordCount?: number;
+  deleted?: boolean;
 }
 
 export interface DocumentInterface {
@@ -52,9 +55,10 @@ export interface DocumentInterface {
   version: number;
   sync: boolean;
   fontClass?: string;
+  deleted?: boolean;
   metadata?: {
     tags?: string[];
-    status?: 'draft' | 'active' | 'archived';
+    status?: DocumentStatus;
   };
 }
 
@@ -69,7 +73,7 @@ export interface MongoDocumentInterface {
   version: number;
   metadata?: {
     tags?: string[];
-    status?: "draft" | "active" | "archived";
+    status?: DocumentStatus;
   };
 }
 
@@ -103,6 +107,7 @@ export interface ActiveParagraphInterface {
   direction: NavigationDirection;
 }
 
-export type NavigationDirection = 'Up' | 'Down' | null;
-export type DocumentComponentsItems = ParagraphInterface | ChapterInterface;
-export type DocumentComponentsItemsType = 'paragraph' | 'chapter';
+export type ContentEntityType = 'paragraphs' | 'chapters';
+export type DocumentEntityType = 'paragraphs' | 'chapters' | 'documents';
+export type ContentEntity = ParagraphInterface | ChapterInterface;
+export type DocumentEntity = ParagraphInterface | ChapterInterface | DocumentInterface;

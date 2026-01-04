@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { DocumentStatus } from '@/components/editor/types';
 
 export default function DocumentForm() {
   const router = useRouter();
@@ -10,7 +11,7 @@ export default function DocumentForm() {
     title: '',
     subtitle: '',
     tags: '',
-    status: 'draft' as 'draft' | 'active' | 'archived',
+    status: 'draft' as DocumentStatus,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

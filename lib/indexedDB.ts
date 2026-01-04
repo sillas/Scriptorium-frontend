@@ -1,8 +1,7 @@
 /**
  * IndexedDB utilities for local storage and sync queue management
  */
-
-import { DocumentComponentsItems, DocumentComponentsItemsType, DocumentInterface } from "@/components/editor/types";
+import { DocumentEntity, DocumentEntityType } from "@/components/editor/types";
 
 const DB_NAME = 'EditorDB';
 const DB_VERSION = 1;
@@ -212,9 +211,9 @@ export async function getUnsyncedItemsForDocument(documentId: string): Promise<{
  * Both operations are executed atomically within a single transaction
  */
 export async function replaceItem (
-    storeName: 'paragraphs' | 'chapters' | 'documents',
+    storeName: DocumentEntityType,
     idToDelete: string, 
-    newItem: DocumentComponentsItems | DocumentInterface,
+    newItem: DocumentEntity,
   ) : Promise<void> {
 
     const db = await initDB();

@@ -27,7 +27,7 @@ export default function Chapter({ chapter, setLocalChapters, onFocus, onRemoteSy
   const { SaveItemOnIndexedDB } = useLocalStorage();
 
   const handleChapterLocalChange = useCallback((data: TitleUpdateData) => {
-    SaveItemOnIndexedDB(chapter, data, 'chapter')
+    SaveItemOnIndexedDB(chapter, data, 'chapters');
   }, [chapter, SaveItemOnIndexedDB]);
 
   const syncChapters = useCallback((data: TitleUpdateData)  => {    

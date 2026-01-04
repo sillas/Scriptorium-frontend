@@ -75,7 +75,7 @@ export function EditorClientSide({ document, chapters, paragraphs }: EditorClien
         updatedParagraphs[paragraphIndex].chapterId = localChapters[chapterIndex + 1].id;
         setLocalParagraphs(updatedParagraphs);
         setActiveParagraph({ id: updatedParagraphs[paragraphIndex].id, direction: null });
-        SaveItemOnIndexedDB(updatedParagraphs[paragraphIndex], null, 'paragraph');
+        SaveItemOnIndexedDB(updatedParagraphs[paragraphIndex], null, 'paragraphs');
       }
       return
     }
@@ -89,7 +89,7 @@ export function EditorClientSide({ document, chapters, paragraphs }: EditorClien
 
       setLocalParagraphs(updatedParagraphs);
       setActiveParagraph({ id: currentParagraph.id, direction: null });
-      SaveItemOnIndexedDB(currentParagraph, null, 'paragraph');
+      SaveItemOnIndexedDB(currentParagraph, null, 'paragraphs');
       return
     }
 
@@ -101,7 +101,7 @@ export function EditorClientSide({ document, chapters, paragraphs }: EditorClien
     reindexAndSave(
       updatedParagraphs, 
       Math.min(paragraphIndex, targetIndex), 
-      'paragraph',
+      'paragraphs',
       setLocalParagraphs
     );
     setActiveParagraph({ id: updatedParagraphs[targetIndex].id, direction: null });
@@ -119,7 +119,7 @@ export function EditorClientSide({ document, chapters, paragraphs }: EditorClien
     if(paragraphIndex === null) {
       setLocalParagraphs(prev => [...prev, newParagraph]);
       setActiveParagraph({ id: newParagraph.id, direction: null });
-      SaveItemOnIndexedDB(newParagraph, null, 'paragraph');
+      SaveItemOnIndexedDB(newParagraph, null, 'paragraphs');
       return;
     }
 
@@ -128,18 +128,18 @@ export function EditorClientSide({ document, chapters, paragraphs }: EditorClien
     updatedParagraphs.splice(paragraphIndex, 0, newParagraph);
     
     // Re-index and save affected paragraphs
-    reindexAndSave(updatedParagraphs, paragraphIndex, 'paragraph', setLocalParagraphs);
+    reindexAndSave(updatedParagraphs, paragraphIndex, 'paragraphs', setLocalParagraphs);
     setActiveParagraph({ id: updatedParagraphs[paragraphIndex].id, direction: null});
   }, [localDocument.id, localParagraphs, reindexAndSave]);
 
 
   const handleDeleteChapter = useCallback((chapterIndex: number) => {
-    handleDeleteAndReindex<ChapterInterface>(localChapters, 'chapter', chapterIndex, setLocalChapters);
+    handleDeleteAndReindex<ChapterInterface>(localChapters, 'chapters', chapterIndex, setLocalChapters);
   }, [handleDeleteAndReindex, localChapters]);
 
 
   const handleDeleteParagraph = useCallback((paragraphIndex: number) => {
-    handleDeleteAndReindex<ParagraphInterface>(localParagraphs, 'paragraph', paragraphIndex, setLocalParagraphs);
+    handleDeleteAndReindex<ParagraphInterface>(localParagraphs, 'paragraphs', paragraphIndex, setLocalParagraphs);
   }, [handleDeleteAndReindex, localParagraphs]);
    
   const syncAll = useCallback(async (origin: string) => {
@@ -178,7 +178,7 @@ export function EditorClientSide({ document, chapters, paragraphs }: EditorClien
     setShouldAddNewChapter(false);
 
     // save new chapter to IndexedDB in backgroun
-    SaveItemOnIndexedDB(newChapterData, null, 'chapter')
+    SaveItemOnIndexedDB(newChapterData, null, 'chapters')
   }, [
     shouldAddNewChapter, 
     localDocument.id,
@@ -241,7 +241,7 @@ export function EditorClientSide({ document, chapters, paragraphs }: EditorClien
               setLocalChapters={setLocalChapters}
               onFocus={() => setActiveParagraph(null)}
               oneDelete={() => handleDeleteChapter(chapterIndex)}
-              onRemoteSync={() => syncAll('chapter')}
+              onRemoteSync={() => syncAll('chapters')}
             >
               {localParagraphs.filter(p => p.chapterId === chapter.id).map((paragraph) => (
                   <Paragraph 
@@ -254,18 +254,18 @@ export function EditorClientSide({ document, chapters, paragraphs }: EditorClien
                     onDelete={() => handleDeleteParagraph(paragraph.index)}
                     onCreateNewParagraph={(paragraphIndex) => createParagraph(chapter.id, paragraphIndex)}
                     fontClass={localDocument.fontClass || "font-merriweather"}
-                    onRemoteSync={() => syncAll('paragraph')}
+                    onRemoteSync={() => syncAll('paragraphs')}
                     isNavigatingRef={isNavigatingRef}
                   />
                 ))}
 
               {/* Add Paragraph Button */}
-              <AddButton type="paragraph" onClick={() => createParagraph(chapter.id)} />
+              <AddButton type="paragraphs" onClick={() => createParagraph(chapter.id)} />
             </Chapter>
           ))}
           
           {/* Add Chapter Button */}
-          <AddButton type="chapter" onClick={() => setShouldAddNewChapter(true)} />
+          <AddButton type="chapters" onClick={() => setShouldAddNewChapter(true)} />
         </main>
 
         {/* Coluna Lateral Direita */}
