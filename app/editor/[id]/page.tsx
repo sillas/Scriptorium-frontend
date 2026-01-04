@@ -1,8 +1,7 @@
-// import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ObjectId } from 'mongodb';
 import { getDatabase } from '@/lib/mongodb';
-import { EditorClientSide } from '@/components/editor/EditorClientSide';
+import { ClientEditor } from '@/components/editor/clientEditor';
 import { 
   convertMongoDocument,
   convertMongoChapters,
@@ -17,24 +16,6 @@ import {
 interface EditorProps {
   params: Promise<{ id: string }>
 }
-
-/**
- * Generates metadata for the document editor page
- * Converts the slug into a human-readable title for SEO purposes
- */
-// export async function generateMetadata({
-//   params
-// }: EditorProps): Promise<Metadata> {
-//   const { id } = await params;
-//   const title = formatSlugToTitle(id);
-  
-//   return {
-//     title: `${title} - Editor`,
-//     description: `Editing document: ${title}`,
-//   };
-// }
-
-
 
 // Database collection names
 const COLLECTIONS = {
@@ -92,7 +73,7 @@ export default async function Editor({ params }: EditorProps) {
   );
   
   return (
-    <EditorClientSide 
+    <ClientEditor 
       document={document}
       chapters={chapters}
       paragraphs={paragraphs}

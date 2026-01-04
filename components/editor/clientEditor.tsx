@@ -21,7 +21,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useNavigation } from '@/hooks/editor/useNavigation';
 import { useSyncBackground } from '@/hooks/editor/useSyncBackground';
 
-interface EditorClientSideProps {
+interface ClientEditorProps {
   document: DocumentInterface;
   chapters: ChapterInterface[];
   paragraphs: ParagraphInterface[];
@@ -37,7 +37,7 @@ interface EditorClientSideProps {
  * @param slug - document slug (used in header routing)
  * @param theDocument - initial document data fetched from the server
  */
-export function EditorClientSide({ document, chapters, paragraphs }: EditorClientSideProps) {
+export function ClientEditor({ document, chapters, paragraphs }: ClientEditorProps) {
 
   const isNavigatingRef = useRef(false);
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(document);

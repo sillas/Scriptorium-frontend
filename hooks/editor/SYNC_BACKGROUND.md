@@ -22,7 +22,7 @@ Sincroniza capítulos não sincronizados do IndexedDB para o MongoDB.
    - Adiciona/atualiza registro com `sync=true`
 5. **Retorna capítulos sincronizados**: Array para atualização do estado no componente
 
-#### Uso no EditorClientSide
+#### Uso no ClientEditor
 
 ```typescript
 const { syncChapters } = useSyncBackground();
