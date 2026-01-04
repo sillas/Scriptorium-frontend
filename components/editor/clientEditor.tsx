@@ -20,9 +20,10 @@ import { createParagraphObject, updateLocalState } from '@/lib/editor/paragraph-
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useNavigation } from '@/hooks/editor/useNavigation';
 import { useSyncBackground } from '@/hooks/editor/useSyncBackground';
+import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 
 interface ClientEditorProps {
-  document: DocumentInterface;
+  initialDocument: DocumentInterface;
   chapters: ChapterInterface[];
   paragraphs: ParagraphInterface[];
 }
@@ -37,14 +38,15 @@ interface ClientEditorProps {
  * @param slug - document slug (used in header routing)
  * @param theDocument - initial document data fetched from the server
  */
-export function ClientEditor({ document, chapters, paragraphs }: ClientEditorProps) {
+export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEditorProps) {
 
   const isNavigatingRef = useRef(false);
-  const [localDocument, setLocalDocument] = useState<DocumentInterface>(document);
+  const [localDocument, setLocalDocument] = useState<DocumentInterface>(initialDocument);
   const [localChapters, setLocalChapters] = useState<ChapterInterface[]>(chapters);
   const [localParagraphs, setLocalParagraphs] = useState<ParagraphInterface[]>(paragraphs);
   const [shouldAddNewChapter, setShouldAddNewChapter] = useState(false);
   const [activeParagraph, setActiveParagraph] = useState<ActiveParagraphInterface | null>(null);
+  const [ setDebounce, clearDebounceTimer ] = useDebounceTimer();
   const { 
     SaveItemOnIndexedDB,
     handleDeleteAndReindex, 
@@ -139,19 +141,26 @@ export function ClientEditor({ document, chapters, paragraphs }: ClientEditorPro
 
 
   const handleDeleteParagraph = useCallback((paragraphIndex: number) => {
+    console.log('onDelete -> ClientEditor -> handleDeleteParagraph -> handleDeleteAndReindex...');
+    
     handleDeleteAndReindex<ParagraphInterface>(localParagraphs, 'paragraphs', paragraphIndex, setLocalParagraphs);
   }, [handleDeleteAndReindex, localParagraphs]);
    
-  const syncAll = useCallback(async (origin: string) => {
-    console.log('Sync all items triggered from:', origin);
-    
-    // Sincronizar capítulos
-    const {syncedChapters, syncedParagraphs} = await syncAllItems(document.id);
-    
-    // Atualizar estado com capítulos sincronizados
-    updateLocalState(syncedChapters, setLocalChapters);
-    updateLocalState(syncedParagraphs, setLocalParagraphs);
-  }, [syncAllItems, updateLocalState]);
+  const syncAll = useCallback(() => {
+    clearDebounceTimer();
+    setDebounce( async() => {
+      // If user is typing, skip auto-sync
+      const activeElement = document.activeElement;
+      if (activeElement?.getAttribute('contenteditable') === 'true') {
+        return;
+      }
+
+      const {syncedChapters, syncedParagraphs} = await syncAllItems(localDocument.id);
+      updateLocalState(syncedChapters, setLocalChapters);
+      updateLocalState(syncedParagraphs, setLocalParagraphs);
+    }, 3000); // prevent auto-sync for 3s after manual sync
+
+  }, [localDocument.id, syncAllItems, updateLocalState]);
   
   // Add new chapter when shouldAddNewChapter is set
   useEffect(() => {
@@ -188,19 +197,19 @@ export function ClientEditor({ document, chapters, paragraphs }: ClientEditorPro
   // Load unsynced data from IndexedDB on mount
   useEffect(() => {
     loadUnsyncedData(
-      document, 
+      initialDocument, 
       chapters, 
       paragraphs, 
       setLocalDocument,
       setLocalChapters,
       setLocalParagraphs
     );
-  }, [document, chapters, paragraphs]);
+  }, [initialDocument, chapters, paragraphs]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
       {/* Barra Superior */}
-      <EditorHeader slug={document.title} />
+      <EditorHeader slug={localDocument.title} />
 
       {/* Container Principal */}
       <div className="flex flex-1 overflow-hidden relative">
@@ -227,7 +236,7 @@ export function ClientEditor({ document, chapters, paragraphs }: ClientEditorPro
             updatedAt={localDocument.updatedAt}
             createdAt={localDocument.createdAt}
             isSynced={localDocument.sync}
-            onRemoteSync={() => syncAll('document')}
+            onRemoteSync={syncAll}
             onChange={(data) => true}
             onFocus={() => setActiveParagraph(null)}
             fontClass={localDocument.fontClass || "font-merriweather"}
@@ -241,7 +250,7 @@ export function ClientEditor({ document, chapters, paragraphs }: ClientEditorPro
               setLocalChapters={setLocalChapters}
               onFocus={() => setActiveParagraph(null)}
               oneDelete={() => handleDeleteChapter(chapterIndex)}
-              onRemoteSync={() => syncAll('chapters')}
+              onRemoteSync={syncAll}
             >
               {localParagraphs.filter(p => p.chapterId === chapter.id).map((paragraph) => (
                   <Paragraph 
@@ -254,7 +263,7 @@ export function ClientEditor({ document, chapters, paragraphs }: ClientEditorPro
                     onDelete={() => handleDeleteParagraph(paragraph.index)}
                     onCreateNewParagraph={(paragraphIndex) => createParagraph(chapter.id, paragraphIndex)}
                     fontClass={localDocument.fontClass || "font-merriweather"}
-                    onRemoteSync={() => syncAll('paragraphs')}
+                    onRemoteSync={syncAll}
                     isNavigatingRef={isNavigatingRef}
                   />
                 ))}

@@ -1,5 +1,6 @@
 import { RefObject, useCallback, useRef, useState } from 'react';
 import { handleClick } from '@/lib/editor/selection';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 interface UseParagraphEditingParams {
   paragraphRef: RefObject<HTMLDivElement | null>;
@@ -14,7 +15,7 @@ interface UseParagraphEditingParams {
 interface UseParagraphEditingReturn {
   isEditing: boolean;
   handleStartEditing: () => void;
-  handleFinishEditing: () => void;
+  handleFinishEditing: () => Promise<void>;
   handleParagraphClick: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
@@ -30,6 +31,7 @@ export function useParagraphEditing({
   onSave, onRemoteSync,
 }: UseParagraphEditingParams): UseParagraphEditingReturn {
   const [isEditing, setIsEditing] = useState(false);
+  const { waitForPendingSaves } = useLocalStorage();
   const localPreviousTextRef = useRef<string>(paragraphRef.current?.textContent || '');
   
   const handleStartEditing = useCallback(() => {
@@ -45,7 +47,7 @@ export function useParagraphEditing({
     }
   }, [paragraphRef, emptyTextPlaceholder, isEditing]);
 
-  const handleFinishEditing = useCallback(() => {
+  const handleFinishEditing = useCallback(async () => {
     // Don't finish editing if text is selected (context menu open)
     if (selection) return;
     if (!paragraphRef.current) return;
@@ -64,6 +66,7 @@ export function useParagraphEditing({
     if(localPreviousTextRef.current !== text) {
       localPreviousTextRef.current = text;
       onSave();
+      await waitForPendingSaves();
       onRemoteSync?.();
     }
 

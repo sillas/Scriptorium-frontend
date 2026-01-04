@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, title, subtitle, updatedAt, metadata } = body;
+    const { id, ...rest } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -71,17 +71,9 @@ export async function PUT(request: NextRequest) {
       return POST(request);
     }
 
-    const updateData: any = {
-      updatedAt: updatedAt ? new Date(updatedAt) : new Date(),
-    };
-
-    if (title !== undefined) updateData.title = title;
-    if (subtitle !== undefined) updateData.subtitle = subtitle;
-    if (metadata !== undefined) updateData.metadata = metadata;
-
     const result = await db.collection('chapters').updateOne(
       { _id: new ObjectId(id) },
-      { $set: updateData }
+      { $set: rest }
     );
 
     if (result.matchedCount === 0) {

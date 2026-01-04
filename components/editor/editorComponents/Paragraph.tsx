@@ -108,8 +108,7 @@ export function Paragraph({
     navigation, emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
     handleFinishEditing, onNavigate,
     onCreateNewParagraph,
-    onReorder, onDelete,
-    setForceLocalDelete,
+    onReorder, setForceLocalDelete,
   });
 
   // ============ Helper Functions ============

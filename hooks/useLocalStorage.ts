@@ -57,10 +57,9 @@ export function useLocalStorage() {
     [trackSaveOperation]
   );
 
-  // TODO Document Entity Type
   const deleteLocal = useCallback(
     (
-      type: DocumentEntityType,
+      storeName: DocumentEntityType,
       itemToDelete: ChapterInterface | ParagraphInterface | DocumentInterface
     ) => {
       const { id } = itemToDelete;
@@ -68,12 +67,14 @@ export function useLocalStorage() {
       try {
         trackSaveOperation((async (): Promise<void> => {
           await initDB();
-          const storeName = `${type}s`;
           
           // If id starts with 'temp-', completely remove from IndexedDB
           if (id.startsWith('temp-')) {
+            console.log('deleteLocal -> is TEMP!');
+            
             await deleteFromIndexedDB(storeName, id);
           } else {
+            console.log('deleteLocal -> MARK SYNC AND deleted: true!');
             // Otherwise, mark as deleted but keep for sync
             const deletedData = {
               ...itemToDelete,
@@ -152,6 +153,14 @@ export function useLocalStorage() {
   ) => {
     const updatedItens = [...localItens];
     const itemToDelete = updatedItens.splice(index, 1)[0];
+
+    console.log('handleDeleteAndReindex -> deleteLocal... [itemToDelete] ', itemToDelete);
+    
+    if(!itemToDelete) {
+      console.error('handleDeleteAndReindex -> No item found to delete at index:', index);
+      throw new Error('No item found to delete');
+    }
+
     deleteLocal(itemsType, itemToDelete)
     reindexAndSave(
       updatedItens, 
@@ -187,5 +196,6 @@ export function useLocalStorage() {
     reindexAndSave,
     deleteLocal,
     handleDeleteAndReindex,
+    waitForPendingSaves,
   };
 }

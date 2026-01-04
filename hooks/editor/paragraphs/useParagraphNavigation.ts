@@ -18,7 +18,6 @@ interface UseParagraphNavigationParams {
   onNavigate?: (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => void;
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
   onReorder?: (direction: NavigationDirection) => void;
-  onDelete?: () => void;
   setForceLocalDelete: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -43,7 +42,6 @@ export function useParagraphNavigation({
   onNavigate,
   onCreateNewParagraph,
   onReorder,
-  onDelete,
   setForceLocalDelete,
 }: UseParagraphNavigationParams): UseParagraphNavigationReturn {
   
@@ -190,7 +188,6 @@ export function useParagraphNavigation({
       handleFinishEditingAndNavigate,
       setForceLocalDelete,
       onReorder,
-      onDelete,
       goToParagraphOnArrows,
       goToParagraphOnTab,
       handleEnterKeyPress,

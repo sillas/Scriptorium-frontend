@@ -74,7 +74,7 @@ export default async function Editor({ params }: EditorProps) {
   
   return (
     <ClientEditor 
-      document={document}
+      initialDocument={document}
       chapters={chapters}
       paragraphs={paragraphs}
     />

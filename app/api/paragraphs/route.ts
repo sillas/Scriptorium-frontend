@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, text, updatedAt, metadata } = body;
+    const { id, ...rest } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -67,16 +67,10 @@ export async function PUT(request: NextRequest) {
       return POST(request);
     }
 
-    const updateData: any = {
-      updatedAt: updatedAt ? new Date(updatedAt) : new Date(),
-    };
-
-    if (text !== undefined) updateData.text = text;
-    if (metadata !== undefined) updateData.metadata = metadata;
 
     const result = await db.collection('paragraphs').updateOne(
       { _id: new ObjectId(id) },
-      { $set: updateData }
+      { $set: rest }
     );
 
     if (result.matchedCount === 0) {

@@ -49,7 +49,7 @@ export function useParagraphPersistence({
 }: UseParagraphPersistenceParams): UseParagraphPersistenceReturn {
 
   const prevStylesRef = useRef({ isQuote, isHighlighted, textAlignment });
-  const { deleteLocal, SaveItemOnIndexedDB } = useLocalStorage();
+  const { SaveItemOnIndexedDB } = useLocalStorage();
   const [ setDebounce, clearDebounceTimer ] = useDebounceTimer();
 
   const saveLocalParagraph = useCallback((
@@ -92,20 +92,19 @@ export function useParagraphPersistence({
 
   const deleteLocalParagraph = useCallback((
     paragraphRef: React.RefObject<HTMLDivElement | null>,
-    paragraph: ParagraphInterface,
     text_placeholder: string,
-  ) => {
-    if (!onDelete) return;
-
+  ):boolean => {
     let text = (paragraphRef.current?.textContent || '').trim();
     if (text === text_placeholder) text = '';
 
     const result = handleDeleteQuestion(text, 'parágrafo');
-    if (!result) return;
-
-    onDelete();
-    deleteLocal('paragraphs', paragraph);
-  }, [deleteLocal, onDelete]);
+    if (!result) return false;
+    
+    console.log('deleteLocalParagraph -> RUN -> onDelete');
+    
+    onDelete?.();
+    return true;
+  }, [onDelete]);
 
   const triggerLocalSave = useCallback(
     (forceUpdate: boolean = false) => {
@@ -150,13 +149,12 @@ export function useParagraphPersistence({
   // Effect to trigger local delete when flagged
   useEffect(() => {
     if (!shouldForceLocalDelete) return;
-    deleteLocalParagraph(paragraphRef, paragraph, emptyTextPlaceholder);
-    setForceLocalDelete(false);
+    console.log('useParagraphPersistence -> useEffect -> deleteLocalParagraph...');
+    const deleted = deleteLocalParagraph(paragraphRef, emptyTextPlaceholder);
+    if(deleted) setForceLocalDelete(false);
   }, [
-    shouldForceLocalDelete, 
-    paragraph, emptyTextPlaceholder,
-    deleteLocalParagraph,
-    setForceLocalDelete
+    shouldForceLocalDelete, emptyTextPlaceholder,
+    deleteLocalParagraph, setForceLocalDelete
   ]);
 
   // Effect to trigger local save on style changes

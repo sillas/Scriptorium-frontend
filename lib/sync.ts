@@ -1,7 +1,34 @@
-import { ChapterInterface, ParagraphInterface } from '@/components/editor/types';
-import { saveToIndexedDB, replaceItem } from '@/lib/indexedDB';
+import { ChapterInterface, ParagraphInterface, ContentEntity } from '@/components/editor/types';
+import { saveToIndexedDB, replaceItem, deleteFromIndexedDB } from '@/lib/indexedDB';
 
-type SyncableItem = ChapterInterface | ParagraphInterface;
+/**
+ * Deleta um item do MongoDB e do IndexedDB
+ * 
+ * @param item - Item a ser deletado
+ * @param storeName - Nome da store no IndexedDB ('chapters' ou 'paragraphs')
+ */
+const deleteItem = async <T extends ContentEntity>(
+  item: T,
+  storeName: 'chapters' | 'paragraphs',
+): Promise<void> => {
+  // Deletar do MongoDB
+  const response = await fetch(`/api/${storeName}/${item.id}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Erro ao deletar ${storeName} ${item.id}: ${error.error || response.statusText}`);
+  }
+  console.log(`✅ ${storeName} ${item.id} deletado do MongoDB`);
+
+  // Remover do IndexedDB
+  await deleteFromIndexedDB(storeName, item.id);
+  console.log(`✅ ${storeName} ${item.id} removido do IndexedDB`);
+};
 
 /**
  * Função genérica para sincronizar itens (capítulos ou parágrafos) com o MongoDB
@@ -12,12 +39,18 @@ type SyncableItem = ChapterInterface | ParagraphInterface;
  * @param itemType - Tipo do item para mensagens de log ('capítulo' ou 'parágrafo')
  * @returns Tupla com [item sincronizado, ID anterior se foi alterado]
  */
-const syncItem = async <T extends SyncableItem>(
+const syncItem = async <T extends ContentEntity>(
   item: T,
   storeName: 'chapters' | 'paragraphs',
-): Promise<T> => {
+): Promise<T | null> => {
   const previousId = item.id;
   const isTemp = previousId.startsWith('temp-');
+
+  // Se o item está marcado para deleção, remover do MongoDB e IndexedDB
+  if ((item as any).deleted) {
+    await deleteItem(item, storeName);
+    return null;
+  }
 
   // Preparar dados para envio ao MongoDB
   const { id, ...itemData }: any = { ...item };
@@ -82,7 +115,9 @@ export const syncChapters = async (
   for (const chapter of unsyncedChapters) {
     try {
       const syncedChapter = await syncItem(chapter, 'chapters');
+      if(syncedChapter === null) continue; // Capítulo deletado
       syncedChapters.push(syncedChapter);
+      
       const previousId = syncedChapter.previousId;
       // Se o ID mudou, atualizar referências em parágrafos (se necessário)
       if (syncedChapter.id !== previousId && unsyncedParagraphs.length > 0) {
@@ -116,6 +151,7 @@ export const syncParagraphs = async (unsyncedParagraphs: ParagraphInterface[]): 
   for (const paragraph of unsyncedParagraphs) {
     try {
       const syncedParagraph = await syncItem(paragraph, 'paragraphs');
+      if(syncedParagraph === null) continue; // Parágrafo deletado
       syncedParagraphs.push(syncedParagraph);
     } catch (error) {
       console.error(`❌ Erro ao sincronizar parágrafo ${paragraph.id}:`, error);

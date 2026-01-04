@@ -52,9 +52,11 @@ export async function initDB(): Promise<IDBDatabase> {
  * Generic function to save data to IndexedDB
  */
 export async function saveToIndexedDB<T>(
-  storeName: string,
+  storeName: DocumentEntityType,
   data: T
 ): Promise<void> {
+  console.log('saveToIndexedDB |', data);
+  
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction([storeName], 'readwrite');
