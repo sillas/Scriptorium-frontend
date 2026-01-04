@@ -144,22 +144,24 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
     handleDeleteAndReindex<ParagraphInterface>(localParagraphs, 'paragraphs', paragraphIndex, setLocalParagraphs);
   }, [handleDeleteAndReindex, localParagraphs]);
    
+  const syncAllWWithoutDebounce = useCallback(async () => {
+    const {syncedChapters, syncedParagraphs} = await syncAllItems(localDocument.id);
+    updateLocalState(syncedChapters, setLocalChapters);
+    updateLocalState(syncedParagraphs, setLocalParagraphs);
+  }, [localDocument.id, syncAllItems, updateLocalState]);
+
   const syncAll = useCallback(() => {
     clearDebounceTimer();
-    setDebounce( async() => {
+    setDebounce( async () => {
       // If user is typing, skip auto-sync
       const activeElement = document.activeElement;
       if (activeElement?.getAttribute('contenteditable') === 'true') {
         return;
       }
-
-      const {syncedChapters, syncedParagraphs} = await syncAllItems(localDocument.id);
-      updateLocalState(syncedChapters, setLocalChapters);
-      updateLocalState(syncedParagraphs, setLocalParagraphs);
+      await syncAllWWithoutDebounce();
     }, 3000); // prevent auto-sync for 3s after manual sync
+  }, [syncAllWWithoutDebounce]);
 
-  }, [localDocument.id, syncAllItems, updateLocalState]);
-  
   // Add new chapter when shouldAddNewChapter is set
   useEffect(() => {
     if (!shouldAddNewChapter) return;
@@ -192,7 +194,7 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
     localChapters
   ]);
 
-  // Load unsynced data from IndexedDB on mount
+  // Load unsynced data from IndexedDB on mount and sync in background
   useEffect(() => {
     loadUnsyncedData(
       initialDocument, 
@@ -201,8 +203,10 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
       setLocalDocument,
       setLocalChapters,
       setLocalParagraphs
-    );
-  }, [initialDocument, chapters, paragraphs]);
+    ).finally(() => {
+      syncAllWWithoutDebounce();
+    });
+  }, [initialDocument, chapters, paragraphs, syncAllWWithoutDebounce]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
