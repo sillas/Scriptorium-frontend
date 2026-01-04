@@ -46,7 +46,7 @@ export function Paragraph({
 }: ParagraphProps) {
 
   const paragraphRef = useRef<HTMLDivElement>(null);
-  const previousTextRef = useRef(paragraph.text);
+  const [isSynced, setIsSynced] = useState(paragraph.sync);
   const [shouldForceLocalSave, setForceLocalSave] = useState(false);
   const [shouldForceLocalDelete, setForceLocalDelete] = useState(false);
   
@@ -71,13 +71,13 @@ export function Paragraph({
   const { 
     triggerLocalSave, scheduleLocalAutoSave,
   } = useParagraphPersistence({
-    paragraphRef, previousTextRef, paragraph,
+    paragraphRef, paragraph,
     emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
     debounceDelayMs: DEBOUNCE_DELAY_MS,
     isQuote, isHighlighted, textAlignment, 
     shouldForceLocalSave, shouldForceLocalDelete,
     onDelete, updateContentMetrics, 
-    setForceLocalSave, setForceLocalDelete
+    setIsSynced, setForceLocalSave, setForceLocalDelete
   });
 
   // 5. Cursor Position Tracking
@@ -147,6 +147,10 @@ export function Paragraph({
     const content = paragraph.text.length === 0 ? EMPTY_TEXT_PLACEHOLDER : paragraph.text;
     paragraphRef.current.innerHTML = content;
   }, [paragraph.text]);
+
+  useEffect(() => {
+    setIsSynced(paragraph.sync);
+  }, [paragraph.sync]);
 
   // ============ Render ============
 
@@ -231,7 +235,7 @@ export function Paragraph({
           )}
 
           <div className={styles.syncIndicatorStyle}>
-            <SyncIndicator isSynced={paragraph.sync} />
+            <SyncIndicator isSynced={isSynced} />
           </div>
         </div>
       </div>

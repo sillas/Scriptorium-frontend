@@ -7,7 +7,6 @@ import { countWords, countCharacters } from '@/lib/editor/text-utils';
 
 interface UseParagraphPersistenceParams {
   paragraphRef: RefObject<HTMLDivElement | null>;
-  previousTextRef: RefObject<string>;
   paragraph: ParagraphInterface;
   emptyTextPlaceholder: string;
   debounceDelayMs: number;
@@ -16,6 +15,7 @@ interface UseParagraphPersistenceParams {
   textAlignment: textAlignmentType;
   shouldForceLocalSave: boolean;
   shouldForceLocalDelete: boolean;
+  setIsSynced: Dispatch<SetStateAction<boolean>>;
   setForceLocalSave: Dispatch<SetStateAction<boolean>>;
   setForceLocalDelete: Dispatch<SetStateAction<boolean>>;
   updateContentMetrics: () => void;
@@ -33,7 +33,6 @@ interface UseParagraphPersistenceReturn {
  */
 export function useParagraphPersistence({
   paragraphRef,
-  previousTextRef,
   paragraph,
   emptyTextPlaceholder,
   debounceDelayMs,
@@ -42,6 +41,7 @@ export function useParagraphPersistence({
   textAlignment,
   shouldForceLocalSave,
   shouldForceLocalDelete,
+  setIsSynced,
   setForceLocalSave,
   setForceLocalDelete,
   updateContentMetrics,
@@ -51,10 +51,10 @@ export function useParagraphPersistence({
   const prevStylesRef = useRef({ isQuote, isHighlighted, textAlignment });
   const { SaveItemOnIndexedDB } = useLocalStorage();
   const [ setDebounce, clearDebounceTimer ] = useDebounceTimer();
+  const previousTextRef = useRef(paragraph.text);
 
   const saveLocalParagraph = useCallback((
     paragraphRef: React.RefObject<HTMLDivElement | null>,
-    previousTextRef: React.RefObject<string>,
     paragraph: ParagraphInterface,
     isQuote: boolean,
     isHighlighted: boolean,
@@ -66,6 +66,9 @@ export function useParagraphPersistence({
     let characterCount = 0;
     let wordCount = 0;
 
+    // textContent = plain text without line breaks
+    // innerText = plain text with line breaks
+    // innerHTML = HTML content for saving
     let currentText = (paragraphRef.current?.innerText || '').trim();
     if (currentText === text_placeholder) currentText = '';
     else {
@@ -74,8 +77,13 @@ export function useParagraphPersistence({
       currentText = paragraphRef.current?.innerHTML || '';
     }
 
-    if (!forceUpdate && currentText === previousTextRef.current) return;
-    previousTextRef.current = currentText;
+    const textToCompare = currentText.replaceAll('&nbsp;', '').trim();
+    if (!forceUpdate && textToCompare === previousTextRef.current) {
+      setIsSynced(true);
+      return;
+    };
+
+    previousTextRef.current = textToCompare;
 
     /// Build updated paragraph data
     const newData = {
@@ -88,7 +96,7 @@ export function useParagraphPersistence({
     };
 
     SaveItemOnIndexedDB(paragraph, newData, 'paragraphs');
-  }, [SaveItemOnIndexedDB]);
+  }, [SaveItemOnIndexedDB, setIsSynced]);
 
   const deleteLocalParagraph = useCallback((
     paragraphRef: React.RefObject<HTMLDivElement | null>,
@@ -108,7 +116,6 @@ export function useParagraphPersistence({
       try {        
         saveLocalParagraph(
           paragraphRef,
-          previousTextRef,
           paragraph,
           isQuote,
           isHighlighted,
@@ -130,10 +137,11 @@ export function useParagraphPersistence({
   );
 
   const scheduleLocalAutoSave = useCallback(() => {
+    setIsSynced(false);
     clearDebounceTimer();
     setDebounce(triggerLocalSave, debounceDelayMs);
     updateContentMetrics();
-  }, [clearDebounceTimer, setDebounce, triggerLocalSave, debounceDelayMs, updateContentMetrics]);
+  }, [debounceDelayMs, clearDebounceTimer, setIsSynced, setDebounce, triggerLocalSave, updateContentMetrics]);
 
   // Effect to trigger local save when flagged
   useEffect(() => {

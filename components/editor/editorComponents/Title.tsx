@@ -94,7 +94,6 @@ export function Title({
     if (previousContentSnapshot.current === null) return;
 
     const [newTitle, newSubtitle] = getTitleAndSubtitleContent();
-
     const snapshot = newTitle + newSubtitle
     if( !force && snapshot === previousContentSnapshot.current ) return;
     previousContentSnapshot.current = snapshot;
@@ -122,7 +121,7 @@ export function Title({
   }, [ persistLocalChanges, setDebounce, clearDebounceTimer ]);
 
   /**
-   * Stops the editing process by clearing the debounce timer and immediately triggering synchronization.
+   * Stops the editing process by clearing the debounce timer and triggering synchronization.
    * Called when the user finishes editing (e.g., on blur or specific key press).
    */
   const handleEditingComplete = useCallback(() => {
@@ -132,7 +131,6 @@ export function Title({
   }, [persistLocalChanges, onRemoteSync, clearDebounceTimer]);
 
   useEffect(() => {
-    console.log(`${isDocumentLevel ? 'Doc ': ''}isSynced? ${isSynced}`);
     setLocalIsSynced(!!isSynced);
   }, [isSynced]);
 
