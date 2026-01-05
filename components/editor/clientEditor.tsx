@@ -236,13 +236,11 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
-      {/* Barra Superior */}
       <EditorHeader slug={localDocument.title} isOnline={isOnline} syncInProgress={syncInProgress} />
 
       {/* Container Principal */}
       <div className="flex flex-1 overflow-hidden relative">
 
-        {/* Coluna Lateral Esquerda */}
         <SideColumn side="left">
           <div className="text-sm text-gray-800">
             <Contents
@@ -297,17 +295,13 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
                     isNavigatingRef={isNavigatingRef}
                   />
                 ))}
-
-              {/* Add Paragraph Button */}
               <AddButton type="paragraphs" onClick={() => createParagraph(chapter.id)} />
             </Chapter>
           ))}
-          
-          {/* Add Chapter Button */}
+
           <AddButton type="chapters" onClick={addNewChapter} />
         </main>
 
-        {/* Coluna Lateral Direita */}
         <SideColumn side="right">
           <div className="text-sm text-gray-800 p-4">Right</div>
         </SideColumn>
