@@ -34,7 +34,6 @@ interface AsideProps {
 function Aside({ isOpen, children }: AsideProps) {
   return (
     <aside
-      aria-hidden={!isOpen}
       className={`bg-gray-100 transition-all duration-300 ease-in-out relative ${
       isOpen ? 'w-1/4 max-w-[200px]' : 'w-0'
       }`}
