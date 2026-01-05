@@ -110,7 +110,7 @@ function Aside({ isOpen, children, setIsOpen, width, setWidth }: AsideProps) {
         >
             <ToggleButton isOpen={isOpen} setOpen={setIsOpen} />
             <div 
-                className='bg-gray-800 w-1 h-full cursor-col-resize absolute left-0 z-10'
+                className='bg-gray-800 hover:bg-red-800 w-1 h-full cursor-col-resize absolute left-0 z-10'
                 onMouseDown={handleMouseDown}
             ></div>
             <div className={`h-full ${isOpen ? 'pl-6 pt-4' : 'p-0'}`}>

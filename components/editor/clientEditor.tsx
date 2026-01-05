@@ -253,7 +253,7 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
 
         {/* Coluna Central */}
         <main
-          className={`bg-gray-100 flex-1 transition-all duration-300 ease-in-out p-4 overflow-y-auto`}
+          className={`bg-gray-100 flex-1 transition-all duration-300 ease-in-out p-4 overflow-y-auto custom-scrollbar`}
         >
           {/* Document Title */}
           <Title

@@ -25,3 +25,27 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Estilo personalizado para scrollbar da coluna central */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 12px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #e5e7eb; /* gray-200 */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #1f2937; /* gray-800 */
+  border-radius: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #111827; /* gray-900 */
+}
+
+/* Para Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #1f2937 #e5e7eb;
+}
