@@ -4,6 +4,7 @@ import { Brain, ArrowRightFromLine } from 'lucide-react';
 const AUTO_CLOSE_THRESHOLD = 50;
 const MAX_WIDTH_PERCENT = 0.5;
 const DEFAULT_WIDTH = 200;
+const toggleButtonStyle = 'absolute z-20 w-8 h-8 flex items-center justify-center text-xs rounded-md hover:opacity-100 transition-all text-gray-800 hover:text-white shadow-xl shadow-black/20 opacity-50 cursor-pointer';
 
 interface ToggleButtonProps {
   isOpen: boolean;
@@ -20,7 +21,7 @@ function ToggleButton({ isOpen, setOpen }: ToggleButtonProps) {
       aria-label={`${isOpen ? 'Fechar' : 'Abrir'} painel direito`}
       aria-expanded={isOpen}
       onClick={() => setOpen(!isOpen)}
-      className={`absolute z-20 w-8 h-8 flex items-center justify-center text-xs rounded-md hover:opacity-100 transition-all text-gray-800 hover:text-white shadow-xl shadow-black/20 opacity-50 cursor-pointer ${positionClasses}`}
+      className={`${toggleButtonStyle} ${positionClasses}`}
     >
       {isOpen ? <ArrowRightFromLine color="#1e2939" /> : <Brain color="#1e2939" />}
     </button>
