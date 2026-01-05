@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useIsOnline } from '@/components/OnlineStatusProvider';
 import EditorHeader from '@/components/editor/Header';
-import SideColumn from '@/components/editor/editorComponents/SideColumn';
+import LeftColumn from '@/components/editor/editorComponents/LeftColumn';
+import RightColumn from '@/components/editor/editorComponents/RightAside';
 import Contents from '@/components/editor/editorComponents/Contents';
 import AddButton from '@/components/editor/editorComponents/AddButton';
 import Chapter from '@/components/editor/editorComponents/Chapter';
@@ -241,14 +242,14 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
       {/* Container Principal */}
       <div className="flex flex-1 overflow-hidden relative">
 
-        <SideColumn side="left">
+        <LeftColumn>
           <div className="text-sm text-gray-800">
             <Contents
                 chapters={localChapters}
                 syncInProgress={syncInProgress}
               />
           </div>
-        </SideColumn>
+        </LeftColumn>
 
         {/* Coluna Central */}
         <main
@@ -302,9 +303,9 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
           <AddButton type="chapters" onClick={addNewChapter} />
         </main>
 
-        <SideColumn side="right">
+        <RightColumn>
           <div className="text-sm text-gray-800 p-4">Right</div>
-        </SideColumn>
+        </RightColumn>
       </div>
     </div>
   );
