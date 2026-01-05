@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Brain, ArrowRightFromLine } from 'lucide-react';
 
+const AUTO_CLOSE_THRESHOLD = 50;
 const MAX_WIDTH_PERCENT = 0.5;
 const DEFAULT_WIDTH = 200;
-const AUTO_CLOSE_THRESHOLD = 50;
 
 interface ToggleButtonProps {
   isOpen: boolean;
@@ -30,8 +30,8 @@ function ToggleButton({ isOpen, setOpen }: ToggleButtonProps) {
 interface AsideProps {
   isOpen: boolean;
   children: React.ReactNode;
-  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   width: number;
+  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setWidth: React.Dispatch<React.SetStateAction<number>>;
 }
 
@@ -42,6 +42,18 @@ function Aside({ isOpen, children, setIsOpen, width, setWidth }: AsideProps) {
     useEffect(() => {
         const aside = asideRef.current;
         if (!aside) return;
+
+        const handleMouseUp = () => {
+            if (!isDraggingRef.current) return;
+            isDraggingRef.current = false;
+            aside.classList.remove('transition-none');
+            document.body.style.userSelect = '';
+            
+            const currentWidth = parseInt(aside.style.width);
+            if (!isNaN(currentWidth)) {
+                setWidth(currentWidth);
+            }
+        };
 
         const handleMouseMove = (event: MouseEvent) => {
             if (!isDraggingRef.current) return;
@@ -62,20 +74,6 @@ function Aside({ isOpen, children, setIsOpen, width, setWidth }: AsideProps) {
                 aside.classList.remove('transition-none');
                 document.body.style.userSelect = '';
                 setIsOpen(false);
-            }
-        };
-
-        const handleMouseUp = () => {
-            if (!isDraggingRef.current) return;
-            isDraggingRef.current = false;
-            
-            // Restaura transição e persiste o valor final no state
-            aside.classList.remove('transition-none');
-            document.body.style.userSelect = '';
-            
-            const currentWidth = parseInt(aside.style.width);
-            if (!isNaN(currentWidth)) {
-                setWidth(currentWidth);
             }
         };
 
@@ -137,7 +135,7 @@ export default function RightColumn({ children }: RightColumnProps) {
     if (storedWidth !== null) {
       const parsedWidth = parseInt(storedWidth);
       if (!isNaN(parsedWidth)) {
-        setWidth(parsedWidth > AUTO_CLOSE_THRESHOLD ? parsedWidth : DEFAULT_WIDTH);
+        setWidth(parsedWidth);
       }
     }
   }, []);
@@ -147,7 +145,10 @@ export default function RightColumn({ children }: RightColumnProps) {
   }, [isOpen]);
   
   useEffect(() => {
-    sessionStorage.setItem(storageKeyWidth, width.toString());
+    sessionStorage.setItem(
+      storageKeyWidth, 
+      (width < DEFAULT_WIDTH ? DEFAULT_WIDTH : width).toString()
+    );
   }, [width]);
   
   return (
