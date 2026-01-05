@@ -98,6 +98,7 @@ export const syncDocument = async (
   unsyncedDocument: DocumentInterface
 ): Promise<DocumentInterface | null> => {
   if(!unsyncedDocument) return null;
+  if(unsyncedDocument.title.trim().length === 0 ) return null; // Skip empty titles
   const syncedDocument = await syncItem(unsyncedDocument, 'documents');
   if(syncedDocument === null) return null;
   return syncedDocument
@@ -108,12 +109,11 @@ export const syncChapters = async (
   unsyncedParagraphs: ParagraphInterface[]
 ): Promise<ChapterInterface[]> => {
 
-  if(unsyncedChapters.length === 0) {
-    return [];
-  }
+  if(unsyncedChapters.length === 0) return [];
 
   const syncedChapters: ChapterInterface[] = [];
   for (const chapter of unsyncedChapters) {
+    if (chapter.title.trim().length === 0 ) continue; // Skip empty titles
     try {
       const syncedChapter = await syncItem(chapter, 'chapters');
       if(syncedChapter === null) continue; // Capítulo deletado

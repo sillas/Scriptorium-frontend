@@ -36,12 +36,13 @@ interface ParagraphProps {
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
   onReorder?: (direction: NavigationDirection) => void;
   onRemoteSync?: () => void;
+  onRemoteSyncNow?: () => void;
   fontClass?: string;
 }
 
 export function Paragraph({
   paragraph, focusActivation, isNavigatingRef, navigation, 
-  onNavigate, onDelete, onCreateNewParagraph, onReorder, onRemoteSync,
+  onNavigate, onDelete, onCreateNewParagraph, onReorder, onRemoteSync, onRemoteSyncNow,
   fontClass = ''
 }: ParagraphProps) {
 
@@ -79,6 +80,12 @@ export function Paragraph({
     onDelete, updateContentMetrics, 
     setIsSynced, setForceLocalSave, setForceLocalDelete
   });
+  
+  // 4. Fast Finish Editing
+  const handleFastFinishEditing = useCallback(() => {
+    // triggerLocalSave();
+    // onRemoteSyncNow?.();
+  }, [onRemoteSyncNow]);
 
   // 5. Cursor Position Tracking
   const {
@@ -107,9 +114,9 @@ export function Paragraph({
     paragraphRef, isNavigatingRef, paragraph, isEditing,
     isCursorAtFirstPosition, isCursorAtLastPosition,
     navigation, emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
-    handleFinishEditing, onNavigate,
+    handleFinishEditing, handleFastFinishEditing,
     onCreateNewParagraph, setIsSynced,
-    onReorder, setForceLocalDelete
+    onNavigate, onReorder, setForceLocalDelete
   });
 
   // ============ Helper Functions ============

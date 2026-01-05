@@ -1,4 +1,3 @@
-
 interface Chapter {
   id: string;
   index: number;
@@ -7,13 +6,14 @@ interface Chapter {
 
 interface ContentsProps {
   chapters: Chapter[];
+  syncInProgress: boolean;
 }
 
 const titleOrPlaceholder = (title: string | undefined) => {
   return title && title.trim().length > 0 ? title : 'Untitled Chapter';
 }
 
-export default function Contents({ chapters }: ContentsProps) {
+export default function Contents({ chapters, syncInProgress }: ContentsProps) {
 
   const scrollToChapter = (chapterId: string) => {
     const element = document.getElementById(`chapter-${chapterId}`);

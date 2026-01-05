@@ -15,6 +15,7 @@ interface UseParagraphNavigationParams {
     isTheLastParagraphInChapter: boolean;
   };
   handleFinishEditing: () => void;
+  handleFastFinishEditing: () => void;
   onNavigate?: (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => void;
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
   onReorder?: (direction: NavigationDirection) => void;
@@ -41,6 +42,7 @@ export function useParagraphNavigation({
   isCursorAtLastPosition,
   navigation,
   handleFinishEditing,
+  handleFastFinishEditing,
   onNavigate,
   onCreateNewParagraph,
   onReorder,
@@ -141,6 +143,12 @@ export function useParagraphNavigation({
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       const pressedKey = event.key;
+
+      if (['s', 'S'].includes(pressedKey) && (event.ctrlKey)) {
+        event.preventDefault();
+        handleFastFinishEditing();
+        return;
+      }
 
       // Go to previous or next paragraph on Arrow Up/Down
       if (['ArrowUp', 'ArrowDown'].includes(pressedKey)) {

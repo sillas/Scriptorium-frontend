@@ -57,12 +57,10 @@ export function useParagraphEditing({
     resetCursorPosition();
 
     // Add placeholder if text is empty
-    let textToCompare;
-
+    let textToCompare = '';
     const text = (paragraphRef.current.textContent || '').trim();
 
     if (text.length === 0) {
-      textToCompare = '';
       paragraphRef.current.textContent = emptyTextPlaceholder;
     } else {
       textToCompare = paragraphRef.current.innerHTML.replaceAll('&nbsp;', '').trim();

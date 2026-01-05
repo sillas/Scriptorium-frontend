@@ -21,23 +21,23 @@ export function useLocalStorage() {
   /**
  * Helper to track save operations and ensure they complete
  */
-  const trackSaveOperation = (savePromise: Promise<any>) => {
+  const trackSaveOperation = useCallback((savePromise: Promise<any>) => {
     pendingSavesRef.current.add(savePromise);
     savePromise
       .finally(() => {
         pendingSavesRef.current.delete(savePromise);
       });
     return savePromise;
-  }
+  }, []);
 
   /**
    * Wait for all pending save operations to complete
    */
-  const waitForPendingSaves = async () => {
+  const waitForPendingSaves = useCallback(async () => {
     if (pendingSavesRef.current.size > 0) {
       await Promise.allSettled(Array.from(pendingSavesRef.current));
     }
-  }
+  }, []);
 
   const saveLocal = useCallback(
     <T extends { id: string }>(
@@ -54,7 +54,7 @@ export function useLocalStorage() {
         throw error;
       }
     },
-    [trackSaveOperation]
+    []
   );
 
   const deleteLocal = useCallback(
@@ -191,5 +191,6 @@ export function useLocalStorage() {
     deleteLocal,
     handleDeleteAndReindex,
     waitForPendingSaves,
+    trackSaveOperation,
   };
 }

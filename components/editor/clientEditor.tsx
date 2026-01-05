@@ -42,8 +42,10 @@ interface ClientEditorProps {
  * @param theDocument - initial document data fetched from the server
  */
 export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEditorProps) {
+  const documentId = initialDocument.id;
   const isOnline = useIsOnline();
   const isNavigatingRef = useRef(false);
+  const [syncInProgress, setSyncInProgress] = useState(true);
   const [localDocument, setLocalDocument] = useState<DocumentInterface>(initialDocument);
   const [localChapters, setLocalChapters] = useState<ChapterInterface[]>(chapters);
   const [localParagraphs, setLocalParagraphs] = useState<ParagraphInterface[]>(paragraphs);
@@ -134,29 +136,28 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
     setActiveParagraph({ id: updatedParagraphs[paragraphIndex].id, direction: null});
   }, [localDocument.id, localParagraphs, reindexAndSave]);
 
-  const syncAllWithoutDebounce = useCallback(async () => {
+  const syncAllWithoutDebounce = useCallback(() => {
     if(!isOnline) return;
-    const {syncedDocument, syncedChapters, syncedParagraphs} = await syncAllItems(localDocument.id);
-
-    updateLocalState(syncedChapters, setLocalChapters);
-    updateLocalState(syncedParagraphs, setLocalParagraphs);
-    if(syncedDocument) {
-      console.log('syncedDocument?: ', syncedDocument.sync);
-      setLocalDocument(syncedDocument);
-    }
-
-  }, [isOnline, localDocument.id, syncAllItems, updateLocalState]);
+    setSyncInProgress(true);
+    waitForPendingSaves().then( async () => {
+      const {syncedDocument, syncedChapters, syncedParagraphs} = await syncAllItems(documentId);
+      updateLocalState(syncedChapters, setLocalChapters);
+      updateLocalState(syncedParagraphs, setLocalParagraphs);
+      if(syncedDocument) setLocalDocument(syncedDocument);
+      setSyncInProgress(false);
+    });
+  }, [isOnline]);
 
   const handleDeleteChapter = useCallback((chapterIndex: number) => {
     handleDeleteAndReindex<ChapterInterface>(localChapters, 'chapters', chapterIndex, setLocalChapters);
-    waitForPendingSaves().then(syncAllWithoutDebounce);
-  }, [handleDeleteAndReindex, localChapters]);
+    syncAllWithoutDebounce();
+  }, [localChapters, handleDeleteAndReindex, syncAllWithoutDebounce]);
 
 
   const handleDeleteParagraph = useCallback((paragraphIndex: number) => {    
     handleDeleteAndReindex<ParagraphInterface>(localParagraphs, 'paragraphs', paragraphIndex, setLocalParagraphs);
-    waitForPendingSaves().then(syncAllWithoutDebounce);
-  }, [localParagraphs, handleDeleteAndReindex, waitForPendingSaves, syncAllWithoutDebounce]);
+    syncAllWithoutDebounce();
+  }, [localParagraphs, handleDeleteAndReindex, syncAllWithoutDebounce]);
    
 
   const handleDocumentHeadingChange = useCallback((data: TitleUpdateData) => {
@@ -164,17 +165,17 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
     SaveItemOnIndexedDB(localDocument, data, 'documents');
   }, [SaveItemOnIndexedDB]);
 
-  const syncAll = useCallback(() => {
+  const syncAll = useCallback(() => {    
     clearDebounceTimer();
-    setDebounce( async () => {
-      // If user is typing, skip auto-sync
+    setDebounce(() => {
       const activeElement = document.activeElement;
       if (activeElement?.getAttribute('contenteditable') === 'true') {
         return;
       }
-      await syncAllWithoutDebounce();
+      syncAllWithoutDebounce();
     }, 3000); // prevent auto-sync for 3s after manual sync
-  }, [syncAllWithoutDebounce, setDebounce, clearDebounceTimer]);
+
+  }, [setDebounce, clearDebounceTimer, syncAllWithoutDebounce]);
 
   // Add new chapter when shouldAddNewChapter is set
   const addNewChapter = useCallback(() => {
@@ -204,8 +205,25 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
     localChapters
   ]);
 
+  // ============ Effects ============
+  useEffect(() => {    
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Captura Ctrl+S (ou Cmd+S no Mac)
+      if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+        event.preventDefault();
+        waitForPendingSaves().then(syncAllWithoutDebounce);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [waitForPendingSaves, syncAllWithoutDebounce]);
+
   // Load unsynced data from IndexedDB on mount and sync in background
   useEffect(() => {
+    setSyncInProgress(true);
     loadUnsyncedData(
       initialDocument, 
       chapters, 
@@ -213,15 +231,13 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
       setLocalDocument,
       setLocalChapters,
       setLocalParagraphs
-    ).finally(() => {
-      syncAllWithoutDebounce();
-    });
-  }, [isOnline, initialDocument, chapters, paragraphs, syncAllWithoutDebounce]);
+    ).finally(syncAllWithoutDebounce);
+  }, [isOnline, initialDocument, chapters, paragraphs]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
       {/* Barra Superior */}
-      <EditorHeader slug={localDocument.title} isOnline={isOnline} />
+      <EditorHeader slug={localDocument.title} isOnline={isOnline} syncInProgress={syncInProgress} />
 
       {/* Container Principal */}
       <div className="flex flex-1 overflow-hidden relative">
@@ -231,6 +247,7 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
           <div className="text-sm text-gray-800">
             <Contents
                 chapters={localChapters}
+                syncInProgress={syncInProgress}
               />
           </div>
         </SideColumn>
@@ -276,6 +293,7 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
                     onCreateNewParagraph={(paragraphIndex) => createParagraph(chapter.id, paragraphIndex)}
                     fontClass={localDocument.fontClass || "font-merriweather"}
                     onRemoteSync={syncAll}
+                    onRemoteSyncNow={syncAllWithoutDebounce}
                     isNavigatingRef={isNavigatingRef}
                   />
                 ))}

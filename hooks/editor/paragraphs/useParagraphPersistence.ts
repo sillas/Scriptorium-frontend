@@ -51,59 +51,56 @@ export function useParagraphPersistence({
   const prevStylesRef = useRef({ isQuote, isHighlighted, textAlignment });
   const { SaveItemOnIndexedDB } = useLocalStorage();
   const [ setDebounce, clearDebounceTimer ] = useDebounceTimer();
-  const previousTextRef = useRef(paragraph.text);
+  const previousTextRef = useRef('');
 
-  const saveLocalParagraph = useCallback((
-    paragraphRef: React.RefObject<HTMLDivElement | null>,
-    paragraph: ParagraphInterface,
-    isQuote: boolean,
-    isHighlighted: boolean,
-    textAlignment: textAlignmentType,
-    text_placeholder: string,
-    forceUpdate = false,
-  ) => {
-
-    let characterCount = 0;
-    let wordCount = 0;
-
+  const getCurrentText = useCallback((): string => {
     // textContent = plain text without line breaks
     // innerText = plain text with line breaks
     // innerHTML = HTML content for saving
     let currentText = (paragraphRef.current?.innerText || '').trim();
-    if (currentText === text_placeholder) currentText = '';
+    if (currentText === emptyTextPlaceholder) currentText = '';
     else {
-      characterCount = countCharacters(currentText);
-      wordCount = countWords(currentText);
       currentText = paragraphRef.current?.innerHTML || '';
     }
+    return currentText
+  }, []);
 
+  const saveLocalParagraph = useCallback((
+    paragraph: ParagraphInterface,
+    isQuote: boolean,
+    isHighlighted: boolean,
+    textAlignment: textAlignmentType,
+    forceUpdate = false,
+  ) => {
+
+    const currentText = getCurrentText();
     const textToCompare = currentText.replaceAll('&nbsp;', '').trim();
     if (!forceUpdate && textToCompare === previousTextRef.current) {
-      setIsSynced(true);
       return;
     };
+
+    setIsSynced(false);
 
     previousTextRef.current = textToCompare;
 
     /// Build updated paragraph data
     const newData = {
       text: currentText,
-      characterCount: characterCount,
-      wordCount: wordCount,
+      characterCount: countCharacters(currentText),
+      wordCount: countWords(currentText),
       isQuote: isQuote || false,
       isHighlighted: isHighlighted || false,
       textAlignment: textAlignment,
     };
 
     SaveItemOnIndexedDB(paragraph, newData, 'paragraphs');
-  }, [SaveItemOnIndexedDB, setIsSynced]);
+  }, [paragraph.sync, SaveItemOnIndexedDB, setIsSynced, getCurrentText]);
 
   const deleteLocalParagraph = useCallback((
-    paragraphRef: React.RefObject<HTMLDivElement | null>,
-    text_placeholder: string,
+    paragraphRef: React.RefObject<HTMLDivElement | null>
   ):boolean => {
     let text = (paragraphRef.current?.textContent || '').trim();
-    if (text === text_placeholder) text = '';
+    if (text === emptyTextPlaceholder) text = '';
 
     const result = handleDeleteQuestion(text, 'parágrafo');
     if (!result) return false;
@@ -115,12 +112,10 @@ export function useParagraphPersistence({
     (forceUpdate: boolean = false) => {
       try {        
         saveLocalParagraph(
-          paragraphRef,
           paragraph,
           isQuote,
           isHighlighted,
           textAlignment,
-          emptyTextPlaceholder,
           forceUpdate
         );
       } catch (error) {
@@ -137,11 +132,10 @@ export function useParagraphPersistence({
   );
 
   const scheduleLocalAutoSave = useCallback(() => {
-    setIsSynced(false);
     clearDebounceTimer();
     setDebounce(triggerLocalSave, debounceDelayMs);
     updateContentMetrics();
-  }, [debounceDelayMs, clearDebounceTimer, setIsSynced, setDebounce, triggerLocalSave, updateContentMetrics]);
+  }, [debounceDelayMs, clearDebounceTimer, setDebounce, triggerLocalSave, updateContentMetrics]);
 
   // Effect to trigger local save when flagged
   useEffect(() => {
@@ -154,10 +148,10 @@ export function useParagraphPersistence({
   // Effect to trigger local delete when flagged
   useEffect(() => {
     if (!shouldForceLocalDelete) return;
-    const deleted = deleteLocalParagraph(paragraphRef, emptyTextPlaceholder);
+    const deleted = deleteLocalParagraph(paragraphRef);
     if(deleted) setForceLocalDelete(false);
   }, [
-    shouldForceLocalDelete, emptyTextPlaceholder,
+    shouldForceLocalDelete,
     deleteLocalParagraph, setForceLocalDelete
   ]);
 
@@ -173,6 +167,10 @@ export function useParagraphPersistence({
     clearDebounceTimer();
     triggerLocalSave(true);
   }, [isQuote, isHighlighted, textAlignment, clearDebounceTimer, triggerLocalSave]);
+
+  useEffect(() => {
+    previousTextRef.current = getCurrentText();
+  }, [paragraph.text, getCurrentText]);
 
   // Cleanup on unmount
   useEffect(() => {
