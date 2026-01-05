@@ -45,17 +45,13 @@ function Aside({ isOpen, children, setIsOpen, width, setWidth }: AsideProps) {
 
         const handleMouseMove = (event: MouseEvent) => {
             if (!isDraggingRef.current) return;
-            
             event.preventDefault();
             
             const mousePos = event.clientX;
             const windowWidth = window.innerWidth;
-            const newWidth = Math.max(
-                AUTO_CLOSE_THRESHOLD, 
-                Math.min(
-                    windowWidth * MAX_WIDTH_PERCENT, 
-                    windowWidth - mousePos
-                )
+            const newWidth = Math.min(
+                windowWidth * MAX_WIDTH_PERCENT, 
+                windowWidth - mousePos
             );
             
             // Atualiza DOM diretamente sem re-render
@@ -141,7 +137,7 @@ export default function RightColumn({ children }: RightColumnProps) {
     if (storedWidth !== null) {
       const parsedWidth = parseInt(storedWidth);
       if (!isNaN(parsedWidth)) {
-        setWidth(parsedWidth);
+        setWidth(parsedWidth > AUTO_CLOSE_THRESHOLD ? parsedWidth : DEFAULT_WIDTH);
       }
     }
   }, []);
