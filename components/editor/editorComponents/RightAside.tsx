@@ -28,14 +28,14 @@ function ToggleButton({ isOpen, setOpen }: ToggleButtonProps) {
 }
 
 interface AsideProps {
-  isOpen: boolean;
   children: React.ReactNode;
+  isOpen: boolean;
   width: number;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setWidth: React.Dispatch<React.SetStateAction<number>>;
 }
 
-function Aside({ isOpen, children, setIsOpen, width, setWidth }: AsideProps) {
+function Aside({ children, isOpen, width, setIsOpen, setWidth }: AsideProps) {
     const asideRef = useRef<HTMLElement>(null);
     const isDraggingRef = useRef(false);
 
