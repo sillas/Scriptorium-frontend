@@ -141,12 +141,16 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
     if(!isOnline) return;
     setSyncInProgress(true);
     waitForPendingSaves().then( async () => {
-      const {syncedDocument, syncedChapters, syncedParagraphs} = await syncAllItems(documentId);
+      const {syncedDocument, syncedChapters, syncedParagraphs} = await syncAllItems(
+        localDocument,
+        localChapters,
+        localParagraphs
+      );
       updateLocalState(syncedChapters, setLocalChapters);
       updateLocalState(syncedParagraphs, setLocalParagraphs);
       if(syncedDocument) setLocalDocument(syncedDocument);
     }).finally(() => setSyncInProgress(false));
-  }, [isOnline]);
+  }, [isOnline, localDocument, localChapters, localParagraphs]);
 
   const handleDeleteChapter = useCallback((chapterIndex: number) => {
     handleDeleteAndReindex<ChapterInterface>(localChapters, 'chapters', chapterIndex, setLocalChapters);

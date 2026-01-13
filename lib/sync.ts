@@ -1,5 +1,6 @@
 import { ChapterInterface, ParagraphInterface, ContentEntity, DocumentEntity, DocumentEntityType, ContentEntityType, DocumentInterface } from '@/components/editor/types';
 import { saveToIndexedDB, replaceItem, deleteFromIndexedDB } from '@/lib/indexedDB';
+import { myersDiff } from '@/lib/editor/myersDiff';
 
 /**
  * Deleta um item do MongoDB e do IndexedDB
@@ -137,7 +138,10 @@ export const syncChapters = async (
   return syncedChapters;
 }
 
-export const syncParagraphs = async (unsyncedParagraphs: ParagraphInterface[]): Promise<ParagraphInterface[]> => {
+export const syncParagraphs = async (
+  currentParagraphs: ParagraphInterface[],
+  unsyncedParagraphs: ParagraphInterface[]
+): Promise<ParagraphInterface[]> => {
   if(unsyncedParagraphs.length === 0) {
     return [];
   }
@@ -146,9 +150,66 @@ export const syncParagraphs = async (unsyncedParagraphs: ParagraphInterface[]): 
 
   for (const paragraph of unsyncedParagraphs) {
     try {
+      // --------------------------
+      const original = currentParagraphs[paragraph.index].text.split(' ');
+      const current = paragraph.text.split(' ');
+
+      if(original.length === 1 && original[0] === '') original.pop();
+
+      const diff = myersDiff(original, current);
+      console.log(diff);
+      
+      /*
+        TODO: Store diffs in MongoDB and IndexedDB for future use.
+        Use the diffs to implement version history.
+        --------------------------
+        Use 24h timestamps to limit history size by merge all diffs in 
+        period to create a diff-version snapshot.
+
+        Steps: 
+        1 - Get all diffs older than 24h and version number different then null (current version).
+        2 - merge them to create a big snapshot diff.
+        3 - store the snapshot as a new version.
+        4 - clear the null-version diffs from the database.
+            keep only null-diffs after the snapshot.
+
+        # - If the version number is to big, we can also create a snapshot.
+        # - If the number of diffs is to big, we can also create a snapshot.
+
+        # - Older snapshots can be deleted after some time:
+        Steps:
+        1 - Get all snapshot-diffs older than X days.
+        2 - Create the new base text by applying the snapshot diffs to the original text.
+        3 - Store the new base text as the new original text with the last snapshot version.
+        4 - Delete all diffs used here from database.
+
+        # New paragraphs are stored as full text with version=null (the base text).
+        # Deleted paragraphs are marked as soft-deleted to preserve history.
+        
+        Example of diff data structure:
+        {
+          id: string,
+          documentId: string,
+          chapterId: string | null,
+          paragraphId: string | null,
+          version: number | null, // Create indexed on this field too.
+          diffs: Array<{operation: '+' | '-', position: number, content?: string}>,
+          createdAt: Date
+        }
+
+        diffs structure explanation:
+        - operation: '+' for insertions, '-' for deletions
+        - position: index in the original text where the operation occurs
+        - content: text to be inserted (only for '+' operations)
+        obs.: diffs cam be stored as linear CSV string to save space if needed.
+        Ex.: "+,0,Hello;-,5" means insert "Hello" at position 0 and delete word at position 5.
+      */
+      // --------------------------
+
       const syncedParagraph = await syncItem(paragraph, 'paragraphs');
       if(syncedParagraph === null) continue; // Parágrafo deletado
       syncedParagraphs.push(syncedParagraph);
+
     } catch (error) {
       console.error(`❌ Erro ao sincronizar parágrafo ${paragraph.id}:`, error);
     }

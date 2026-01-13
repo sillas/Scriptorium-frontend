@@ -31,15 +31,20 @@ export function useSyncBackground() {
    * @param documentId - ID do documento cujos itens serão sincronizados
    * @returns Objeto contendo arrays de capítulos e parágrafos sincronizados com sync=true
    */
-  const syncAllItems = useCallback(async (documentId: string): Promise<SyncAllItemsResult> => {
+  const syncAllItems = useCallback(async (
+    currentDocument: DocumentInterface,
+    currentChapters: ChapterInterface[],
+    currentParagraphs: ParagraphInterface[],
+  ): Promise<SyncAllItemsResult> => {
     // Prevenir múltiplas sincronizações simultâneas
+
     if (isSyncingRef.current) {
       console.log('⏳ Sincronização já em andamento, aguarde...');
       return {};
     }
 
     isSyncingRef.current = true;
-
+    const documentId = currentDocument.id;
     try {
       const unsyncedData = await getUnsyncedItemsForDocument(documentId.toString());
       const unsyncedChapters = unsyncedData.chapters
@@ -48,7 +53,7 @@ export function useSyncBackground() {
 
       const syncedDocument = await syncDocument(unsyncedDocument);
       const syncedChapters = await syncChapters(unsyncedChapters, unsyncedParagraphs);
-      const syncedParagraphs = await syncParagraphs(unsyncedParagraphs);
+      const syncedParagraphs = await syncParagraphs(currentParagraphs, unsyncedParagraphs);
       
       return {syncedDocument, syncedChapters, syncedParagraphs};
 
