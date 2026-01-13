@@ -151,7 +151,7 @@ export const syncParagraphs = async (
   for (const paragraph of unsyncedParagraphs) {
     try {
       // --------------------------
-      const original = currentParagraphs[paragraph.index].text.split(' ');
+      const original = currentParagraphs[paragraph.index]?.text.split(' ') || [];
       const current = paragraph.text.split(' ');
 
       if(original.length === 1 && original[0] === '') original.pop();
