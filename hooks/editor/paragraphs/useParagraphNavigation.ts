@@ -21,6 +21,7 @@ interface UseParagraphNavigationParams {
   onReorder?: (direction: NavigationDirection) => void;
   setIsSynced: React.Dispatch<React.SetStateAction<boolean>>;
   setForceLocalDelete: React.Dispatch<React.SetStateAction<boolean>>;
+  setCursorPosition: () => void;
 }
 
 interface UseParagraphNavigationReturn {
@@ -48,6 +49,7 @@ export function useParagraphNavigation({
   onReorder,
   setIsSynced,
   setForceLocalDelete,
+  setCursorPosition,
 }: UseParagraphNavigationParams): UseParagraphNavigationReturn {
   
   const handleScrolling = useCallback(() => {
@@ -71,10 +73,10 @@ export function useParagraphNavigation({
   );
 
   const goToParagraphOnArrows = useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => {
+    (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection): boolean => {
       const canNavigate =
         direction === 'Down' ? navigation.canNavigateNext : navigation.canNavigatePrevious;
-      if (!canNavigate) return;
+      if (!canNavigate) return false;
 
       // Navigate only if cursor is at edge
       const isAtEdge =
@@ -83,7 +85,9 @@ export function useParagraphNavigation({
       if (isAtEdge) {
         event.preventDefault();
         handleFinishEditingAndNavigate(event, direction);
+        return true;
       }
+      return false;
     },
     [
       navigation,
@@ -144,9 +148,19 @@ export function useParagraphNavigation({
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       const pressedKey = event.key;
 
+      if (['x', 'X', 'z', 'Z'].includes(pressedKey) && (event.ctrlKey)) {
+        event.preventDefault();
+        return;
+      }
+
       if (['s', 'S'].includes(pressedKey) && (event.ctrlKey)) {
         event.preventDefault();
         handleFastFinishEditing();
+        return;
+      }
+
+      if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(pressedKey)) {
+        setCursorPosition();
         return;
       }
 
@@ -168,7 +182,8 @@ export function useParagraphNavigation({
           return;
         }
 
-        goToParagraphOnArrows(event, direction);
+        if (goToParagraphOnArrows(event, direction)) return;
+        setCursorPosition();
         return;
       }
 
@@ -198,6 +213,7 @@ export function useParagraphNavigation({
         event.preventDefault();
 
         if (pressedKey === 'Backspace') {
+          setCursorPosition();
           const direction: NavigationDirection = navigation.canNavigatePrevious ? 'Up' : null;
           handleFinishEditingAndNavigate(event, direction);
         }

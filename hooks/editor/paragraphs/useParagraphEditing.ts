@@ -1,4 +1,4 @@
-import { RefObject, useCallback, useRef, useState } from 'react';
+import { RefObject, useCallback, useState, MouseEvent } from 'react';
 import { handleClick } from '@/lib/editor/selection';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
@@ -17,7 +17,7 @@ interface UseParagraphEditingReturn {
   isEditing: boolean;
   handleStartEditing: () => void;
   handleFinishEditing: () => void;
-  handleParagraphClick: (event: React.MouseEvent<HTMLDivElement>) => void;
+  handleParagraphClick: (event: MouseEvent<HTMLDivElement>) => void;
 }
 
 /**
@@ -69,7 +69,7 @@ export function useParagraphEditing({
 
     if(textToCompare !== syncedText) {
       onSave();
-      waitForPendingSaves().then(onRemoteSync)
+      waitForPendingSaves().then(onRemoteSync);
     }
 
     paragraphRef.current?.blur();
@@ -84,7 +84,7 @@ export function useParagraphEditing({
   ]);
 
   const handleParagraphClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
+    (event: MouseEvent<HTMLDivElement>) => {
       setSelection(null);
       if (!paragraphRef.current) return;
 

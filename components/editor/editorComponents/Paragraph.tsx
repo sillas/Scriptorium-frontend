@@ -55,7 +55,9 @@ export function Paragraph({
   
   // 1. Content Management
   const { 
-    characterCount, wordCount, updateContentMetrics
+    characterCount,
+    wordCount, 
+    updateContentMetrics,
   } = useParagraphContent({
     paragraphRef, initialText: paragraph.text,
   });
@@ -89,9 +91,10 @@ export function Paragraph({
 
   // 5. Cursor Position Tracking
   const {
+    cursorPosition,
     isCursorAtFirstPosition, isCursorAtLastPosition,
     setIsCursorAtFirstPosition, setIsCursorAtLastPosition,
-    resetCursorPosition,
+    resetCursorPosition, setCursorPosition
   } = useParagraphCursor({ paragraphRef, focusActivation });
 
   // 6. Editing State & Transitions
@@ -116,7 +119,8 @@ export function Paragraph({
     navigation, emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
     handleFinishEditing, handleFastFinishEditing,
     onCreateNewParagraph, setIsSynced,
-    onNavigate, onReorder, setForceLocalDelete
+    onNavigate, onReorder, setForceLocalDelete,
+    setCursorPosition
   });
 
   // ============ Helper Functions ============
@@ -132,6 +136,11 @@ export function Paragraph({
     handleStartEditing, 
     setIsCursorAtFirstPosition, setIsCursorAtLastPosition
   ]);
+
+  const paragraphOnClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    handleParagraphClick(event); 
+    setCursorPosition();
+  }
 
   const onCreateNewParagraphAbove = () => onCreateNewParagraph?.(paragraph.index);
 
@@ -207,7 +216,7 @@ export function Paragraph({
             ref={paragraphRef}
             contentEditable
             suppressContentEditableWarning
-            onClick={handleParagraphClick}
+            onClick={paragraphOnClick}
             onContextMenu={handleRightClick}
             onBlur={handleFinishEditing}
             onInput={scheduleLocalAutoSave}
@@ -223,7 +232,7 @@ export function Paragraph({
           ></div>
 
           <span className={styles.characterCountStyle(isEditing)}>
-            {paragraph.index + 1}° parágrafo • {characterCount} chars • {wordCount} words
+            {paragraph.index + 1}° parágrafo • Col: {cursorPosition}{isEditing && ` • ${characterCount} chars`} • {wordCount} words
           </span>
 
           {isCursorAtLastPosition && navigation.canNavigateNext && (

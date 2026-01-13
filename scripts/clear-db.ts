@@ -26,8 +26,7 @@ async function clearDatabase() {
 
   console.log('🚨 ATENÇÃO: Este script irá deletar TODOS os dados do banco de dados!');
   console.log(`📦 Banco de dados: ${DB_NAME}`);
-  console.log(`🗂️  Coleções: ${COLLECTIONS.join(', ')}`);
-  console.log('');
+  console.log(`🗂️  Coleções: ${COLLECTIONS.join(', ')}\n`);
 
   // Solicitar confirmação do usuário
   const rl = readline.createInterface({
@@ -54,8 +53,7 @@ async function clearDatabase() {
     await client.connect();
     
     const db = client.db(DB_NAME);
-    console.log('✅ Conectado com sucesso!');
-    console.log('');
+    console.log('✅ Conectado com sucesso!\n');
 
     // Limpar cada coleção
     for (const collectionName of COLLECTIONS) {
@@ -68,8 +66,7 @@ async function clearDatabase() {
       }
     }
 
-    console.log('');
-    console.log('✅ Banco de dados limpo com sucesso!');
+    console.log('\n✅ Banco de dados limpo com sucesso!');
     
   } catch (error) {
     console.error('❌ Erro ao conectar ou limpar o banco de dados:', error);

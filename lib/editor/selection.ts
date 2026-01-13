@@ -1,3 +1,4 @@
+import { MouseEvent } from 'react';
 /**
  * Sets the cursor position at the clicked coordinates within a contentEditable element.
  * Should be called after the element becomes contentEditable.
@@ -34,7 +35,7 @@ function setCursorPositionAtClick(x: number, y: number): void {
  * @param elementRef - Reference to the element to make editable
  */
 function handleContentEditableClick(
-    event: React.MouseEvent,
+    event: MouseEvent,
     elementRef: React.RefObject<HTMLElement | null>
 ): void {
     elementRef.current?.focus();
@@ -50,7 +51,7 @@ function handleContentEditableClick(
  * @returns 
  */
 export function handleClick(
-    event: React.MouseEvent<HTMLHeadingElement>, 
+    event: MouseEvent<HTMLHeadingElement>, 
     itemRef: React.RefObject<HTMLHeadingElement | null>, 
     isEditing?: boolean,
     setEditing?: React.Dispatch<React.SetStateAction<boolean>>
@@ -117,7 +118,7 @@ export const setCursorAt = (
  * @param event The mouse click event on the div
  * @returns Information about the selected text and its positions, or null if no selection 
  */
-export function getSelection(event: React.MouseEvent<HTMLDivElement>): Selection | null {
+export function getSelection(event: MouseEvent<HTMLDivElement>): Selection | null {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return null;
 

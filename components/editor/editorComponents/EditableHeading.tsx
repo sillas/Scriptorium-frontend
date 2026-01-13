@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
+import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect, MouseEvent } from 'react';
 import { handleClick, setCursorAt } from '@/lib/editor/selection';
 import { styles } from '@/components/editor/styles/editable-heading';
 
@@ -60,12 +60,12 @@ export const EditableHeading = forwardRef<EditableHeadingHandle, EditableHeading
       }
     }, [EMPTY_TEXT_PLACEHOLDER]);
 
-    const handleMouseDown = (event: React.MouseEvent<HTMLHeadingElement>) => {      
+    const handleMouseDown = (event: MouseEvent<HTMLHeadingElement>) => {      
       focusByClick.current = true
       mouseXPositionRef.current = event.clientX;
     }
 
-    const handleHeadingClick = useCallback((event: React.MouseEvent<HTMLHeadingElement>) => {
+    const handleHeadingClick = useCallback((event: MouseEvent<HTMLHeadingElement>) => {
 
       if (event.detail === 2) {
         mouseXPositionRef.current = null;

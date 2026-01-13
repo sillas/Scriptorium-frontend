@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, MouseEvent } from 'react';
 import { getSelection } from '@/lib/editor/selection';
 
 interface UseParagraphContextMenuParams {
@@ -8,7 +8,7 @@ interface UseParagraphContextMenuParams {
 
 interface UseParagraphContextMenuReturn {
   horizontalPosition: number;
-  handleRightClick: (event: React.MouseEvent<HTMLDivElement>) => void;
+  handleRightClick: (event: MouseEvent<HTMLDivElement>) => void;
 }
 
 /**
@@ -22,7 +22,7 @@ export function useParagraphContextMenu({
   const [horizontalPosition, setHorizontalPosition] = useState(0);
 
   const handleRightClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
+    (event: MouseEvent<HTMLDivElement>) => {
       if (!isEditing) return;
       event.preventDefault();
 

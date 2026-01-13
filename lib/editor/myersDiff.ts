@@ -142,12 +142,9 @@ class DiffFormatter {
     
     for (const { op, pos, item } of diffResult) {
       if (op === 'd') {
-        output.push(`-,${pos},${item.length}`);
+        output.push(`-,${pos},${item}`);
       } else if (op === 'i') {
         output.push(`+,${pos},'${item}'`);
-      } else {
-        // update
-        output.push(`~,${pos},'${item}'`);
       }
     }
     

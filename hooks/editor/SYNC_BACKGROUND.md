@@ -29,7 +29,6 @@ const { syncChapters } = useSyncBackground();
 
 // A função syncAll foi atualizada para usar o hook
 const syncAll = useCallback(async (origin: string) => {
-  console.log('Sync all items triggered from:', origin);
   
   // Sincronizar capítulos
   const syncedChapters = await syncChapters();

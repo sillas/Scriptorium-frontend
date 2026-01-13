@@ -50,7 +50,7 @@ export function useParagraphPersistence({
 
   const prevStylesRef = useRef({ isQuote, isHighlighted, textAlignment });
   const { SaveItemOnIndexedDB } = useLocalStorage();
-  const [ setDebounce, clearDebounceTimer ] = useDebounceTimer();
+  const [setDebounce, clearDebounceTimer] = useDebounceTimer();
   const previousTextRef = useRef('');
 
   const getCurrentText = useCallback((): string => {
@@ -72,10 +72,11 @@ export function useParagraphPersistence({
     textAlignment: textAlignmentType,
     forceUpdate = false,
   ) => {
-
+    const previousText = previousTextRef.current
     const currentText = getCurrentText();
+
     const textToCompare = currentText.replaceAll('&nbsp;', '').trim();
-    if (!forceUpdate && textToCompare === previousTextRef.current) {
+    if (!forceUpdate && textToCompare === previousText) {
       return;
     };
 
@@ -98,7 +99,7 @@ export function useParagraphPersistence({
 
   const deleteLocalParagraph = useCallback((
     paragraphRef: React.RefObject<HTMLDivElement | null>
-  ):boolean => {
+  ): boolean => {
     let text = (paragraphRef.current?.textContent || '').trim();
     if (text === emptyTextPlaceholder) text = '';
 
@@ -110,7 +111,7 @@ export function useParagraphPersistence({
 
   const triggerLocalSave = useCallback(
     (forceUpdate: boolean = false) => {
-      try {        
+      try {
         saveLocalParagraph(
           paragraph,
           isQuote,
@@ -149,7 +150,7 @@ export function useParagraphPersistence({
   useEffect(() => {
     if (!shouldForceLocalDelete) return;
     const deleted = deleteLocalParagraph(paragraphRef);
-    if(deleted) setForceLocalDelete(false);
+    if (deleted) setForceLocalDelete(false);
   }, [
     shouldForceLocalDelete,
     deleteLocalParagraph, setForceLocalDelete
@@ -158,9 +159,9 @@ export function useParagraphPersistence({
   // Effect to trigger local save on style changes
   useEffect(() => {
     const prev = prevStylesRef.current;
-    const hasChanged = prev.isQuote !== isQuote || 
-                     prev.isHighlighted !== isHighlighted || 
-                     prev.textAlignment !== textAlignment;
+    const hasChanged = prev.isQuote !== isQuote ||
+      prev.isHighlighted !== isHighlighted ||
+      prev.textAlignment !== textAlignment;
     if (!hasChanged) return;
 
     prevStylesRef.current = { isQuote, isHighlighted, textAlignment };
@@ -169,7 +170,7 @@ export function useParagraphPersistence({
   }, [isQuote, isHighlighted, textAlignment, clearDebounceTimer, triggerLocalSave]);
 
   useEffect(() => {
-    previousTextRef.current = getCurrentText();
+    previousTextRef.current = paragraph.text.replaceAll('&nbsp;', '').trim();
   }, [paragraph.text, getCurrentText]);
 
   // Cleanup on unmount

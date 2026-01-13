@@ -145,8 +145,7 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
       updateLocalState(syncedChapters, setLocalChapters);
       updateLocalState(syncedParagraphs, setLocalParagraphs);
       if(syncedDocument) setLocalDocument(syncedDocument);
-      setSyncInProgress(false);
-    });
+    }).finally(() => setSyncInProgress(false));
   }, [isOnline]);
 
   const handleDeleteChapter = useCallback((chapterIndex: number) => {
@@ -166,7 +165,7 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
     SaveItemOnIndexedDB(localDocument, data, 'documents');
   }, [SaveItemOnIndexedDB]);
 
-  const syncAll = useCallback(() => {    
+  const syncAll = useCallback(() => {
     clearDebounceTimer();
     setDebounce(() => {
       const activeElement = document.activeElement;
@@ -174,7 +173,7 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
         return;
       }
       syncAllWithoutDebounce();
-    }, 3000); // prevent auto-sync for 3s after manual sync
+    }, 5000); // prevent auto-sync for 5s after manual sync
 
   }, [setDebounce, clearDebounceTimer, syncAllWithoutDebounce]);
 
