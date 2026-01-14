@@ -209,8 +209,6 @@ The editor implements an **offline-first architecture** with automatic backgroun
 - **Background Sync**: Automatically syncs to MongoDB when online
 - **Conflict Resolution**: Smart merging of local and remote changes
 
-For detailed sync architecture, see [SYNC_DOCUMENTATION.md](SYNC_DOCUMENTATION.md)
-
 #### Component Architecture
 
 - **Client-Side Rendering**: Main editor is client-side for performance
@@ -250,7 +248,7 @@ When contributing to the codebase:
 2. **Maintain offline-first**: All features must work offline
 3. **Add proper TypeScript types**: See `components/editor/types/`
 4. **Test sync behavior**: Ensure offline → online sync works correctly
-5. **Update documentation**: Keep README and SYNC_DOCUMENTATION.md current
+5. **Update documentation**: Keep README current
 
 ---
 
