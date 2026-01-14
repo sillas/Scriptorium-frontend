@@ -152,30 +152,46 @@ editor/
 │   │   └── users/            # User management
 │   ├── editor/               # Editor pages
 │   │   └── [id]/             # Dynamic document routes
-│   └── layout.tsx            # Root layout
+│   ├── layout.tsx            # Root layout
+│   ├── page.tsx              # Home page
+│   └── globals.css           # Global styles
 │
 ├── components/               # React Components
 │   ├── editor/               # Editor-specific components
 │   │   ├── clientEditor.tsx  # Main editor component (client-side)
+│   │   ├── DocumentForm.tsx  # Document creation form
 │   │   ├── Header.tsx        # Editor header with controls
 │   │   ├── SyncIndicator.tsx # Sync status indicator
 │   │   ├── editorComponents/ # Atomic editor components
-│   │   │   ├── Chapter.tsx   # Chapter component
-│   │   │   ├── Paragraph.tsx # Paragraph component
-│   │   │   ├── Title.tsx     # Document title component
-│   │   │   └── ...
+│   │   │   ├── AddButton.tsx      # Add paragraph button
+│   │   │   ├── Chapter.tsx        # Chapter component
+│   │   │   ├── Contents.tsx       # Table of contents
+│   │   │   ├── EditableHeading.tsx # Editable heading component
+│   │   │   ├── LeftColumn.tsx     # Left sidebar column
+│   │   │   ├── Paragraph.tsx      # Paragraph component
+│   │   │   ├── RightAside.tsx     # Right sidebar panel
+│   │   │   └── Title.tsx          # Document title component
+│   │   ├── styles/           # Component-specific styles
+│   │   │   ├── editable-heading.ts # Heading styles
+│   │   │   └── paragraph.ts       # Paragraph styles
 │   │   └── types/            # TypeScript type definitions
-│   └── OnlineStatusProvider.tsx # Online/offline detection
+│   │       └── index.ts      # Shared types
+│   ├── OnlineStatusProvider.tsx # Online/offline detection
+│   └── UserForm.tsx          # User form component
 │
 ├── hooks/                    # Custom React Hooks
 │   ├── editor/               # Editor-specific hooks
 │   │   ├── useSyncBackground.ts    # Background sync management
 │   │   ├── useNavigation.ts        # Keyboard navigation
+│   │   ├── SYNC_BACKGROUND.md      # Sync documentation
 │   │   └── paragraphs/             # Paragraph-specific hooks
-│   │       ├── useParagraphContent.ts      # Content management
-│   │       ├── useParagraphNavigation.ts   # Navigation logic
-│   │       ├── useParagraphPersistence.ts  # Save/sync logic
-│   │       └── ...
+│   │       ├── useActionButtons.ts        # Paragraph action buttons
+│   │       ├── useParagraphContent.ts     # Content management
+│   │       ├── useParagraphContextMenu.ts # Context menu logic
+│   │       ├── useParagraphCursor.ts      # Cursor management
+│   │       ├── useParagraphEditing.ts     # Editing operations
+│   │       ├── useParagraphNavigation.ts  # Navigation logic
+│   │       └── useParagraphPersistence.ts # Save/sync logic
 │   ├── useOnlineStatus.ts    # Online/offline detection
 │   ├── useDebounceTimer.ts   # Debounced operations
 │   └── useLocalStorage.ts    # Local storage utilities
@@ -185,13 +201,17 @@ editor/
 │   ├── mongodb.ts            # MongoDB connection and utilities
 │   ├── sync.ts               # Synchronization logic
 │   ├── loadUnsyncedData.ts   # Load unsynced data from IndexedDB
+│   ├── slug-helpers.ts       # URL slug utilities
 │   └── editor/               # Editor utilities
 │       ├── constants.ts      # Editor constants
 │       ├── conversions.ts    # Data format conversions
 │       ├── formatting.ts     # Text formatting utilities
+│       ├── myersDiff.ts      # Myers diff algorithm
 │       ├── paragraph-helpers.ts  # Paragraph operations
 │       ├── selection.ts      # Text selection utilities
 │       └── text-utils.ts     # Text manipulation utilities
+│
+├── public/                   # Static assets
 │
 └── scripts/                  # Utility Scripts
     ├── clear-db.ts           # Database cleanup tool
