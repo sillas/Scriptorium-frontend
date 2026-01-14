@@ -1,8 +1,8 @@
-# Next Editor
+# Scriptorium Editor
 
 **A modern writing platform designed specifically for book and eBook authors.**
 
-Next Editor provides a distraction-free environment for long-form writing with intelligent chapter and paragraph management, offline-first architecture.
+Scriptorium Editor provides a distraction-free environment for long-form writing with intelligent chapter and paragraph management, offline-first architecture.
 
 ## ✨ Key Features
 
