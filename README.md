@@ -3,10 +3,12 @@
 
 <img width="1365" height="548" alt="Tela do editor" src="https://github.com/user-attachments/assets/9174293e-7229-4d37-9637-9d9a4325ba44" />
 
-**Painel direito reservado  para funções de agentes de IA**
+**Painel esquerdo reservado para funções de agentes de IA**
 <img width="1365" height="560" alt="image" src="https://github.com/user-attachments/assets/232bfe21-8d8f-44e3-b483-234a625432ea" />
 
 Scriptorium Editor provides a distraction-free environment for long-form writing with intelligent chapter and paragraph management, offline-first architecture.
+
+> **⚠️ Development Status**: This project is currently in active development. The current backend is provisional. Development efforts are focused on front-end features, usability, UX improvements, and offline-first capabilities. AI-powered features (planned for the left panel) and the robust backend integration will be implemented in future iterations.
 
 ## ✨ Key Features
 
@@ -29,7 +31,7 @@ Scriptorium Editor provides a distraction-free environment for long-form writing
 
 ### Planned Features (Roadmap)
 
-- **AI-Powered Writing Assistant**:
+- **AI-Powered Writing Assistant** _(to be integrated in the left panel with backend support)_:
   - Character development and arc consistency checking
   - Style analysis and rewriting suggestions
   - Redundant theme detection
