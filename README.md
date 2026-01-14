@@ -137,7 +137,7 @@ Your work is organized as: **Title** → **Chapters** → **Paragraphs**
 ### Project Structure
 
 ```
-next_editor/
+editor/
 ├── app/                      # Next.js App Router
 │   ├── api/                  # API Routes
 │   │   ├── chapters/         # Chapter CRUD endpoints
