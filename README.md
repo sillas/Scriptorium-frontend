@@ -256,7 +256,7 @@ When contributing to the codebase:
 
 ## 📄 License
 
-Private project - All rights reserved
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🤝 Support
 
