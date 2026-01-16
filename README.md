@@ -113,7 +113,7 @@ Your work is organized as: **Title** → **Chapters** → **Paragraphs**
    ```
 
 4. **Access Application**
-   - Open [http://localhost:3000](http://localhost:3000) in your browser
+   - Open [http://localhost:3000/editor](http://localhost:3000/editor) in your browser
 
 5. **Stop MongoDB** (when needed)
    ```bash

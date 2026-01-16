@@ -159,8 +159,18 @@ export function useParagraphNavigation({
         return;
       }
 
-      if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(pressedKey)) {
+      if (['Home', 'End'].includes(pressedKey)) {
         setCursorPosition();
+        return;
+      }
+
+      if (['ArrowLeft', 'ArrowRight'].includes(pressedKey)) {
+        setCursorPosition();
+
+        if(event.ctrlKey) {
+          //  TODO: Implement CTRL + Arrow navigation between alignments.
+          console.log('CTRL  Key');
+        }
         return;
       }
 
