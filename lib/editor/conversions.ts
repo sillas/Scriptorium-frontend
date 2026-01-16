@@ -22,10 +22,8 @@ export function convertMongoDocument(
         createdAt: new Date(mongoDoc.createdAt),
         updatedAt: new Date(mongoDoc.updatedAt),
         version: mongoDoc.version,
-        metadata: {
-        tags: mongoDoc.metadata?.tags || [],
-        status: mongoDoc.metadata?.status || 'draft',
-        },
+        tags: mongoDoc?.tags || [],
+        status: mongoDoc?.status || 'draft',
     };
 }
 

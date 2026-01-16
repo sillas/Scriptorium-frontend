@@ -56,10 +56,8 @@ export interface DocumentInterface {
   slug?: string;
   fontClass?: string;
   deleted?: boolean;
-  metadata?: {
-    tags?: string[];
-    status?: DocumentStatus;
-  };
+  tags?: string[];
+  status?: DocumentStatus;
 }
 
 export interface MongoDocumentInterface {
@@ -71,10 +69,9 @@ export interface MongoDocumentInterface {
   createdAt: string;
   updatedAt: string;
   version: number;
-  metadata?: {
-    tags?: string[];
-    status?: DocumentStatus;
-  };
+  fontClass?: string;
+  tags?: string[];
+  status?: DocumentStatus;
 }
 
 export interface MongoChapterInterface {

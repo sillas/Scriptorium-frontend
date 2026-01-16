@@ -28,10 +28,8 @@ export default function DocumentForm() {
           title: formData.title,
           subtitle: formData.subtitle,
           author: 'Usuário Padrão',
-          metadata: {
-            tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-            status: formData.status,
-          },
+          tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+          status: formData.status,
         }),
       });
 
