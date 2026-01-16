@@ -150,37 +150,42 @@ editor/
 │   │   ├── documents/        # Document CRUD endpoints
 │   │   ├── paragraphs/       # Paragraph CRUD endpoints
 │   │   └── users/            # User management
+│   │
 │   ├── editor/               # Editor pages
 │   │   └── [id]/             # Dynamic document routes
+│   │
 │   ├── layout.tsx            # Root layout
 │   ├── page.tsx              # Home page
 │   └── globals.css           # Global styles
 │
-├── components/               # React Components
-│   ├── editor/               # Editor-specific components
-│   │   ├── clientEditor.tsx  # Main editor component (client-side)
-│   │   ├── DocumentForm.tsx  # Document creation form
-│   │   ├── Header.tsx        # Editor header with controls
-│   │   ├── SyncIndicator.tsx # Sync status indicator
-│   │   ├── editorComponents/ # Atomic editor components
-│   │   │   ├── AddButton.tsx      # Add paragraph button
-│   │   │   ├── Chapter.tsx        # Chapter component
-│   │   │   ├── Contents.tsx       # Table of contents
+├── components/                     # React Components
+│   ├── editor/                     # Editor-specific components
+│   │   ├── clientEditor.tsx        # Main editor component (client-side)
+│   │   ├── DocumentForm.tsx        # Document creation form
+│   │   ├── Header.tsx              # Editor header with controls
+│   │   ├── SyncIndicator.tsx       # Sync status indicator
+│   │   ├── editorComponents/       # Atomic editor components
+│   │   │   ├── AddButton.tsx       # Add paragraph button
+│   │   │   ├── Chapter.tsx         # Chapter component
+│   │   │   ├── Contents.tsx        # Table of contents
 │   │   │   ├── EditableHeading.tsx # Editable heading component
-│   │   │   ├── LeftAside.tsx      # Left sidebar column
-│   │   │   ├── Paragraph.tsx      # Paragraph component
-│   │   │   ├── RightAside.tsx     # Right sidebar panel
-│   │   │   └── Title.tsx          # Document title component
-│   │   ├── styles/           # Component-specific styles
+│   │   │   ├── LeftAside.tsx       # Left sidebar column
+│   │   │   ├── Paragraph.tsx       # Paragraph component
+│   │   │   ├── RightAside.tsx      # Right sidebar panel
+│   │   │   └── Title.tsx           # Document title component
+│   │   │
+│   │   ├── styles/                 # Component-specific styles
 │   │   │   ├── editable-heading.ts # Heading styles
-│   │   │   └── paragraph.ts       # Paragraph styles
-│   │   └── types/            # TypeScript type definitions
-│   │       └── index.ts      # Shared types
-│   ├── OnlineStatusProvider.tsx # Online/offline detection
-│   └── UserForm.tsx          # User form component
+│   │   │   └── paragraph.ts        # Paragraph styles
+│   │   │
+│   │   └── types/                  # TypeScript type definitions
+│   │       └── index.ts            # Shared types
+│   │
+│   ├── OnlineStatusProvider.tsx    # Online/offline detection
+│   └── UserForm.tsx                # User form component
 │
-├── hooks/                    # Custom React Hooks
-│   ├── editor/               # Editor-specific hooks
+├── hooks/                          # Custom React Hooks
+│   ├── editor/                     # Editor-specific hooks
 │   │   ├── useSyncBackground.ts    # Background sync management
 │   │   ├── useNavigation.ts        # Keyboard navigation
 │   │   ├── SYNC_BACKGROUND.md      # Sync documentation
@@ -192,6 +197,7 @@ editor/
 │   │       ├── useParagraphEditing.ts     # Editing operations
 │   │       ├── useParagraphNavigation.ts  # Navigation logic
 │   │       └── useParagraphPersistence.ts # Save/sync logic
+│   │
 │   ├── useOnlineStatus.ts    # Online/offline detection
 │   ├── useDebounceTimer.ts   # Debounced operations
 │   └── useLocalStorage.ts    # Local storage utilities
