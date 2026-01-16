@@ -2,9 +2,8 @@
 
 import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { Quote } from 'lucide-react';
-import { NavigationDirection, ParagraphInterface } from '@/components/editor/types';
-import { styles } from '@/components/editor/styles/paragraph';
 import { updateCursorPosition } from '@/lib/editor/selection';
+import { PARAGRAPH_CONFIG } from '@/lib/editor/constants';
 import { useActionButtons } from '@/hooks/editor/paragraphs/useActionButtons';
 import { useParagraphEditing } from '@/hooks/editor/paragraphs/useParagraphEditing';
 import { useParagraphNavigation } from '@/hooks/editor/paragraphs/useParagraphNavigation';
@@ -12,11 +11,12 @@ import { useParagraphCursor } from '@/hooks/editor/paragraphs/useParagraphCursor
 import { useParagraphContent } from '@/hooks/editor/paragraphs/useParagraphContent';
 import { useParagraphPersistence } from '@/hooks/editor/paragraphs/useParagraphPersistence';
 import { useParagraphContextMenu } from '@/hooks/editor/paragraphs/useParagraphContextMenu';
+import { styles } from '@/components/editor/styles/paragraph';
+import { NavigationDirection, ParagraphInterface } from '@/components/editor/types';
 import SyncIndicator from '@/components/editor/SyncIndicator';
-import { PARAGRAPH_CONFIG } from '@/lib/editor/constants';
 
-const { 
-  ICON_SIZE, ICON_COLOR, 
+const {
+  ICON_SIZE, ICON_COLOR,
   DEBOUNCE_DELAY_MS, EMPTY_TEXT_PLACEHOLDER
 } = PARAGRAPH_CONFIG;
 
@@ -41,7 +41,7 @@ interface ParagraphProps {
 }
 
 export function Paragraph({
-  paragraph, focusActivation, isNavigatingRef, navigation, 
+  paragraph, focusActivation, isNavigatingRef, navigation,
   onNavigate, onDelete, onCreateNewParagraph, onReorder, onRemoteSync, onRemoteSyncNow,
   fontClass = ''
 }: ParagraphProps) {
@@ -54,9 +54,9 @@ export function Paragraph({
   // ============ Hooks Customizados ============
   
   // 1. Content Management
-  const { 
+  const {
     characterCount,
-    wordCount, 
+    wordCount,
     updateContentMetrics,
   } = useParagraphContent({
     paragraphRef, initialText: paragraph.text,
@@ -77,7 +77,7 @@ export function Paragraph({
     paragraphRef, paragraph,
     emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
     debounceDelayMs: DEBOUNCE_DELAY_MS,
-    isQuote, isHighlighted, textAlignment, 
+    isQuote, isHighlighted, textAlignment,
     shouldForceLocalSave, shouldForceLocalDelete,
     onDelete, updateContentMetrics, 
     setIsSynced, setForceLocalSave, setForceLocalDelete
