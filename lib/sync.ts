@@ -151,14 +151,34 @@ export const syncParagraphs = async (
   for (const paragraph of unsyncedParagraphs) {
     try {
       // --------------------------
-      const original = currentParagraphs[paragraph.index]?.text.split(' ') || [];
-      const current = paragraph.text.split(' ');
+      const original = currentParagraphs[paragraph.index];
 
-      if(original.length === 1 && original[0] === '') original.pop();
+      const originalText = original?.text.split(' ') || []
+      const currentText = paragraph.text.split(' ');
 
-      const diff = myersDiff(original, current);
+      if(originalText.length === 1 && originalText[0] === '') originalText.pop();
+
+      const diff = myersDiff(originalText, currentText);
       const diffCsv = DiffFormatter.toCsv(diff);
       console.log(diffCsv);
+
+      // diff text formatting:
+      const textStyleDiff = [];
+      if(original.isHighlighted !== paragraph.isHighlighted)  {
+        textStyleDiff.push(`h:${original.isHighlighted?1:0},${paragraph.isHighlighted?1:0}`);
+        // highlighted changed:1 = true, 0 = false 
+      }
+      if(original.isQuote !== paragraph.isQuote)  {
+        textStyleDiff.push(`q:${original.isQuote?1:0},${paragraph.isQuote?1:0}`)
+        // quote changed:1 = true, 0 = false
+      }
+      if(original.textAlignment !== paragraph.textAlignment)  {
+        textStyleDiff.push(`a:${original.textAlignment?.substring(5)[0]},${paragraph.textAlignment?.substring(5)[0]}`);
+        // alignment changed: 'l' = left, 'c' = center, 'r' = right, 'j' = justify
+      }
+      const styleDiffCsv = textStyleDiff.join('\n');
+      console.log(styleDiffCsv);
+      
       
       /*
         TODO: Store diffs in MongoDB and IndexedDB for future use.
