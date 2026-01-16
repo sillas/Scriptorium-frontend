@@ -53,7 +53,7 @@ export function Paragraph({
   
   // ============ Hooks Customizados ============
   
-  // 1. Content Management
+  // Content Management
   const {
     characterCount,
     wordCount,
@@ -62,7 +62,7 @@ export function Paragraph({
     paragraphRef, initialText: paragraph.text,
   });
 
-  // 2. Action Buttons (formatting, styles, delete)
+  // Action Buttons (formatting, styles, delete)
   const {
     selection, verticalButtonsActions, contextButtonsActions,
     isQuote, isHighlighted, textAlignment, setSelection, setTextAlignment
@@ -70,7 +70,7 @@ export function Paragraph({
     paragraph, setForceLocalSave, setForceLocalDelete
   );
 
-  // 3. Persistence
+  // Persistence
   const { 
     triggerLocalSave, scheduleLocalAutoSave,
   } = useParagraphPersistence({
@@ -83,13 +83,13 @@ export function Paragraph({
     setIsSynced, setForceLocalSave, setForceLocalDelete
   });
   
-  // 4. Fast Finish Editing
-  const handleFastFinishEditing = useCallback(() => {    
-    // triggerLocalSave();
-    // onRemoteSyncNow?.();
+  // Ctrl + S -> Fast Finish Editing
+  const handleFastFinishEditing = useCallback(() => { 
+    triggerLocalSave();
+    onRemoteSyncNow?.();
   }, [onRemoteSyncNow]);
 
-  // 5. Cursor Position Tracking
+  // Cursor Position Tracking
   const {
     cursorPosition,
     isCursorAtFirstPosition, isCursorAtLastPosition,
@@ -97,7 +97,7 @@ export function Paragraph({
     resetCursorPosition, setCursorPosition
   } = useParagraphCursor({ paragraphRef, focusActivation });
 
-  // 6. Editing State & Transitions
+  // Editing State & Transitions
   const {
     isEditing, 
     handleStartEditing, handleFinishEditing, handleParagraphClick,
@@ -106,12 +106,12 @@ export function Paragraph({
     setSelection, onRemoteSync, resetCursorPosition, onSave: triggerLocalSave,
   });
 
-  // 7. Context Menu (right-click)
+  // Context Menu (right-click)
   const { 
     horizontalPosition, handleRightClick
   } = useParagraphContextMenu({ isEditing, setSelection });
 
-  // 8. Keyboard Navigation
+  // Keyboard Navigation
   const { handleKeyDown, handleScrolling } = useParagraphNavigation({
     paragraphRef, isNavigatingRef, paragraph, isEditing,
     isCursorAtFirstPosition, isCursorAtLastPosition,
