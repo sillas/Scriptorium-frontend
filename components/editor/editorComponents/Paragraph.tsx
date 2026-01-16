@@ -102,7 +102,6 @@ export function Paragraph({
     isEditing, 
     handleStartEditing, handleFinishEditing, handleParagraphClick,
   } = useParagraphEditing({
-    syncedText: paragraph.text,
     paragraphRef, selection, emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
     setSelection, onRemoteSync, resetCursorPosition, onSave: triggerLocalSave,
   });

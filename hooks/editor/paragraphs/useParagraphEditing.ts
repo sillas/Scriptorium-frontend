@@ -4,7 +4,6 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 interface UseParagraphEditingParams {
   paragraphRef: RefObject<HTMLDivElement | null>;
-  syncedText: string;
   emptyTextPlaceholder: string;
   selection: Selection | null;
   setSelection: (selection: Selection | null) => void;
@@ -25,7 +24,7 @@ interface UseParagraphEditingReturn {
  * Handles starting/finishing edit mode, placeholder management, and click events
  */
 export function useParagraphEditing({
-  paragraphRef, syncedText,
+  paragraphRef,
   emptyTextPlaceholder,
   selection, setSelection,
   resetCursorPosition,
@@ -67,10 +66,8 @@ export function useParagraphEditing({
       paragraphRef.current.innerHTML = textToCompare;
     }
 
-    if(textToCompare !== syncedText) {
-      onSave();
-      waitForPendingSaves().then(onRemoteSync);
-    }
+    onSave();
+    waitForPendingSaves().then(onRemoteSync);
 
     paragraphRef.current?.blur();
   }, [
