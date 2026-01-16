@@ -159,8 +159,7 @@ export const syncParagraphs = async (
       if(originalText.length === 1 && originalText[0] === '') originalText.pop();
 
       const diff = myersDiff(originalText, currentText);
-      const diffCsv = DiffFormatter.toCsv(diff);
-      console.log(diffCsv);
+      let diffCsv = DiffFormatter.toCsv(diff);
 
       // diff text formatting:
       const textStyleDiff = [];
@@ -176,8 +175,9 @@ export const syncParagraphs = async (
         textStyleDiff.push(`a:${original.textAlignment?.substring(5)[0]},${paragraph.textAlignment?.substring(5)[0]}`);
         // alignment changed: 'l' = left, 'c' = center, 'r' = right, 'j' = justify
       }
-      const styleDiffCsv = textStyleDiff.join('\n');
-      console.log(styleDiffCsv);
+      
+      diffCsv = diffCsv + '\n' + textStyleDiff.join('\n');
+      console.log(diffCsv);
       
       
       /*
