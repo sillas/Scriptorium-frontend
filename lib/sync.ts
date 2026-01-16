@@ -1,6 +1,6 @@
 import { ChapterInterface, ParagraphInterface, ContentEntity, DocumentEntity, DocumentEntityType, ContentEntityType, DocumentInterface } from '@/components/editor/types';
 import { saveToIndexedDB, replaceItem, deleteFromIndexedDB } from '@/lib/indexedDB';
-import { myersDiff } from '@/lib/editor/myersDiff';
+import { myersDiff, DiffFormatter } from '@/lib/editor/myersDiff';
 
 /**
  * Deleta um item do MongoDB e do IndexedDB
@@ -157,7 +157,8 @@ export const syncParagraphs = async (
       if(original.length === 1 && original[0] === '') original.pop();
 
       const diff = myersDiff(original, current);
-      console.log(diff);
+      const diffCsv = DiffFormatter.toCsv(diff);
+      console.log(diffCsv);
       
       /*
         TODO: Store diffs in MongoDB and IndexedDB for future use.

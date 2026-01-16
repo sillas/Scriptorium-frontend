@@ -138,11 +138,16 @@ class DiffFormatter {
    * Converte operações de diff para formato CSV.
    */
   static toCsv(diffResult: DiffOperation[]): string {
+
+    if(diffResult.length === 0) {
+      return ''; // Retorna string vazia se não houver diferenças
+    }
+
     const output: string[] = ['op,pos,item'];
     
     for (const { op, pos, item } of diffResult) {
       if (op === 'd') {
-        output.push(`-,${pos},${item}`);
+        output.push(`-,${pos},'${item}'`);
       } else if (op === 'i') {
         output.push(`+,${pos},'${item}'`);
       }
