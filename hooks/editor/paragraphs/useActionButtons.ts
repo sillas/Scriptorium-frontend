@@ -1,33 +1,47 @@
 import { useCallback, useMemo, useState } from 'react';
-import { 
+import { LucideProps,
     Bold, Copy, Eraser, Italic, 
     Quote, RemoveFormatting, 
     Star, TextAlignCenter, 
     TextAlignEnd, TextAlignJustify, 
     TextAlignStart, Underline } from 'lucide-react';
-import {
-    toggleFormattingOnSelection,
-    clearFormattingOnSelection
-} from '@/lib/editor/formatting';
+import { toggleFormattingOnSelection, clearFormattingOnSelection } from '@/lib/editor/formatting';
 import { ParagraphInterface, textAlignmentType, FormatTag } from '@/components/editor/types';
+import { useToast } from '@/components/ToastProvider';
 
-export function useActionButtons(
+interface UseActionButtonsReturn {
+    isQuote: boolean;
+    isHighlighted: boolean;
+    textAlignment: textAlignmentType;
+    verticalButtonsActions: { Icon: React.ComponentType<LucideProps>; description: string; action: () => void }[];
+    contextButtonsActions: { Icon: React.ComponentType<LucideProps>; description: string; action: () => void }[];
+    selection: Selection | null;
+    setSelection: React.Dispatch<React.SetStateAction<Selection | null>>;
+    setTextAlignment: React.Dispatch<React.SetStateAction<textAlignmentType>>;
+}
+
+export const useActionButtons = (
     paragraph: ParagraphInterface,
     setForceLocalSave: React.Dispatch<React.SetStateAction<boolean>>,
     setForceLocalDelete: React.Dispatch<React.SetStateAction<boolean>>,
-) {
+): UseActionButtonsReturn => {
     const [isQuote, setIsQuote] = useState(paragraph?.isQuote || false);
     const [selection, setSelection] = useState<Selection | null>(null);
     const [isHighlighted, setIsHighlighted] = useState(paragraph?.isHighlighted || false);
     const [textAlignment, setTextAlignment] = useState<textAlignmentType>(paragraph?.textAlignment || 'text-justify');
+    const { showToast } = useToast();
 
     const copyTextToClipboard = useCallback(() => {
         if (!selection || selection.isCollapsed) return;
         const selectedText = selection.toString();
-        navigator.clipboard.writeText(selectedText).catch((err) => {
-            console.error('Failed to copy text: ', err);
-        });
-    }, [selection]);
+        navigator.clipboard.writeText(selectedText)
+            .then(() => {
+                showToast('Text copied to clipboard', 'info');
+            })
+            .catch((err) => {
+                console.error('Failed to copy text: ', err);
+            });
+    }, [selection, showToast]);
 
     const verticalButtonsActions = useMemo(() => [
         { Icon: TextAlignStart, description: 'Toggle Text Left', action: () => setTextAlignment('text-left') },
@@ -52,9 +66,9 @@ export function useActionButtons(
         { Icon: Italic, description: 'Toggle Italic', action: () => handleFormatting('i')},
         { Icon: Underline, description: 'Toggle Underline', action: () => handleFormatting('u')},
         { Icon: RemoveFormatting, description: 'Clear Text Formatting', action: () => handleFormatting(null)},
-        { Icon:  Copy, description: 'Copy Text', action: copyTextToClipboard },
+        { Icon: Copy, description: 'Copy Text', action: copyTextToClipboard },
     ], [handleFormatting, copyTextToClipboard]);
-    
+
     return {
         isQuote,
         isHighlighted,
@@ -63,5 +77,6 @@ export function useActionButtons(
         contextButtonsActions,
         selection,
         setSelection,
+        setTextAlignment,
     }
 }

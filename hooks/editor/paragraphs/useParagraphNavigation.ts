@@ -1,5 +1,6 @@
 import { RefObject, useCallback } from 'react';
-import { NavigationDirection, ParagraphInterface } from '@/components/editor/types';
+import { NavigationDirection, ParagraphInterface, textAlignmentType } from '@/components/editor/types';
+import { useToast } from '@/components/ToastProvider';
 
 interface UseParagraphNavigationParams {
   paragraphRef: RefObject<HTMLDivElement | null>;
@@ -22,12 +23,27 @@ interface UseParagraphNavigationParams {
   setIsSynced: React.Dispatch<React.SetStateAction<boolean>>;
   setForceLocalDelete: React.Dispatch<React.SetStateAction<boolean>>;
   setCursorPosition: () => void;
+  setTextAlignment: React.Dispatch<React.SetStateAction<textAlignmentType>>;
 }
 
 interface UseParagraphNavigationReturn {
   handleKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   handleScrolling: () => void;
 }
+
+const nextLeftAlignmentMap: Record<textAlignmentType, textAlignmentType> = {
+  'text-left': 'text-left',
+  'text-justify': 'text-left',
+  'text-center': 'text-justify',
+  'text-right': 'text-center',
+};
+
+const nextRightAlignmentMap: Record<textAlignmentType, textAlignmentType> = {
+  'text-left': 'text-justify',
+  'text-justify': 'text-center',
+  'text-center': 'text-right',
+  'text-right': 'text-right',
+};
 
 /**
  * Hook to manage paragraph navigation via keyboard
@@ -50,8 +66,11 @@ export function useParagraphNavigation({
   setIsSynced,
   setForceLocalDelete,
   setCursorPosition,
+  setTextAlignment,
 }: UseParagraphNavigationParams): UseParagraphNavigationReturn {
   
+  const { showToast } = useToast();
+
   const handleScrolling = useCallback(() => {
     if(!isNavigatingRef.current) return;
       isNavigatingRef.current = false;
@@ -146,37 +165,48 @@ export function useParagraphNavigation({
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
-      const pressedKey = event.key;
+      const pressedKey = event.key.toLowerCase();
 
-      if (['x', 'X', 'z', 'Z'].includes(pressedKey) && (event.ctrlKey)) {
+      if (['x', 'z'].includes(pressedKey) && (event.ctrlKey)) {
         event.preventDefault();
         return;
       }
 
-      if (['s', 'S'].includes(pressedKey) && (event.ctrlKey)) {
+      if (pressedKey === 's' && (event.ctrlKey)) {
         event.preventDefault();
         handleFastFinishEditing();
         return;
       }
 
-      if (['Home', 'End'].includes(pressedKey)) {
+      if (pressedKey === 'c' && (event.ctrlKey)){
+        showToast('Text copied to clipboard', 'info');
+        return;
+      }
+
+      if (['home', 'end'].includes(pressedKey)) {
         setCursorPosition();
         return;
       }
 
-      if (['ArrowLeft', 'ArrowRight'].includes(pressedKey)) {
-        setCursorPosition();
+      if(pressedKey === 'arrowleft') {
+        if(event.altKey){
+          event.preventDefault();
+          setTextAlignment(prev => nextLeftAlignmentMap[prev]);
+        } else setCursorPosition();
+        return;
+      }
 
-        if(event.ctrlKey) {
-          //  TODO: Implement CTRL + Arrow navigation between alignments.
-          console.log('CTRL  Key');
-        }
+      if(pressedKey === 'arrowright') {
+        if(event.altKey) {
+          event.preventDefault();
+          setTextAlignment(prev => nextRightAlignmentMap[prev]);
+        } else setCursorPosition();
         return;
       }
 
       // Go to previous or next paragraph on Arrow Up/Down
-      if (['ArrowUp', 'ArrowDown'].includes(pressedKey)) {
-        const direction = pressedKey === 'ArrowUp' ? 'Up' : 'Down';
+      if (['arrowup', 'arrowdown'].includes(pressedKey)) {
+        const direction = pressedKey === 'arrowup' ? 'Up' : 'Down';
 
         // Reorder paragraph with Ctrl+Arrow
         if (event.ctrlKey) {
@@ -198,13 +228,13 @@ export function useParagraphNavigation({
       }
 
       // Go to previous or next paragraph on Tab
-      if (pressedKey === 'Tab' && isEditing) {
+      if (pressedKey === 'tab' && isEditing) {
         goToParagraphOnTab(event);
         return;
       }
 
       // Handle Enter key
-      if (pressedKey === 'Enter' && isEditing) {
+      if (pressedKey === 'enter' && isEditing) {
         handleEnterKeyPress(event);
         return;
       }
@@ -212,17 +242,17 @@ export function useParagraphNavigation({
       const currentText = paragraphRef.current?.textContent?.trim() || '';
 
       // Finish editing on Escape
-      if (pressedKey === 'Escape' && currentText.length > 0) {
+      if (pressedKey === 'escape' && currentText.length > 0) {
         event.preventDefault();
         handleFinishEditing();
         return;
       }
 
       // Delete paragraph on Escape/Backspace if it's empty
-      if (['Backspace', 'Escape'].includes(pressedKey) && currentText === '') {
+      if (['backspace', 'escape'].includes(pressedKey) && currentText === '') {
         event.preventDefault();
 
-        if (pressedKey === 'Backspace') {
+        if (pressedKey === 'backspace') {
           setCursorPosition();
           const direction: NavigationDirection = navigation.canNavigatePrevious ? 'Up' : null;
           handleFinishEditingAndNavigate(event, direction);

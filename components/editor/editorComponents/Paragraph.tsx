@@ -65,7 +65,7 @@ export function Paragraph({
   // 2. Action Buttons (formatting, styles, delete)
   const {
     selection, verticalButtonsActions, contextButtonsActions,
-    isQuote, isHighlighted, textAlignment, setSelection,
+    isQuote, isHighlighted, textAlignment, setSelection, setTextAlignment
   } = useActionButtons(
     paragraph, setForceLocalSave, setForceLocalDelete
   );
@@ -84,7 +84,7 @@ export function Paragraph({
   });
   
   // 4. Fast Finish Editing
-  const handleFastFinishEditing = useCallback(() => {
+  const handleFastFinishEditing = useCallback(() => {    
     // triggerLocalSave();
     // onRemoteSyncNow?.();
   }, [onRemoteSyncNow]);
@@ -120,11 +120,11 @@ export function Paragraph({
     handleFinishEditing, handleFastFinishEditing,
     onCreateNewParagraph, setIsSynced,
     onNavigate, onReorder, setForceLocalDelete,
-    setCursorPosition
+    setCursorPosition, setTextAlignment
   });
 
   // ============ Helper Functions ============
-  const handleCursorPositionUpdate = useCallback((event: FocusOrKeyboardEventType) => {
+  const handleCursorPositionUpdate = useCallback(() => {
     handleStartEditing();
     updateCursorPosition(
       paragraphRef, isEditing,

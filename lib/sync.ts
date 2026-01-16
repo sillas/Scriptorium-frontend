@@ -60,6 +60,8 @@ const syncItem = async <T extends DocumentEntity>(
   }
 
   // Salvar/atualizar no MongoDB
+  console.log('itemData: ', itemData);
+  
   const response = await fetch(`/api/${storeName}`, {
     method: isTemp ? 'POST' : 'PUT',
     headers: {

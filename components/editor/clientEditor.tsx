@@ -43,6 +43,8 @@ interface ClientEditorProps {
  * @param theDocument - initial document data fetched from the server
  */
 export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEditorProps) {
+  console.log('TOP PAR: ', paragraphs);
+  
   const documentId = initialDocument.id;
   const isOnline = useIsOnline();
   const isNavigatingRef = useRef(false);
@@ -170,6 +172,9 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
   }, [SaveItemOnIndexedDB]);
 
   const syncAll = useCallback(() => {
+
+    console.log('syncAll!');
+    
     clearDebounceTimer();
     setDebounce(() => {
       const activeElement = document.activeElement;

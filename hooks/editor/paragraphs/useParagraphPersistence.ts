@@ -93,7 +93,7 @@ export function useParagraphPersistence({
       isHighlighted: isHighlighted || false,
       textAlignment: textAlignment,
     };
-
+    
     SaveItemOnIndexedDB(paragraph, newData, 'paragraphs');
   }, [paragraph.sync, SaveItemOnIndexedDB, setIsSynced, getCurrentText]);
 
@@ -162,8 +162,9 @@ export function useParagraphPersistence({
     const hasChanged = prev.isQuote !== isQuote ||
       prev.isHighlighted !== isHighlighted ||
       prev.textAlignment !== textAlignment;
+      
     if (!hasChanged) return;
-
+    
     prevStylesRef.current = { isQuote, isHighlighted, textAlignment };
     clearDebounceTimer();
     triggerLocalSave(true);

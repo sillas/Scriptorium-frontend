@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Merriweather } from "next/font/google";
 import "./globals.css";
 import { OnlineStatusProvider } from '@/components/OnlineStatusProvider';
+import { ToastProvider } from '@/components/ToastProvider';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,9 +35,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${merriweather.variable} antialiased`}
       >
-        <OnlineStatusProvider>
-          {children}
-        </OnlineStatusProvider>
+        <ToastProvider>
+          <OnlineStatusProvider>
+            {children}
+          </OnlineStatusProvider>
+        </ToastProvider>
       </body>
     </html>
   );

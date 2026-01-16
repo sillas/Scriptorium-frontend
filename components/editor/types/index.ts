@@ -100,6 +100,9 @@ export interface MongoParagraphInterface {
   version: number;
   characterCount: number;
   wordCount: number;
+  isQuote?: boolean;
+  isHighlighted?: boolean;
+  textAlignment?: textAlignmentType;
 }
 
 export interface TitleUpdateData {

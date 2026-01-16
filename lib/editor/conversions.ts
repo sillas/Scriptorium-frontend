@@ -63,6 +63,9 @@ export function convertMongoParagraphs(
     version: paragraph.version,
     sync: true,
     characterCount: paragraph.characterCount || 0,
-    wordCount: paragraph.wordCount || 0
+    wordCount: paragraph.wordCount || 0,
+    isQuote: paragraph.isQuote || false,
+    isHighlighted: paragraph.isHighlighted || false,
+    textAlignment: paragraph.textAlignment || 'text-left',
   }));
 }
