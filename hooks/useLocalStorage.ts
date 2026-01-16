@@ -109,8 +109,6 @@ export function useLocalStorage() {
     }
 
     try {
-      console.log('saveLocal! ', setLocalItems);
-      
       saveLocal(itemType, setLocalItems);
       return true
     } catch (error) {

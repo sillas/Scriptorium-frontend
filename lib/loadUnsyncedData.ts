@@ -125,9 +125,6 @@ export const loadUnsyncedData = async (
         const unsyncedChapters = unsyncedData.chapters
         const unsyncedParagraphs = unsyncedData.paragraphs
 
-        console.log('unsyncedParagraphs: ', unsyncedParagraphs[0]);
-        
-
         if (unsyncedChapters.length > 0) {
             const updatedChapters = proccessChapters(chapters, unsyncedChapters);
             setChapters(updatedChapters);
