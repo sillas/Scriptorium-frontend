@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useIsOnline } from '@/components/OnlineStatusProvider';
 import EditorHeader from '@/components/editor/Header';
-import LeftColumn from '@/components/editor/editorComponents/LeftColumn';
+import LeftAside from '@/components/editor/editorComponents/LeftAside';
 import RightColumn from '@/components/editor/editorComponents/RightAside';
 import Contents from '@/components/editor/editorComponents/Contents';
 import AddButton from '@/components/editor/editorComponents/AddButton';
@@ -245,14 +245,14 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
       {/* Container Principal */}
       <div className="flex flex-1 overflow-hidden relative">
 
-        <LeftColumn>
+        <LeftAside>
           <div className="text-sm text-gray-800">
             <Contents
                 chapters={localChapters}
                 syncInProgress={syncInProgress}
               />
           </div>
-        </LeftColumn>
+        </LeftAside>
 
         {/* Coluna Central */}
         <main

@@ -45,11 +45,11 @@ function Aside({ isOpen, children }: AsideProps) {
   )
 }
 
-interface LeftColumnProps {
+interface LeftAsideProps {
   children: React.ReactNode;
 }
 
-export default function LeftColumn({ children }: LeftColumnProps) {
+export default function LeftAside({ children }: LeftAsideProps) {
   const storageKey = 'sideColumn-left-isOpen';
   const [isOpen, setOpen] = useState(true);
 

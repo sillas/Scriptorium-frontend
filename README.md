@@ -31,7 +31,7 @@ Scriptorium Editor provides a distraction-free environment for long-form writing
 
 ### Planned Features (Roadmap)
 
-- **AI-Powered Writing Assistant** _(to be integrated in the left panel with backend support)_:
+- **AI-Powered Writing Assistant** _(to be integrated in the right panel with backend support)_:
   - Character development and arc consistency checking
   - Style analysis and rewriting suggestions
   - Redundant theme detection
@@ -167,7 +167,7 @@ editor/
 │   │   │   ├── Chapter.tsx        # Chapter component
 │   │   │   ├── Contents.tsx       # Table of contents
 │   │   │   ├── EditableHeading.tsx # Editable heading component
-│   │   │   ├── LeftColumn.tsx     # Left sidebar column
+│   │   │   ├── LeftAside.tsx      # Left sidebar column
 │   │   │   ├── Paragraph.tsx      # Paragraph component
 │   │   │   ├── RightAside.tsx     # Right sidebar panel
 │   │   │   └── Title.tsx          # Document title component
