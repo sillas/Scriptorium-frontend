@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { 
-    Bold, Eraser, Italic, 
+    Bold, Copy, Eraser, Italic, 
     Quote, RemoveFormatting, 
     Star, TextAlignCenter, 
     TextAlignEnd, TextAlignJustify, 
@@ -20,6 +20,14 @@ export function useActionButtons(
     const [selection, setSelection] = useState<Selection | null>(null);
     const [isHighlighted, setIsHighlighted] = useState(paragraph?.isHighlighted || false);
     const [textAlignment, setTextAlignment] = useState<textAlignmentType>(paragraph?.textAlignment || 'text-justify');
+
+    const copyTextToClipboard = useCallback(() => {
+        if (!selection || selection.isCollapsed) return;
+        const selectedText = selection.toString();
+        navigator.clipboard.writeText(selectedText).catch((err) => {
+            console.error('Failed to copy text: ', err);
+        });
+    }, [selection]);
 
     const verticalButtonsActions = useMemo(() => [
         { Icon: TextAlignStart, description: 'Toggle Text Left', action: () => setTextAlignment('text-left') },
@@ -44,7 +52,9 @@ export function useActionButtons(
         { Icon: Italic, description: 'Toggle Italic', action: () => handleFormatting('i')},
         { Icon: Underline, description: 'Toggle Underline', action: () => handleFormatting('u')},
         { Icon: RemoveFormatting, description: 'Clear Text Formatting', action: () => handleFormatting(null)},
-    ], [handleFormatting]);
+        { Icon:  Copy, description: 'Copy Text', action: copyTextToClipboard },
+    ], [handleFormatting, copyTextToClipboard]);
+    
     return {
         isQuote,
         isHighlighted,
