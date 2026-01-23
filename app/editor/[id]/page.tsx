@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import { ObjectId } from 'mongodb';
 import { getDatabase } from '@/lib/mongodb';
-import { ClientEditor } from '@/components/editor/clientEditor';
+// import { ClientEditor } from '@/components/editor/clientEditor';
+import { ClientEditorT } from '@/components/editor/ClientEditorT';
 import { 
   convertMongoDocument,
   convertMongoChapters,
@@ -73,7 +74,7 @@ export default async function Editor({ params }: EditorProps) {
   );
   
   return (
-    <ClientEditor 
+    <ClientEditorT 
       initialDocument={document}
       chapters={chapters}
       paragraphs={paragraphs}

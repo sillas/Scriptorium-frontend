@@ -1,5 +1,9 @@
 type listNodeType<T> = T extends { id: string } ? T : never;
-
+interface ListNodeValue<T> {
+    startIdExclusive?: string, 
+    categoryField?: string, 
+    categoryId?: string
+}
 class ListNode<T> {
     id: string;
     data: T;
@@ -110,7 +114,8 @@ export class DoublyLinkedList<T extends { id: string }> {
         this.nodes.clear();
     }
 
-    *values(): Iterable<T> {
+    *values(): Generator<T> {
+
         let current = this.head;
         while (current) {
             yield current.data;

@@ -1,6 +1,6 @@
 'use client';
 
-import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { RefObject, useCallback, useEffect, useRef, useState, memo } from 'react';
 import { Quote } from 'lucide-react';
 import { updateCursorPosition } from '@/lib/editor/selection';
 import { PARAGRAPH_CONFIG } from '@/lib/editor/constants';
@@ -20,8 +20,6 @@ const {
   DEBOUNCE_DELAY_MS, EMPTY_TEXT_PLACEHOLDER
 } = PARAGRAPH_CONFIG;
 
-type FocusOrKeyboardEventType = React.FocusEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>;
-
 interface ParagraphProps {
   paragraph: ParagraphInterface;
   isNavigatingRef: RefObject<boolean>;
@@ -40,7 +38,7 @@ interface ParagraphProps {
   fontClass?: string;
 }
 
-export function Paragraph({
+function ParagraphComponent({
   paragraph, focusActivation, isNavigatingRef, navigation,
   onNavigate, onDelete, onCreateNewParagraph, onReorder, onRemoteSync, onRemoteSyncNow,
   fontClass = ''
@@ -246,3 +244,22 @@ export function Paragraph({
     </>
   );
 }
+
+// Memoização com comparação customizada para evitar re-renders desnecessários
+export const Paragraph = memo(ParagraphComponent, (prevProps, nextProps) => {
+  // Re-renderizar apenas se o parágrafo específico ou suas props de controle mudarem
+  return (
+    prevProps.paragraph.id === nextProps.paragraph.id &&
+    prevProps.paragraph.text === nextProps.paragraph.text &&
+    prevProps.paragraph.sync === nextProps.paragraph.sync &&
+    prevProps.paragraph.isQuote === nextProps.paragraph.isQuote &&
+    prevProps.paragraph.isHighlighted === nextProps.paragraph.isHighlighted &&
+    prevProps.paragraph.textAlignment === nextProps.paragraph.textAlignment &&
+    prevProps.focusActivation === nextProps.focusActivation &&
+    prevProps.navigation.canNavigatePrevious === nextProps.navigation.canNavigatePrevious &&
+    prevProps.navigation.canNavigateNext === nextProps.navigation.canNavigateNext &&
+    prevProps.fontClass === nextProps.fontClass
+  );
+});
+
+Paragraph.displayName = 'Paragraph';

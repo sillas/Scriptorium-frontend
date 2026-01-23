@@ -34,16 +34,16 @@ async function clearDatabase() {
     output: process.stdout
   });
 
-  const answer = await new Promise<string>((resolve) => {
-    rl.question('Você tem certeza? Digite "SIM" para confirmar: ', resolve);
-  });
+  // const answer = await new Promise<string>((resolve) => {
+  //   rl.question('Você tem certeza? Digite "SIM" para confirmar: ', resolve);
+  // });
 
   rl.close();
 
-  if (answer !== 'SIM') {
-    console.log('❌ Operação cancelada.');
-    process.exit(0);
-  }
+  // if (answer !== 'SIM') {
+  //   console.log('❌ Operação cancelada.');
+  //   process.exit(0);
+  // }
 
   let client: MongoClient | null = null;
 

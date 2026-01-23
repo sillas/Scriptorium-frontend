@@ -44,7 +44,6 @@ interface ClientEditorProps {
  */
 export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEditorProps) {
 
-  const documentId = initialDocument.id;
   const isOnline = useIsOnline();
   const isNavigatingRef = useRef(false);
   const [syncInProgress, setSyncInProgress] = useState(true);
