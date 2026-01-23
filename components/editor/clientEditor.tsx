@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useIsOnline } from '@/components/OnlineStatusProvider';
 import EditorHeader from '@/components/editor/Header';
 import LeftAside from '@/components/editor/editorComponents/LeftAside';
-import RightColumn from '@/components/editor/editorComponents/RightAside';
+import RightAside from '@/components/editor/editorComponents/RightAside';
 import Contents from '@/components/editor/editorComponents/Contents';
 import AddButton from '@/components/editor/editorComponents/AddButton';
 import Chapter from '@/components/editor/editorComponents/Chapter';
@@ -306,9 +306,9 @@ export function ClientEditor({ initialDocument, chapters, paragraphs }: ClientEd
           <AddButton type="chapters" onClick={addNewChapter} />
         </main>
 
-        <RightColumn>
+        <RightAside>
           <div className="text-sm text-gray-800 p-4">Right</div>
-        </RightColumn>
+        </RightAside>
       </div>
     </div>
   );

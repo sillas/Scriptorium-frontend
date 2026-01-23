@@ -1,16 +1,19 @@
 'use client';
 
+import { useMemo, useRef, memo, JSX } from 'react';
 import {
   DocumentInterface,
   ChapterInterface,
   ParagraphInterface,
 } from '@/components/editor/types';
 import EditorHeader from '@/components/editor/Header';
-import { Title } from './editorComponents/Title';
-import Chapter from './editorComponents/Chapter';
+import { Title } from '@/components/editor/editorComponents/Title';
+import Chapter from '@/components/editor/editorComponents/Chapter';
 import { DoublyLinkedList } from '@/lib/editor/doublyLinkedList';
-import { useMemo, useRef, memo, JSX } from 'react';
-import { Paragraph } from './editorComponents/Paragraph';
+import { Paragraph } from '@/components/editor/editorComponents/Paragraph';
+import RightAside from '@/components/editor/editorComponents/RightAside';
+import LeftAside from '@/components/editor/editorComponents/LeftAside';
+import Contents from '@/components/editor/editorComponents/Contents';
 
 interface ClientEditorProps {
   initialDocument: DocumentInterface;
@@ -49,7 +52,7 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
     const paragraphsRef = useRef(new DoublyLinkedList<ParagraphInterface>());
     paragraphsRef.current.create(paragraphs);
 
-    const componentsDataView: (ChapterInterface & { 'Paragraphs': JSX.Element })[] = useMemo(() => {
+    const componentsDataView: (ChapterInterface & { Paragraphs: JSX.Element })[] = useMemo(() => {
         // Agrupar parágrafos por chapterId em uma única passagem - O(M) ao invés de O(N × M)
         const paragraphsByChapter = new Map<string, ParagraphInterface[]>();
         
@@ -61,12 +64,11 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
             paragraphsByChapter.get(chapterId)!.push(paragraph);
         }
         
-        // Mapear cada capítulo com seus parágrafos pré-agrupados
         return chapters.map((chapter) => {
             const ps = paragraphsByChapter.get(chapter.id) || []
             return {
                 ...chapter,
-                'Paragraphs': <ParagraphList paragraphs={ps} isNavigatingRef={isNavigatingRef} />
+                Paragraphs: <ParagraphList paragraphs={ps} isNavigatingRef={isNavigatingRef} />
             }
         });
     }, [chapters, paragraphsRef.current]);
@@ -75,6 +77,16 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
         <div className="flex flex-col h-screen w-screen overflow-hidden">
               <EditorHeader slug={initialDocument.title} isOnline={true} syncInProgress={false} />
               <div className="flex flex-1 overflow-hidden relative">
+
+                <LeftAside>
+                    <div className="text-sm text-gray-800">
+                    <Contents
+                        chapters={chapters}
+                        syncInProgress={false}
+                        />
+                    </div>
+                </LeftAside>
+
                 <main
                     className={`bg-gray-100 flex-1 transition-all duration-300 ease-in-out p-4 overflow-y-auto custom-scrollbar`}
                 >
@@ -98,6 +110,10 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
                         </Chapter>
                     ))}
                 </main>
+
+                <RightAside>
+                    <div className="text-sm text-gray-800 p-4">Right</div>
+                </RightAside>
               </div>
         </div>
     )

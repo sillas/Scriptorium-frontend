@@ -122,7 +122,7 @@ interface RightColumnProps {
 const storageKey = 'sideColumn-right-isOpen';
 const storageKeyWidth = 'sideColumn-right-width';
 
-export default function RightColumn({ children }: RightColumnProps) {
+export default function RightAside({ children }: RightColumnProps) {
   const [isOpen, setOpen] = useState(true);
   const [width, setWidth] = useState(DEFAULT_WIDTH);
   
