@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, memo, JSX } from 'react';
+import { useMemo, useRef,JSX } from 'react';
 import {
   DocumentInterface,
   ChapterInterface,
@@ -10,41 +10,17 @@ import EditorHeader from '@/components/editor/Header';
 import { Title } from '@/components/editor/editorComponents/Title';
 import Chapter from '@/components/editor/editorComponents/Chapter';
 import { DoublyLinkedList } from '@/lib/editor/doublyLinkedList';
-import { Paragraph } from '@/components/editor/editorComponents/Paragraph';
+import { ParagraphList } from '@/components/editor/editorComponents/Paragraph';
 import RightAside from '@/components/editor/editorComponents/RightAside';
 import LeftAside from '@/components/editor/editorComponents/LeftAside';
 import Contents from '@/components/editor/editorComponents/Contents';
+import AddButton from '@/components/editor/editorComponents/AddButton';
 
 interface ClientEditorProps {
   initialDocument: DocumentInterface;
   chapters: ChapterInterface[];
   paragraphs: ParagraphInterface[];
 }
-
-// Componente memoizado para renderizar parágrafos - evita re-renders desnecessários
-const ParagraphList = memo(({ 
-    paragraphs, 
-    isNavigatingRef
-}: { 
-    paragraphs: ParagraphInterface[], 
-    isNavigatingRef: React.RefObject<boolean>
-}) => (
-    <>
-        {paragraphs.map(paragraph => (
-            <Paragraph 
-                key={paragraph.id} 
-                paragraph={paragraph}
-                navigation={{
-                    canNavigatePrevious: paragraph.index > 0,
-                    canNavigateNext: paragraph.index < paragraphs.length -1,
-                    isTheLastParagraphInChapter: false
-                }}
-                isNavigatingRef={isNavigatingRef} 
-            />
-        ))}
-    </>
-));
-ParagraphList.displayName = 'ParagraphList';
 
 export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientEditorProps) {
 
@@ -68,7 +44,11 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
             const ps = paragraphsByChapter.get(chapter.id) || []
             return {
                 ...chapter,
-                Paragraphs: <ParagraphList paragraphs={ps} isNavigatingRef={isNavigatingRef} />
+                Paragraphs: <ParagraphList 
+                    key={`plist_${chapter.id}`}
+                    paragraphs={ps}
+                    isNavigatingRef={isNavigatingRef}
+                />
             }
         });
     }, [chapters, paragraphsRef.current]);
@@ -107,8 +87,10 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
                             chapter={chapter}
                         >
                             {chapter.Paragraphs}
+                            <AddButton key={`add_${chapter.id}`} type="paragraphs" onClick={() => {}} />
                         </Chapter>
                     ))}
+                    <AddButton type="chapters" onClick={() => {}} />
                 </main>
 
                 <RightAside>

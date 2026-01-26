@@ -65,13 +65,7 @@ export function useParagraphPersistence({
     return currentText
   }, []);
 
-  const saveLocalParagraph = useCallback((
-    paragraph: ParagraphInterface,
-    isQuote: boolean,
-    isHighlighted: boolean,
-    textAlignment: textAlignmentType,
-    forceUpdate = false,
-  ) => {
+  const triggerLocalSave = useCallback( (forceUpdate = false) => {
     const previousText = previousTextRef.current
     const currentText = getCurrentText();
 
@@ -95,7 +89,15 @@ export function useParagraphPersistence({
     };
     
     SaveItemOnIndexedDB(paragraph, newData, 'paragraphs');
-  }, [paragraph.sync, SaveItemOnIndexedDB, setIsSynced, getCurrentText]);
+  }, [
+    paragraph.sync, 
+    isQuote,
+    isHighlighted, 
+    textAlignment, 
+    SaveItemOnIndexedDB, 
+    setIsSynced, 
+    getCurrentText
+  ]);
 
   const deleteLocalParagraph = useCallback((
     paragraphRef: React.RefObject<HTMLDivElement | null>
@@ -109,28 +111,6 @@ export function useParagraphPersistence({
     return true;
   }, [onDelete]);
 
-  const triggerLocalSave = useCallback(
-    (forceUpdate: boolean = false) => {
-      try {
-        saveLocalParagraph(
-          paragraph,
-          isQuote,
-          isHighlighted,
-          textAlignment,
-          forceUpdate
-        );
-      } catch (error) {
-        console.error('triggerLocalSave - Error saving paragraph locally:', error);
-      }
-    },
-    [
-      paragraph,
-      isQuote,
-      isHighlighted,
-      textAlignment,
-      saveLocalParagraph,
-    ]
-  );
 
   const scheduleLocalAutoSave = useCallback(() => {
     clearDebounceTimer();

@@ -1,6 +1,6 @@
 'use client';
 
-import { RefObject, useCallback, useEffect, useRef, useState, memo } from 'react';
+import { RefObject, useCallback, useEffect, useRef, useState, memo, Fragment } from 'react';
 import { Quote } from 'lucide-react';
 import { updateCursorPosition } from '@/lib/editor/selection';
 import { PARAGRAPH_CONFIG } from '@/lib/editor/constants';
@@ -11,9 +11,9 @@ import { useParagraphCursor } from '@/hooks/editor/paragraphs/useParagraphCursor
 import { useParagraphContent } from '@/hooks/editor/paragraphs/useParagraphContent';
 import { useParagraphPersistence } from '@/hooks/editor/paragraphs/useParagraphPersistence';
 import { useParagraphContextMenu } from '@/hooks/editor/paragraphs/useParagraphContextMenu';
-import { styles } from '@/components/editor/styles/paragraph';
 import { NavigationDirection, ParagraphInterface } from '@/components/editor/types';
 import SyncIndicator from '@/components/editor/SyncIndicator';
+import { styles } from '@/components/editor/styles/paragraph';
 
 const {
   ICON_SIZE, ICON_COLOR,
@@ -246,7 +246,7 @@ function ParagraphComponent({
 }
 
 // Memoização com comparação customizada para evitar re-renders desnecessários
-export const Paragraph = memo(ParagraphComponent, (prevProps, nextProps) => {
+const Paragraph = memo(ParagraphComponent, (prevProps, nextProps) => {
   // Re-renderizar apenas se o parágrafo específico ou suas props de controle mudarem
   return (
     prevProps.paragraph.id === nextProps.paragraph.id &&
@@ -263,3 +263,27 @@ export const Paragraph = memo(ParagraphComponent, (prevProps, nextProps) => {
 });
 
 Paragraph.displayName = 'Paragraph';
+
+// Componente memoizado para renderizar parágrafos - evita re-renders desnecessários
+export const ParagraphList = memo(({ 
+    paragraphs, 
+    isNavigatingRef
+}: { 
+    paragraphs: ParagraphInterface[], 
+    isNavigatingRef: React.RefObject<boolean>
+}) => (
+    <>
+        {paragraphs.map(paragraph => (<Fragment key={paragraph.id}>
+            <Paragraph
+                paragraph={paragraph}
+                navigation={{
+                    canNavigatePrevious: paragraph.index > 0,
+                    canNavigateNext: paragraph.index < paragraphs.length -1,
+                    isTheLastParagraphInChapter: false
+                }}
+                isNavigatingRef={isNavigatingRef} 
+            />
+        </Fragment>))}
+    </>
+));
+ParagraphList.displayName = 'ParagraphList';
