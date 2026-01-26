@@ -1,10 +1,10 @@
 type listNodeType<T> = T extends { id: string } ? T : never;
-interface ListNodeValue<T> {
+export interface ListNodeValue<T> {
     startIdExclusive?: string, 
     categoryField?: string, 
     categoryId?: string
 }
-class ListNode<T> {
+export class ListNode<T> {
     id: string;
     data: T;
     next: ListNode<T> | null = null;
@@ -60,8 +60,10 @@ export class DoublyLinkedList<T extends { id: string }> {
         return node.data;
     }
 
-    get(id: string): T | null {
-        return this.nodes.get(id)?.data ?? null;
+    get(id: string, useNode?: boolean): T | ListNode<T> | null {
+        const node = this.nodes.get(id) ?? null;
+        if (useNode) return node;
+        return node?.data ?? null;
     }
 
     swap(id1: string, id2: string): void {

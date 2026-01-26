@@ -19,7 +19,7 @@ interface UseParagraphNavigationParams {
   handleFastFinishEditing: () => void;
   onNavigate?: (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => void;
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
-  onReorder?: (direction: NavigationDirection) => void;
+  onReorder?: (paragraphId: string, direction: NavigationDirection) => void;
   setIsSynced: React.Dispatch<React.SetStateAction<boolean>>;
   setForceLocalDelete: React.Dispatch<React.SetStateAction<boolean>>;
   setCursorPosition: () => void;
@@ -213,7 +213,7 @@ export function useParagraphNavigation({
           event.preventDefault();
 
           setIsSynced(false);
-          onReorder?.(direction);
+          onReorder?.(paragraph.id, direction);
 
           setTimeout(() => {
             isNavigatingRef.current = true;

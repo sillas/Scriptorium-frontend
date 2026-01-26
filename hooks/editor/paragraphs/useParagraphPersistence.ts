@@ -79,16 +79,24 @@ export function useParagraphPersistence({
     previousTextRef.current = textToCompare;
 
     /// Build updated paragraph data
-    const newData = {
-      text: currentText,
-      characterCount: countCharacters(currentText),
-      wordCount: countWords(currentText),
-      isQuote: isQuote || false,
-      isHighlighted: isHighlighted || false,
-      textAlignment: textAlignment,
-    };
+    // const newData = {
+    //   text: currentText,
+    //   characterCount: countCharacters(currentText),
+    //   wordCount: countWords(currentText),
+    //   isQuote: isQuote || false,
+    //   isHighlighted: isHighlighted || false,
+    //   textAlignment: textAlignment,
+    // };
+
+    paragraph.sync = false;
+    paragraph.text = currentText
+    paragraph.characterCount = countCharacters(currentText)
+    paragraph.wordCount = countWords(currentText)
+    paragraph.isQuote = isQuote
+    paragraph.isHighlighted = isHighlighted
+    paragraph.textAlignment = textAlignment
     
-    SaveItemOnIndexedDB(paragraph, newData, 'paragraphs');
+    SaveItemOnIndexedDB(paragraph, null, 'paragraphs');
   }, [
     paragraph.sync, 
     isQuote,

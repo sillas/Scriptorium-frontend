@@ -1,20 +1,23 @@
 'use client';
 
-import { useMemo, useRef,JSX } from 'react';
+import { useMemo, useRef, useCallback, useState, useEffect } from 'react';
 import {
   DocumentInterface,
   ChapterInterface,
   ParagraphInterface,
+  NavigationDirection,
 } from '@/components/editor/types';
 import EditorHeader from '@/components/editor/Header';
 import { Title } from '@/components/editor/editorComponents/Title';
 import Chapter from '@/components/editor/editorComponents/Chapter';
-import { DoublyLinkedList } from '@/lib/editor/doublyLinkedList';
+import { DoublyLinkedList, ListNode } from '@/lib/editor/doublyLinkedList';
 import { ParagraphList } from '@/components/editor/editorComponents/Paragraph';
 import RightAside from '@/components/editor/editorComponents/RightAside';
 import LeftAside from '@/components/editor/editorComponents/LeftAside';
 import Contents from '@/components/editor/editorComponents/Contents';
 import AddButton from '@/components/editor/editorComponents/AddButton';
+import { useDebounceTimer } from '@/hooks/useDebounceTimer';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 interface ClientEditorProps {
   initialDocument: DocumentInterface;
@@ -24,11 +27,94 @@ interface ClientEditorProps {
 
 export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientEditorProps) {
 
-    const isNavigatingRef = useRef(false);
     const paragraphsRef = useRef(new DoublyLinkedList<ParagraphInterface>());
-    paragraphsRef.current.create(paragraphs);
+    const isNavigatingRef = useRef(false);
+    const isInitializedRef = useRef(false);
+    const initialParagraphsRef = useRef<Map<string, ParagraphInterface>>(new Map());
 
-    const componentsDataView: (ChapterInterface & { Paragraphs: JSX.Element })[] = useMemo(() => {
+    const [refresh, setRefresh] =  useState(false);
+    const [syncInProgress, setSyncInProgress] = useState(true);
+
+    const [ setDebounce, clearDebounceTimer ] = useDebounceTimer();
+    const { SaveItemOnIndexedDB } = useLocalStorage();
+    
+    // Inicializar a DoublyLinkedList apenas uma vez, de forma síncrona
+    if (!isInitializedRef.current) {
+        paragraphsRef.current.create(paragraphs.map(p => {
+            initialParagraphsRef.current.set(p.id, { ...p });
+            return { ...p };
+        }));
+        isInitializedRef.current = true;
+    }
+    
+
+    // -----------------------------
+    const syncAllWithoutDebounce = useCallback(() => {
+        setSyncInProgress(true);
+
+        console.log('SYNC ======================');
+        for (const paragraph of paragraphsRef.current.values()) {
+            if (paragraph.sync === false) {
+                console.log(paragraph.index, paragraph.text.slice(0, 10));
+                paragraph.sync = true;
+            }
+        }
+
+        setSyncInProgress(false);
+    }, []);
+
+    const syncAll = useCallback(() => {
+        clearDebounceTimer();
+        setDebounce(() => {
+        const activeElement = document.activeElement;
+        if (activeElement?.getAttribute('contenteditable') === 'true') {
+            return;
+        }
+        syncAllWithoutDebounce();
+        }, 5000); // prevent auto-sync for 5s after manual sync
+
+    }, [setDebounce, clearDebounceTimer, syncAllWithoutDebounce]);
+
+    // -----------------------------
+    const reorderParagraph = useCallback((paragraphId: string, direction: NavigationDirection) => {
+        
+        const node = paragraphsRef.current.get(paragraphId, true) as ListNode<ParagraphInterface> | null;
+        if (!node) return;
+        node.data.sync = false;
+        let node2 = null;
+
+        if (direction === 'Up' && node.prev) {
+            node2 = node.prev;
+        } else if (direction === 'Down' && node.next) {
+            node2 = node.next;
+        } else {
+            return;
+        }
+        
+        if (node2.data.chapterId !== node.data.chapterId) {
+            node.data.chapterId = node2.data.chapterId;
+            SaveItemOnIndexedDB(node.data, null, 'paragraphs');
+        } else {
+            node2.data.sync = false;
+            [node.data.index, node2.data.index] = [node2.data.index, node.data.index];
+            paragraphsRef.current.swap(paragraphId, node2.id);
+
+            SaveItemOnIndexedDB(node.data, null, 'paragraphs');
+            SaveItemOnIndexedDB(node2.data, null, 'paragraphs');
+        }
+        
+        syncAll();
+        setRefresh((prev) => !prev); // Trigger re-render
+    }, [syncAll, SaveItemOnIndexedDB]);
+
+
+
+    useEffect(() => {
+        setSyncInProgress(false);
+    }, [refresh]);
+    // -----------------------------
+
+    const componentsDataView: (ChapterInterface & { paragraphs: ParagraphInterface[] })[] = useMemo(() => {
         // Agrupar parágrafos por chapterId em uma única passagem - O(M) ao invés de O(N × M)
         const paragraphsByChapter = new Map<string, ParagraphInterface[]>();
         
@@ -40,29 +126,26 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
             paragraphsByChapter.get(chapterId)!.push(paragraph);
         }
         
+        
         return chapters.map((chapter) => {
-            const ps = paragraphsByChapter.get(chapter.id) || []
+            const ps = paragraphsByChapter.get(chapter.id) || [];
             return {
                 ...chapter,
-                Paragraphs: <ParagraphList 
-                    key={`plist_${chapter.id}`}
-                    paragraphs={ps}
-                    isNavigatingRef={isNavigatingRef}
-                />
+                paragraphs: ps
             }
         });
-    }, [chapters, paragraphsRef.current]);
+    }, [chapters, refresh]);
 
     return (
         <div className="flex flex-col h-screen w-screen overflow-hidden">
-              <EditorHeader slug={initialDocument.title} isOnline={true} syncInProgress={false} />
+              <EditorHeader slug={initialDocument.title} isOnline={true} syncInProgress={syncInProgress} />
               <div className="flex flex-1 overflow-hidden relative">
 
                 <LeftAside>
                     <div className="text-sm text-gray-800">
                     <Contents
                         chapters={chapters}
-                        syncInProgress={false}
+                        syncInProgress={syncInProgress}
                         />
                     </div>
                 </LeftAside>
@@ -86,7 +169,13 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
                             key={chapter.id}
                             chapter={chapter}
                         >
-                            {chapter.Paragraphs}
+                            <ParagraphList 
+                                key={`plist_${chapter.id}`}
+                                paragraphs={chapter.paragraphs}
+                                isNavigatingRef={isNavigatingRef}
+                                onRemoteSync={syncAll}
+                                onReorder={reorderParagraph}
+                            />
                             <AddButton key={`add_${chapter.id}`} type="paragraphs" onClick={() => {}} />
                         </Chapter>
                     ))}

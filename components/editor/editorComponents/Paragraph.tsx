@@ -1,6 +1,6 @@
 'use client';
 
-import { RefObject, useCallback, useEffect, useRef, useState, memo, Fragment } from 'react';
+import { RefObject, useCallback, useEffect, useRef, useState, memo, use } from 'react';
 import { Quote } from 'lucide-react';
 import { updateCursorPosition } from '@/lib/editor/selection';
 import { PARAGRAPH_CONFIG } from '@/lib/editor/constants';
@@ -21,18 +21,12 @@ const {
 } = PARAGRAPH_CONFIG;
 
 interface ParagraphProps {
-  paragraph: ParagraphInterface;
   isNavigatingRef: RefObject<boolean>;
   focusActivation?: { direction: NavigationDirection } | null;
-  navigation: {
-    canNavigatePrevious: boolean;
-    canNavigateNext: boolean;
-    isTheLastParagraphInChapter: boolean;
-  };
   onDelete?: () => void;
   onNavigate?: (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => void;
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
-  onReorder?: (direction: NavigationDirection) => void;
+  onReorder?: (paragraphId: string, direction: NavigationDirection) => void;
   onRemoteSync?: () => void;
   onRemoteSyncNow?: () => void;
   fontClass?: string;
@@ -42,8 +36,19 @@ function ParagraphComponent({
   paragraph, focusActivation, isNavigatingRef, navigation,
   onNavigate, onDelete, onCreateNewParagraph, onReorder, onRemoteSync, onRemoteSyncNow,
   fontClass = ''
-}: ParagraphProps) {
+}: ParagraphProps & { 
+  paragraph: ParagraphInterface, 
+  navigation: {
+    canNavigatePrevious: boolean;
+    canNavigateNext: boolean;
+    isTheLastParagraphInChapter: boolean;
+  }
+}) {
 
+  const count = useRef(0);
+  console.log('paragraph.sync: ', paragraph.sync, count.current);
+  count.current += 1;
+  
   const paragraphRef = useRef<HTMLDivElement>(null);
   const [isSynced, setIsSynced] = useState(paragraph.sync);
   const [shouldForceLocalSave, setForceLocalSave] = useState(false);
@@ -250,6 +255,7 @@ const Paragraph = memo(ParagraphComponent, (prevProps, nextProps) => {
   // Re-renderizar apenas se o parágrafo específico ou suas props de controle mudarem
   return (
     prevProps.paragraph.id === nextProps.paragraph.id &&
+    prevProps.paragraph.index === nextProps.paragraph.index &&
     prevProps.paragraph.text === nextProps.paragraph.text &&
     prevProps.paragraph.sync === nextProps.paragraph.sync &&
     prevProps.paragraph.isQuote === nextProps.paragraph.isQuote &&
@@ -264,26 +270,26 @@ const Paragraph = memo(ParagraphComponent, (prevProps, nextProps) => {
 
 Paragraph.displayName = 'Paragraph';
 
-// Componente memoizado para renderizar parágrafos - evita re-renders desnecessários
-export const ParagraphList = memo(({ 
-    paragraphs, 
-    isNavigatingRef
-}: { 
-    paragraphs: ParagraphInterface[], 
-    isNavigatingRef: React.RefObject<boolean>
-}) => (
-    <>
-        {paragraphs.map(paragraph => (<Fragment key={paragraph.id}>
-            <Paragraph
-                paragraph={paragraph}
-                navigation={{
-                    canNavigatePrevious: paragraph.index > 0,
-                    canNavigateNext: paragraph.index < paragraphs.length -1,
-                    isTheLastParagraphInChapter: false
-                }}
-                isNavigatingRef={isNavigatingRef} 
-            />
-        </Fragment>))}
-    </>
-));
+// Renderizar parágrafos sem memoização para garantir re-render na reordenação
+export const ParagraphList = ({ 
+    paragraphs,
+    ...rest
+}: ParagraphProps & { paragraphs: ParagraphInterface[] }) => {
+    return (
+        <>
+            {paragraphs.map(paragraph => (
+                <Paragraph
+                    key={paragraph.id}
+                    paragraph={paragraph}
+                    {...rest}
+                    navigation={{
+                        canNavigatePrevious: paragraph.index > 0,
+                        canNavigateNext: paragraph.index < paragraphs.length -1,
+                        isTheLastParagraphInChapter: false
+                    }}
+                />
+            ))}
+        </>
+    );
+};
 ParagraphList.displayName = 'ParagraphList';

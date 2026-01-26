@@ -154,12 +154,16 @@ async function seedDatabase() {
 
     let totalChapters = 0;
     let totalParagraphs = 0;
+    let globalParagraphIndex = 0; // Índice global de parágrafos no documento
 
     // Criar 2 documentos
     for (let docIndex = 0; docIndex < 2; docIndex++) {
       const now = new Date();
       const docTitle = shuffledDocTitles[docIndex];
       const docSubtitle = shuffledDocSubtitles[docIndex];
+      
+      // Resetar índice global para cada documento
+      globalParagraphIndex = 0;
       
       const document = {
         title: docTitle,
@@ -206,14 +210,14 @@ async function seedDatabase() {
         let chapterWordCount = 0;
 
         for (let paraIndex = 0; paraIndex < 10; paraIndex++) {
-          const text = paraIndex + ' -- ' + shuffledParagraphs[paraIndex];
+          const text = globalParagraphIndex + ' -- ' + shuffledParagraphs[paraIndex];
           const wordCount = countWords(text);
           chapterWordCount += wordCount;
 
           const paragraph = {
             documentId,
             chapterId,
-            index: paraIndex,
+            index: globalParagraphIndex, // Usar índice global ao invés de paraIndex
             text,
             createdAt: now.toISOString(),
             updatedAt: now.toISOString(),
@@ -227,6 +231,7 @@ async function seedDatabase() {
 
           await paragraphsCollection.insertOne(paragraph);
           totalParagraphs++;
+          globalParagraphIndex++; // Incrementar índice global
         }
 
         // Atualizar contagem de palavras do capítulo
