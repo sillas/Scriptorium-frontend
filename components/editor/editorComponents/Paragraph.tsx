@@ -11,7 +11,7 @@ import { useParagraphContent, ContentMetrics } from '@/hooks/editor/paragraphs/u
 import { useParagraphPersistence } from '@/hooks/editor/paragraphs/useParagraphPersistence';
 import { useParagraphContextMenu } from '@/hooks/editor/paragraphs/useParagraphContextMenu';
 import { NavigationDirection, ParagraphInterface } from '@/components/editor/types';
-import SyncIndicator from '@/components/editor/SyncIndicator';
+import SyncIndicator, { SyncIndicatorHandle } from '@/components/editor/SyncIndicator';
 import { styles } from '@/components/editor/styles/paragraph';
 import ParagraphIndicators, { ParagraphIndicatorsHandle } from '@/components/editor/editorComponents/ParagraphIndicators';
 
@@ -45,17 +45,19 @@ function ParagraphComponent({
   }
 }) {
 
-  console.log('------ RERENDER!!!');
-  
-
   const paragraphRef = useRef<HTMLDivElement>(null);
   const indicatorsRef = useRef<ParagraphIndicatorsHandle>(null);
   const metricsRef = useRef<ContentMetrics | null>(null);
   const firstArrowRef = useRef<HTMLSpanElement>(null);
   const lastArrowRef = useRef<HTMLSpanElement>(null);
-  const [isSynced, setIsSynced] = useState(paragraph.sync);
+  const syncIndicatorRef = useRef<SyncIndicatorHandle>(null);
   const [shouldForceLocalSave, setForceLocalSave] = useState(false);
   const [shouldForceLocalDelete, setForceLocalDelete] = useState(false);
+  
+  // Função callback para atualizar sincronização via ref (sem causar re-render)
+  const updateSyncStatus = useCallback((synced: boolean) => {
+    syncIndicatorRef.current?.setSynced(synced);
+  }, []);
   
   // ============ Hooks Customizados ============
   
@@ -117,7 +119,7 @@ function ParagraphComponent({
     isQuote, isHighlighted, textAlignment,
     shouldForceLocalSave, shouldForceLocalDelete,
     onDelete, updateContentMetrics, 
-    setIsSynced, 
+    updateSyncStatus, 
     setForceLocalSave, setForceLocalDelete
   });
   
@@ -185,9 +187,10 @@ function ParagraphComponent({
     paragraphRef.current.innerHTML = content;
   }, [paragraph.text]);
 
+  // Update sync indicator when paragraph.sync changes
   useEffect(() => {
-    setIsSynced(paragraph.sync);
-  }, [paragraph]);
+    updateSyncStatus(paragraph.sync);
+  }, [paragraph.sync, updateSyncStatus]);
 
   // ============ Render ============
 
@@ -285,7 +288,7 @@ function ParagraphComponent({
           </span>
 
           <div className={styles.syncIndicatorStyle}>
-            <SyncIndicator isSynced={isSynced} />
+            <SyncIndicator ref={syncIndicatorRef} initialSynced={paragraph.sync} />
           </div>
         </div>
       </div>

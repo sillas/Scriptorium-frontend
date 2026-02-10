@@ -17,7 +17,7 @@ interface UseParagraphPersistenceParams {
   textAlignment: textAlignmentType;
   shouldForceLocalSave: boolean;
   shouldForceLocalDelete: boolean;
-  setIsSynced: Dispatch<SetStateAction<boolean>>;
+  updateSyncStatus: (synced: boolean) => void;
   setForceLocalSave: Dispatch<SetStateAction<boolean>>;
   setForceLocalDelete: Dispatch<SetStateAction<boolean>>;
   updateContentMetrics: () => ContentMetrics;
@@ -69,7 +69,7 @@ export function useParagraphPersistence({
   textAlignment,
   shouldForceLocalSave,
   shouldForceLocalDelete,
-  setIsSynced,
+  updateSyncStatus,
   setForceLocalSave,
   setForceLocalDelete,
   updateContentMetrics,
@@ -104,7 +104,7 @@ export function useParagraphPersistence({
       return;
     };
 
-    setIsSynced(false);
+    updateSyncStatus(false);
 
     previousTextRef.current = textToCompare;
 
@@ -131,7 +131,7 @@ export function useParagraphPersistence({
     isHighlighted, 
     textAlignment, 
     SaveItemOnIndexedDB,
-    setIsSynced, 
+    updateSyncStatus, 
     getCurrentText
   ]);
 
