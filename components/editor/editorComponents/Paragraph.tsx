@@ -281,7 +281,7 @@ function ParagraphComponent({
 
           <span
             ref={lastArrowRef}
-            className={`${styles.isCursorAtLastPositionStyle} hidden`}
+            className={styles.isCursorAtLastPositionStyle}
             aria-hidden="true"
           >
             ▼

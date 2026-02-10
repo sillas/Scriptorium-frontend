@@ -10,7 +10,7 @@ export const styles = {
     mainContainerStyle: 'relative flex flex-row items-stretch group is-paragraph',
     createNewParagraphAboveStyle: 'relative flex items-center justify-center box-border w-full cursor-pointer border-2 border-transparent hover:border-dashed hover:border-slate-400/30 hover:rounded-t-md hover:text-gray-400 transition-colors duration-200',
     isCursorAtFirstPositionStyle: 'absolute left-0 top-0 text-gray-400 -translate-y-1/2',
-    isCursorAtLastPositionStyle: 'absolute left-0 bottom-0 text-gray-400 translate-y-1/2',
+    isCursorAtLastPositionStyle: 'absolute left-0 bottom-0 text-gray-400 translate-y-1/2 hidden',
     isQuoteStyle: 'absolute pl-[3.5rem] left-0 top-0 select-none pointer-events-none',
     syncIndicatorStyle: 'absolute top-0 right-0',
 };
