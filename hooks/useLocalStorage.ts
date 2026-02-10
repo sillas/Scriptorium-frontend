@@ -62,6 +62,7 @@ export function useLocalStorage() {
       storeName: DocumentEntityType,
       itemToDelete: ChapterInterface | ParagraphInterface | DocumentInterface
     ) => {
+      
       const { id } = itemToDelete;
 
       try {

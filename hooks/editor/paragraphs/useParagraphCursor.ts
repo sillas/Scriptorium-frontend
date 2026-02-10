@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useState, Dispatch, SetStateAction, useCallback } from 'react';
+import { RefObject, useEffect, useState, Dispatch, SetStateAction, useCallback, useRef, MutableRefObject } from 'react';
 import { NavigationDirection } from '@/components/editor/types';
 import { setCursorAt } from '@/lib/editor/selection';
 
@@ -8,8 +8,8 @@ interface UseParagraphCursorParams {
 }
 
 interface UseParagraphCursorReturn {
-  isCursorAtFirstPosition: boolean;
-  isCursorAtLastPosition: boolean;
+  isCursorAtFirstPositionRef: MutableRefObject<boolean>;
+  isCursorAtLastPositionRef: MutableRefObject<boolean>;
   cursorPosition: number;
   setIsCursorAtFirstPosition: Dispatch<SetStateAction<boolean>>;
   setIsCursorAtLastPosition: Dispatch<SetStateAction<boolean>>;
@@ -25,13 +25,13 @@ export function useParagraphCursor({
   paragraphRef,
   focusActivation,
 }: UseParagraphCursorParams): UseParagraphCursorReturn {
-  const [isCursorAtFirstPosition, setIsCursorAtFirstPosition] = useState(false);
-  const [isCursorAtLastPosition, setIsCursorAtLastPosition] = useState(false);
+  const isCursorAtFirstPositionRef = useRef(false);
+  const isCursorAtLastPositionRef = useRef(false);
   const [cursorPosition, setCursorPosition] = useState(0);
 
   const resetCursorPosition = () => {
-    setIsCursorAtFirstPosition(false);
-    setIsCursorAtLastPosition(false);
+    isCursorAtFirstPositionRef.current = false;
+    isCursorAtLastPositionRef.current = false;
   };
 
   const updateCursorPosition = useCallback(() => {
@@ -62,6 +62,10 @@ export function useParagraphCursor({
       // Get the text content length up to the cursor
       const position = preCaretRange.toString().length;
       setCursorPosition(position);
+
+      const totalLength = element.textContent?.length ?? 0;
+      isCursorAtFirstPositionRef.current = position === 0;
+      isCursorAtLastPositionRef.current = position === totalLength;
     }, 0);
   }, []);
 
@@ -77,12 +81,22 @@ export function useParagraphCursor({
   }, [focusActivation, paragraphRef]);
 
   return {
-    isCursorAtFirstPosition,
-    isCursorAtLastPosition,
+    isCursorAtFirstPositionRef,
+    isCursorAtLastPositionRef,
     cursorPosition,
     setCursorPosition: updateCursorPosition,
-    setIsCursorAtFirstPosition,
-    setIsCursorAtLastPosition,
+    setIsCursorAtFirstPosition: (value: SetStateAction<boolean>) => {
+      isCursorAtFirstPositionRef.current =
+        typeof value === 'function'
+          ? (value as (prev: boolean) => boolean)(isCursorAtFirstPositionRef.current)
+          : value;
+    },
+    setIsCursorAtLastPosition: (value: SetStateAction<boolean>) => {
+      isCursorAtLastPositionRef.current =
+        typeof value === 'function'
+          ? (value as (prev: boolean) => boolean)(isCursorAtLastPositionRef.current)
+          : value;
+    },
     resetCursorPosition,
   };
 }

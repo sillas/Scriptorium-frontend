@@ -172,7 +172,9 @@ export const syncParagraphs = async (
         // quote changed:1 = true, 0 = false
       }
       if(original.textAlignment !== paragraph.textAlignment)  {
-        textStyleDiff.push(`a:${original.textAlignment?.substring(5)[0]},${paragraph.textAlignment?.substring(5)[0]}`);
+        const originalAlignment = original.textAlignment?.substring(5)[0] || 'l';
+        const currentAlignment = paragraph.textAlignment?.substring(5)[0] || 'l';
+        textStyleDiff.push(`a:${originalAlignment},${currentAlignment}`);
         // alignment changed: 'l' = left, 'c' = center, 'r' = right, 'j' = justify
       }
       

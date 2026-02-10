@@ -1,4 +1,4 @@
-import { RefObject, useCallback } from 'react';
+import { RefObject, useCallback, MutableRefObject } from 'react';
 import { NavigationDirection, ParagraphInterface, textAlignmentType } from '@/components/editor/types';
 import { useToast } from '@/components/ToastProvider';
 
@@ -6,10 +6,9 @@ interface UseParagraphNavigationParams {
   paragraphRef: RefObject<HTMLDivElement | null>;
   isNavigatingRef: RefObject<boolean>;
   paragraph: ParagraphInterface;
-  emptyTextPlaceholder: string;
   isEditing: boolean;
-  isCursorAtFirstPosition: boolean;
-  isCursorAtLastPosition: boolean;
+  isCursorAtFirstPositionRef: MutableRefObject<boolean>;
+  isCursorAtLastPositionRef: MutableRefObject<boolean>;
   navigation: {
     canNavigatePrevious: boolean;
     canNavigateNext: boolean;
@@ -53,10 +52,9 @@ export function useParagraphNavigation({
   paragraphRef,
   isNavigatingRef,
   paragraph,
-  emptyTextPlaceholder,
   isEditing,
-  isCursorAtFirstPosition,
-  isCursorAtLastPosition,
+  isCursorAtFirstPositionRef,
+  isCursorAtLastPositionRef,
   navigation,
   handleFinishEditing,
   handleFastFinishEditing,
@@ -99,7 +97,7 @@ export function useParagraphNavigation({
 
       // Navigate only if cursor is at edge
       const isAtEdge =
-        direction === 'Up' ? isCursorAtFirstPosition : isCursorAtLastPosition;
+        direction === 'Up' ? isCursorAtFirstPositionRef.current : isCursorAtLastPositionRef.current;
 
       if (isAtEdge) {
         event.preventDefault();
@@ -110,8 +108,8 @@ export function useParagraphNavigation({
     },
     [
       navigation,
-      isCursorAtFirstPosition,
-      isCursorAtLastPosition,
+      isCursorAtFirstPositionRef,
+      isCursorAtLastPositionRef,
       handleFinishEditingAndNavigate,
     ]
   );
@@ -264,11 +262,8 @@ export function useParagraphNavigation({
     },
     [
       paragraph,
-      emptyTextPlaceholder,
       isEditing,
       navigation,
-      isCursorAtFirstPosition,
-      isCursorAtLastPosition,
       handleFinishEditing,
       handleFinishEditingAndNavigate,
       setForceLocalDelete,

@@ -1,6 +1,6 @@
 'use client';
 
-import { RefObject, useCallback, useEffect, useRef, useState, memo, use } from 'react';
+import { RefObject, useCallback, useEffect, useRef, useState, memo } from 'react';
 import { Quote } from 'lucide-react';
 import { updateCursorPosition } from '@/lib/editor/selection';
 import { PARAGRAPH_CONFIG } from '@/lib/editor/constants';
@@ -8,12 +8,13 @@ import { useActionButtons } from '@/hooks/editor/paragraphs/useActionButtons';
 import { useParagraphEditing } from '@/hooks/editor/paragraphs/useParagraphEditing';
 import { useParagraphNavigation } from '@/hooks/editor/paragraphs/useParagraphNavigation';
 import { useParagraphCursor } from '@/hooks/editor/paragraphs/useParagraphCursor';
-import { useParagraphContent } from '@/hooks/editor/paragraphs/useParagraphContent';
+import { useParagraphContent, ContentMetrics } from '@/hooks/editor/paragraphs/useParagraphContent';
 import { useParagraphPersistence } from '@/hooks/editor/paragraphs/useParagraphPersistence';
 import { useParagraphContextMenu } from '@/hooks/editor/paragraphs/useParagraphContextMenu';
 import { NavigationDirection, ParagraphInterface } from '@/components/editor/types';
 import SyncIndicator from '@/components/editor/SyncIndicator';
 import { styles } from '@/components/editor/styles/paragraph';
+import ParagraphIndicators, { ParagraphIndicatorsHandle } from '@/components/editor/editorComponents/ParagraphIndicators';
 
 const {
   ICON_SIZE, ICON_COLOR,
@@ -45,11 +46,12 @@ function ParagraphComponent({
   }
 }) {
 
-  const count = useRef(0);
-  console.log('paragraph.sync: ', paragraph.sync, count.current);
-  count.current += 1;
+  console.log('------ RERENDER!!!');
   
+
   const paragraphRef = useRef<HTMLDivElement>(null);
+  const indicatorsRef = useRef<ParagraphIndicatorsHandle>(null);
+  const metricsRef = useRef<ContentMetrics | null>(null);
   const [isSynced, setIsSynced] = useState(paragraph.sync);
   const [shouldForceLocalSave, setForceLocalSave] = useState(false);
   const [shouldForceLocalDelete, setForceLocalDelete] = useState(false);
@@ -57,13 +59,25 @@ function ParagraphComponent({
   // ============ Hooks Customizados ============
   
   // Content Management
-  const {
-    characterCount,
-    wordCount,
-    updateContentMetrics,
-  } = useParagraphContent({
-    paragraphRef, initialText: paragraph.text,
+  const handleMetricsChange = useCallback((metrics: ContentMetrics) => {
+    metricsRef.current = metrics;
+    indicatorsRef.current?.setMetrics(metrics);
+  }, []);
+
+  const { initialMetrics, updateContentMetrics } = useParagraphContent({
+    paragraphRef,
+    initialText: paragraph.text,
+    onMetricsChange: handleMetricsChange,
   });
+
+  if (!metricsRef.current) {
+    metricsRef.current = initialMetrics;
+  }
+
+  useEffect(() => {
+    metricsRef.current = initialMetrics;
+    indicatorsRef.current?.setMetrics(initialMetrics);
+  }, [initialMetrics]);
 
   // Action Buttons (formatting, styles, delete)
   const {
@@ -83,7 +97,8 @@ function ParagraphComponent({
     isQuote, isHighlighted, textAlignment,
     shouldForceLocalSave, shouldForceLocalDelete,
     onDelete, updateContentMetrics, 
-    setIsSynced, setForceLocalSave, setForceLocalDelete
+    setIsSynced, 
+    setForceLocalSave, setForceLocalDelete
   });
   
   // Ctrl + S -> Fast Finish Editing
@@ -95,7 +110,7 @@ function ParagraphComponent({
   // Cursor Position Tracking
   const {
     cursorPosition,
-    isCursorAtFirstPosition, isCursorAtLastPosition,
+    isCursorAtFirstPositionRef, isCursorAtLastPositionRef,
     setIsCursorAtFirstPosition, setIsCursorAtLastPosition,
     resetCursorPosition, setCursorPosition
   } = useParagraphCursor({ paragraphRef, focusActivation });
@@ -117,8 +132,8 @@ function ParagraphComponent({
   // Keyboard Navigation
   const { handleKeyDown, handleScrolling } = useParagraphNavigation({
     paragraphRef, isNavigatingRef, paragraph, isEditing,
-    isCursorAtFirstPosition, isCursorAtLastPosition,
-    navigation, emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
+    isCursorAtFirstPositionRef, isCursorAtLastPositionRef,
+    navigation,
     handleFinishEditing, handleFastFinishEditing,
     onCreateNewParagraph, setIsSynced,
     onNavigate, onReorder, setForceLocalDelete,
@@ -126,8 +141,9 @@ function ParagraphComponent({
   });
 
   // ============ Helper Functions ============
-  const handleCursorPositionUpdate = useCallback(() => {
-    handleStartEditing();
+  const handleCursorPositionUpdate = useCallback((event: string) => {
+    
+    if (event === 'focus') handleStartEditing();
     updateCursorPosition(
       paragraphRef, isEditing,
       setIsCursorAtFirstPosition,
@@ -160,6 +176,8 @@ function ParagraphComponent({
   }, [paragraph]);
 
   // ============ Render ============
+
+  const currentMetrics = metricsRef.current ?? initialMetrics;
 
   return (
     <>
@@ -204,7 +222,7 @@ function ParagraphComponent({
         <div
           onFocus={handleScrolling} 
           className={styles.paragraphContainerStyle(isEditing, isHighlighted, fontClass)}>
-          {isCursorAtFirstPosition && navigation.canNavigatePrevious && (
+          {isCursorAtFirstPositionRef.current && navigation.canNavigatePrevious && (
             <span className={styles.isCursorAtFirstPositionStyle}>▲</span>
           )}
 
@@ -214,7 +232,7 @@ function ParagraphComponent({
             </div>
           )}
 
-          <div
+          <p
             ref={paragraphRef}
             contentEditable
             suppressContentEditableWarning
@@ -223,21 +241,25 @@ function ParagraphComponent({
             onBlur={handleFinishEditing}
             onInput={scheduleLocalAutoSave}
             onKeyDown={handleKeyDown}
-            onFocus={handleCursorPositionUpdate}
-            onKeyUp={handleCursorPositionUpdate}
+            onFocus={() => handleCursorPositionUpdate('focus')}
+            onKeyUp={() => handleCursorPositionUpdate('keyup')}
             className={styles.paragraphStyle(
               isEditing, 
-              characterCount, 
+              currentMetrics.characterCount, 
               isQuote, 
               textAlignment
             )}
-          ></div>
+          ></p>
 
-          <span className={styles.characterCountStyle(isEditing)}>
-            {paragraph.index + 1}° parágrafo • Col: {cursorPosition}{isEditing && ` • ${characterCount} chars`} • {wordCount} words
-          </span>
+          <ParagraphIndicators
+            ref={indicatorsRef}
+            paragraphIndex={paragraph.index}
+            cursorPosition={cursorPosition}
+            isEditing={isEditing}
+            initialMetrics={initialMetrics}
+          />
 
-          {isCursorAtLastPosition && navigation.canNavigateNext && (
+          {isCursorAtLastPositionRef.current && navigation.canNavigateNext && (
             <span className={styles.isCursorAtLastPositionStyle}>▼</span>
           )}
 

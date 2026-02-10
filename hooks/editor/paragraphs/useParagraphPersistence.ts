@@ -1,9 +1,11 @@
 import { RefObject, useCallback, useEffect, Dispatch, SetStateAction, useRef } from 'react';
 import { ParagraphInterface, textAlignmentType } from '@/components/editor/types';
+import type { ContentMetrics } from '@/hooks/editor/paragraphs/useParagraphContent';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { handleDeleteQuestion } from '@/lib/editor/paragraph-helpers';
 import { countWords, countCharacters } from '@/lib/editor/text-utils';
+import { DiffFormatter, myersDiff } from '@/lib/editor/myersDiff';
 
 interface UseParagraphPersistenceParams {
   paragraphRef: RefObject<HTMLDivElement | null>;
@@ -18,13 +20,39 @@ interface UseParagraphPersistenceParams {
   setIsSynced: Dispatch<SetStateAction<boolean>>;
   setForceLocalSave: Dispatch<SetStateAction<boolean>>;
   setForceLocalDelete: Dispatch<SetStateAction<boolean>>;
-  updateContentMetrics: () => void;
+  updateContentMetrics: () => ContentMetrics;
   onDelete?: () => void;
 }
 
 interface UseParagraphPersistenceReturn {
   triggerLocalSave: (forceUpdate?: boolean) => void;
   scheduleLocalAutoSave: () => void;
+}
+
+const paragraphDIff = (original: ParagraphInterface, current: ParagraphInterface) => {
+
+  const diff = myersDiff(original.text.split(' '), current.text.split(' '));
+  let diffCsv = DiffFormatter.toCsv(diff);
+
+  // diff text formatting:
+  const textStyleDiff = [];
+  if(original.isHighlighted !== current.isHighlighted)  {
+    // highlighted changed:1 = true, 0 = false 
+    textStyleDiff.push(`h:${original.isHighlighted?1:0},${current.isHighlighted?1:0}`);
+  }
+  if(original.isQuote !== current.isQuote)  {
+    // quote changed:1 = true, 0 = false
+    textStyleDiff.push(`q:${original.isQuote?1:0},${current.isQuote?1:0}`)
+  }
+  if(original.textAlignment !== current.textAlignment)  {
+    const originalAlignment = original.textAlignment?.substring(5)[0] || 'j';
+    const currentAlignment = current.textAlignment?.substring(5)[0] || 'j';
+    // alignment changed: 'l' = left, 'c' = center, 'r' = right, 'j' = justify
+    textStyleDiff.push(`a:${originalAlignment},${currentAlignment}`);
+  }
+  
+  diffCsv = diffCsv + '\n' + textStyleDiff.join('\n');
+  return diffCsv
 }
 
 /**
@@ -66,6 +94,8 @@ export function useParagraphPersistence({
   }, []);
 
   const triggerLocalSave = useCallback( (forceUpdate = false) => {
+    console.log('triggerLocalSave...');
+    
     const previousText = previousTextRef.current
     const currentText = getCurrentText();
 
@@ -78,31 +108,29 @@ export function useParagraphPersistence({
 
     previousTextRef.current = textToCompare;
 
-    /// Build updated paragraph data
-    // const newData = {
-    //   text: currentText,
-    //   characterCount: countCharacters(currentText),
-    //   wordCount: countWords(currentText),
-    //   isQuote: isQuote || false,
-    //   isHighlighted: isHighlighted || false,
-    //   textAlignment: textAlignment,
-    // };
+    const newp = { ...paragraph };
 
-    paragraph.sync = false;
-    paragraph.text = currentText
-    paragraph.characterCount = countCharacters(currentText)
-    paragraph.wordCount = countWords(currentText)
-    paragraph.isQuote = isQuote
-    paragraph.isHighlighted = isHighlighted
-    paragraph.textAlignment = textAlignment
-    
-    SaveItemOnIndexedDB(paragraph, null, 'paragraphs');
+    /// Build updated paragraph data
+    newp.sync = false;
+    newp.text = currentText
+    newp.characterCount = countCharacters(currentText)
+    newp.wordCount = countWords(currentText)
+    newp.isQuote = isQuote
+    newp.isHighlighted = isHighlighted
+    newp.textAlignment = textAlignment
+
+    const diffCsv = paragraphDIff(paragraph, newp);
+    console.log(diffCsv);
+    // Implementar um cemáforo para salvar no IndexedDB no mesmo ID?
+    // Continuamos na conodição de corrida.
+    // salvar direto em paragraph causa rerender!!!
+    SaveItemOnIndexedDB(newp, null, 'paragraphs'); // Parágrafo Atualizado
   }, [
     paragraph.sync, 
     isQuote,
     isHighlighted, 
     textAlignment, 
-    SaveItemOnIndexedDB, 
+    SaveItemOnIndexedDB,
     setIsSynced, 
     getCurrentText
   ]);

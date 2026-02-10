@@ -18,6 +18,7 @@ import Contents from '@/components/editor/editorComponents/Contents';
 import AddButton from '@/components/editor/editorComponents/AddButton';
 import { useDebounceTimer } from '@/hooks/useDebounceTimer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { getFromIndexedDB } from '@/lib/indexedDB';
 
 interface ClientEditorProps {
   initialDocument: DocumentInterface;
@@ -36,7 +37,7 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
     const [syncInProgress, setSyncInProgress] = useState(true);
 
     const [ setDebounce, clearDebounceTimer ] = useDebounceTimer();
-    const { SaveItemOnIndexedDB } = useLocalStorage();
+    const { SaveItemOnIndexedDB, waitForPendingSaves } = useLocalStorage();
     
     // Inicializar a DoublyLinkedList apenas uma vez, de forma síncrona
     if (!isInitializedRef.current) {
@@ -47,7 +48,6 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
         isInitializedRef.current = true;
     }
     
-
     // -----------------------------
     const syncAllWithoutDebounce = useCallback(() => {
         setSyncInProgress(true);
@@ -55,22 +55,26 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
         console.log('SYNC ======================');
         for (const paragraph of paragraphsRef.current.values()) {
             if (paragraph.sync === false) {
-                console.log(paragraph.index, paragraph.text.slice(0, 10));
+                // TODO
+                console.log('SYNC: ', paragraph.index, paragraph.text.slice(0, 30));
                 paragraph.sync = true;
             }
         }
+        console.log('SYNC ====================##');
 
         setSyncInProgress(false);
     }, []);
 
     const syncAll = useCallback(() => {
+        console.log('syncAll syncAll');
+        
         clearDebounceTimer();
         setDebounce(() => {
-        const activeElement = document.activeElement;
-        if (activeElement?.getAttribute('contenteditable') === 'true') {
-            return;
-        }
-        syncAllWithoutDebounce();
+            const activeElement = document.activeElement;
+            if (activeElement?.getAttribute('contenteditable') === 'true') {
+                return;
+            }
+            syncAllWithoutDebounce();
         }, 5000); // prevent auto-sync for 5s after manual sync
 
     }, [setDebounce, clearDebounceTimer, syncAllWithoutDebounce]);
@@ -90,23 +94,40 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
         } else {
             return;
         }
-        
+
+        const updatedData: ParagraphInterface[] = []
+
         if (node2.data.chapterId !== node.data.chapterId) {
             node.data.chapterId = node2.data.chapterId;
-            SaveItemOnIndexedDB(node.data, null, 'paragraphs');
+            updatedData.push(node.data);
         } else {
             node2.data.sync = false;
             [node.data.index, node2.data.index] = [node2.data.index, node.data.index];
             paragraphsRef.current.swap(paragraphId, node2.id);
 
-            SaveItemOnIndexedDB(node.data, null, 'paragraphs');
-            SaveItemOnIndexedDB(node2.data, null, 'paragraphs');
+            updatedData.push(node.data);
+            updatedData.push(node2.data);
         }
-        
-        syncAll();
-        setRefresh((prev) => !prev); // Trigger re-render
-    }, [syncAll, SaveItemOnIndexedDB]);
 
+        waitForPendingSaves().finally(() => {
+            (async () => {
+                for (const p of updatedData) {
+                    const existing = await getFromIndexedDB<ParagraphInterface>('paragraphs', p.id);
+                    if (existing) {
+                        p.text = existing.text;
+                        p.textAlignment = existing.textAlignment;
+                        p.isQuote = existing.isQuote;
+                        p.isHighlighted = existing.isHighlighted;
+                    }
+                    SaveItemOnIndexedDB(p, null, 'paragraphs');
+                }
+
+                syncAll();
+                setRefresh((prev) => !prev); // Trigger re-render
+            })();
+        });
+
+    }, [syncAll, SaveItemOnIndexedDB, waitForPendingSaves]);
 
 
     useEffect(() => {
@@ -163,7 +184,7 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
                         isSynced={initialDocument.sync}
                         fontClass={initialDocument.fontClass || "font-merriweather"}
                     />
-
+                                                                                                                                                                                    
                     {componentsDataView.map((chapter) => (
                         <Chapter
                             key={chapter.id}
