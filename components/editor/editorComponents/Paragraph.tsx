@@ -2,7 +2,6 @@
 
 import { RefObject, useCallback, useEffect, useRef, useState, memo } from 'react';
 import { Quote } from 'lucide-react';
-import { updateCursorPosition } from '@/lib/editor/selection';
 import { PARAGRAPH_CONFIG } from '@/lib/editor/constants';
 import { useActionButtons } from '@/hooks/editor/paragraphs/useActionButtons';
 import { useParagraphEditing } from '@/hooks/editor/paragraphs/useParagraphEditing';
@@ -52,6 +51,8 @@ function ParagraphComponent({
   const paragraphRef = useRef<HTMLDivElement>(null);
   const indicatorsRef = useRef<ParagraphIndicatorsHandle>(null);
   const metricsRef = useRef<ContentMetrics | null>(null);
+  const firstArrowRef = useRef<HTMLSpanElement>(null);
+  const lastArrowRef = useRef<HTMLSpanElement>(null);
   const [isSynced, setIsSynced] = useState(paragraph.sync);
   const [shouldForceLocalSave, setForceLocalSave] = useState(false);
   const [shouldForceLocalDelete, setForceLocalDelete] = useState(false);
@@ -78,6 +79,25 @@ function ParagraphComponent({
     metricsRef.current = initialMetrics;
     indicatorsRef.current?.setMetrics(initialMetrics);
   }, [initialMetrics]);
+
+  const refreshCursorUI = useCallback((params: {
+    position: number;
+    totalLength: number;
+    isAtFirst: boolean;
+    isAtLast: boolean;
+  }) => {
+    indicatorsRef.current?.setCursorPosition(params.position);
+
+    const shouldShowFirst = params.isAtFirst && navigation.canNavigatePrevious;
+    const shouldShowLast = params.isAtLast && navigation.canNavigateNext;
+
+    if (firstArrowRef.current) {
+      firstArrowRef.current.classList.toggle('hidden', !shouldShowFirst);
+    }
+    if (lastArrowRef.current) {
+      lastArrowRef.current.classList.toggle('hidden', !shouldShowLast);
+    }
+  }, [navigation.canNavigatePrevious, navigation.canNavigateNext]);
 
   // Action Buttons (formatting, styles, delete)
   const {
@@ -109,9 +129,7 @@ function ParagraphComponent({
 
   // Cursor Position Tracking
   const {
-    cursorPosition,
     isCursorAtFirstPositionRef, isCursorAtLastPositionRef,
-    setIsCursorAtFirstPosition, setIsCursorAtLastPosition,
     resetCursorPosition, setCursorPosition
   } = useParagraphCursor({ paragraphRef, focusActivation });
 
@@ -133,31 +151,27 @@ function ParagraphComponent({
   const { handleKeyDown, handleScrolling } = useParagraphNavigation({
     paragraphRef, isNavigatingRef, paragraph, isEditing,
     isCursorAtFirstPositionRef, isCursorAtLastPositionRef,
-    navigation,
+    navigation, triggerLocalSave,
     handleFinishEditing, handleFastFinishEditing,
-    onCreateNewParagraph, setIsSynced,
+    onCreateNewParagraph,
     onNavigate, onReorder, setForceLocalDelete,
-    setCursorPosition, setTextAlignment
+    setCursorPosition: (cb) => setCursorPosition(cb ?? refreshCursorUI),
+    setTextAlignment
   });
 
   // ============ Helper Functions ============
-  const handleCursorPositionUpdate = useCallback((event: string) => {
-    
-    if (event === 'focus') handleStartEditing();
-    updateCursorPosition(
-      paragraphRef, isEditing,
-      setIsCursorAtFirstPosition,
-      setIsCursorAtLastPosition
-    );
+  const handleCursorPositionUpdate = useCallback((event: React.FocusEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.type === 'focus') handleStartEditing();
+    setCursorPosition(refreshCursorUI);
   }, [
-    isEditing, paragraphRef, 
-    handleStartEditing, 
-    setIsCursorAtFirstPosition, setIsCursorAtLastPosition
+    handleStartEditing,
+    setCursorPosition,
+    refreshCursorUI
   ]);
 
   const paragraphOnClick = (event: React.MouseEvent<HTMLDivElement>) => {
     handleParagraphClick(event); 
-    setCursorPosition();
+    setCursorPosition(refreshCursorUI);
   }
 
   const onCreateNewParagraphAbove = () => onCreateNewParagraph?.(paragraph.index);
@@ -222,9 +236,13 @@ function ParagraphComponent({
         <div
           onFocus={handleScrolling} 
           className={styles.paragraphContainerStyle(isEditing, isHighlighted, fontClass)}>
-          {isCursorAtFirstPositionRef.current && navigation.canNavigatePrevious && (
-            <span className={styles.isCursorAtFirstPositionStyle}>▲</span>
-          )}
+          <span
+            ref={firstArrowRef}
+            className={`${styles.isCursorAtFirstPositionStyle} hidden`}
+            aria-hidden="true"
+          >
+            ▲
+          </span>
 
           {isQuote && (
             <div className={styles.isQuoteStyle} aria-hidden="true">
@@ -241,8 +259,8 @@ function ParagraphComponent({
             onBlur={handleFinishEditing}
             onInput={scheduleLocalAutoSave}
             onKeyDown={handleKeyDown}
-            onFocus={() => handleCursorPositionUpdate('focus')}
-            onKeyUp={() => handleCursorPositionUpdate('keyup')}
+            onFocus={handleCursorPositionUpdate}
+            onKeyUp={handleCursorPositionUpdate}
             className={styles.paragraphStyle(
               isEditing, 
               currentMetrics.characterCount, 
@@ -254,14 +272,17 @@ function ParagraphComponent({
           <ParagraphIndicators
             ref={indicatorsRef}
             paragraphIndex={paragraph.index}
-            cursorPosition={cursorPosition}
             isEditing={isEditing}
             initialMetrics={initialMetrics}
           />
 
-          {isCursorAtLastPositionRef.current && navigation.canNavigateNext && (
-            <span className={styles.isCursorAtLastPositionStyle}>▼</span>
-          )}
+          <span
+            ref={lastArrowRef}
+            className={`${styles.isCursorAtLastPositionStyle} hidden`}
+            aria-hidden="true"
+          >
+            ▼
+          </span>
 
           <div className={styles.syncIndicatorStyle}>
             <SyncIndicator isSynced={isSynced} />

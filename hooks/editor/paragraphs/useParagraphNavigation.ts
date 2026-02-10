@@ -1,5 +1,6 @@
 import { RefObject, useCallback, MutableRefObject } from 'react';
 import { NavigationDirection, ParagraphInterface, textAlignmentType } from '@/components/editor/types';
+import type { CursorUpdateCallback } from '@/hooks/editor/paragraphs/useParagraphCursor';
 import { useToast } from '@/components/ToastProvider';
 
 interface UseParagraphNavigationParams {
@@ -14,14 +15,14 @@ interface UseParagraphNavigationParams {
     canNavigateNext: boolean;
     isTheLastParagraphInChapter: boolean;
   };
+  triggerLocalSave: (forceUpdate?: boolean) => void;
   handleFinishEditing: () => void;
   handleFastFinishEditing: () => void;
   onNavigate?: (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => void;
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
   onReorder?: (paragraphId: string, direction: NavigationDirection) => void;
-  setIsSynced: React.Dispatch<React.SetStateAction<boolean>>;
   setForceLocalDelete: React.Dispatch<React.SetStateAction<boolean>>;
-  setCursorPosition: () => void;
+  setCursorPosition: (afterUpdate?: CursorUpdateCallback) => void;
   setTextAlignment: React.Dispatch<React.SetStateAction<textAlignmentType>>;
 }
 
@@ -56,12 +57,12 @@ export function useParagraphNavigation({
   isCursorAtFirstPositionRef,
   isCursorAtLastPositionRef,
   navigation,
+  triggerLocalSave,
   handleFinishEditing,
   handleFastFinishEditing,
   onNavigate,
   onCreateNewParagraph,
   onReorder,
-  setIsSynced,
   setForceLocalDelete,
   setCursorPosition,
   setTextAlignment,
@@ -210,7 +211,7 @@ export function useParagraphNavigation({
         if (event.ctrlKey) {
           event.preventDefault();
 
-          setIsSynced(false);
+          triggerLocalSave(true);
           onReorder?.(paragraph.id, direction);
 
           setTimeout(() => {
@@ -268,7 +269,6 @@ export function useParagraphNavigation({
       handleFinishEditingAndNavigate,
       setForceLocalDelete,
       onReorder,
-      setIsSynced,
       goToParagraphOnArrows,
       goToParagraphOnTab,
       handleEnterKeyPress,

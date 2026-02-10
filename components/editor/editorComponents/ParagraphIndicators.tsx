@@ -4,20 +4,21 @@ import type { ContentMetrics } from '@/hooks/editor/paragraphs/useParagraphConte
 
 export interface ParagraphIndicatorsHandle {
   setMetrics: (metrics: ContentMetrics) => void;
+  setCursorPosition: (position: number) => void;
 }
 
 interface ParagraphIndicatorsProps {
   paragraphIndex: number;
-  cursorPosition: number;
   isEditing: boolean;
   initialMetrics: ContentMetrics;
 }
 
 const ParagraphIndicators = forwardRef<ParagraphIndicatorsHandle, ParagraphIndicatorsProps>(
-  ({ paragraphIndex, cursorPosition, isEditing, initialMetrics }, ref) => {
+  ({ paragraphIndex, isEditing, initialMetrics }, ref) => {
     const [metrics, setMetrics] = useState<ContentMetrics>(initialMetrics);
+    const [cursorPosition, setCursorPosition] = useState(0);
 
-    useImperativeHandle(ref, () => ({ setMetrics }), [setMetrics]);
+    useImperativeHandle(ref, () => ({ setMetrics, setCursorPosition }), [setMetrics, setCursorPosition]);
 
     useEffect(() => {
       setMetrics(initialMetrics);

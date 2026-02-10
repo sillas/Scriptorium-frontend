@@ -108,23 +108,23 @@ export function useParagraphPersistence({
 
     previousTextRef.current = textToCompare;
 
-    const newp = { ...paragraph };
+    const old_paragraph = { ...paragraph };
 
     /// Build updated paragraph data
-    newp.sync = false;
-    newp.text = currentText
-    newp.characterCount = countCharacters(currentText)
-    newp.wordCount = countWords(currentText)
-    newp.isQuote = isQuote
-    newp.isHighlighted = isHighlighted
-    newp.textAlignment = textAlignment
+    paragraph.sync = false;
+    paragraph.text = currentText
+    paragraph.characterCount = countCharacters(currentText)
+    paragraph.wordCount = countWords(currentText)
+    paragraph.isQuote = isQuote
+    paragraph.isHighlighted = isHighlighted
+    paragraph.textAlignment = textAlignment
 
-    const diffCsv = paragraphDIff(paragraph, newp);
+    const diffCsv = paragraphDIff(old_paragraph, paragraph);
     console.log(diffCsv);
     // Implementar um cemáforo para salvar no IndexedDB no mesmo ID?
     // Continuamos na conodição de corrida.
     // salvar direto em paragraph causa rerender!!!
-    SaveItemOnIndexedDB(newp, null, 'paragraphs'); // Parágrafo Atualizado
+    SaveItemOnIndexedDB(paragraph, null, 'paragraphs'); // Parágrafo Atualizado
   }, [
     paragraph.sync, 
     isQuote,

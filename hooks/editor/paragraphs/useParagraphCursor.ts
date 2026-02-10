@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useState, Dispatch, SetStateAction, useCallback, useRef, MutableRefObject } from 'react';
+import { RefObject, useEffect, Dispatch, SetStateAction, useCallback, useRef, MutableRefObject } from 'react';
 import { NavigationDirection } from '@/components/editor/types';
 import { setCursorAt } from '@/lib/editor/selection';
 
@@ -10,12 +10,19 @@ interface UseParagraphCursorParams {
 interface UseParagraphCursorReturn {
   isCursorAtFirstPositionRef: MutableRefObject<boolean>;
   isCursorAtLastPositionRef: MutableRefObject<boolean>;
-  cursorPosition: number;
+  cursorPositionRef: MutableRefObject<number>;
   setIsCursorAtFirstPosition: Dispatch<SetStateAction<boolean>>;
   setIsCursorAtLastPosition: Dispatch<SetStateAction<boolean>>;
   resetCursorPosition: () => void;
-  setCursorPosition: () => void;
+  setCursorPosition: (afterUpdate?: CursorUpdateCallback) => void;
 }
+
+export type CursorUpdateCallback = (params: {
+  position: number;
+  totalLength: number;
+  isAtFirst: boolean;
+  isAtLast: boolean;
+}) => void;
 
 /**
  * Hook to manage cursor position state within a paragraph
@@ -27,17 +34,19 @@ export function useParagraphCursor({
 }: UseParagraphCursorParams): UseParagraphCursorReturn {
   const isCursorAtFirstPositionRef = useRef(false);
   const isCursorAtLastPositionRef = useRef(false);
-  const [cursorPosition, setCursorPosition] = useState(0);
+  const cursorPositionRef = useRef(0);
 
   const resetCursorPosition = () => {
     isCursorAtFirstPositionRef.current = false;
     isCursorAtLastPositionRef.current = false;
+    cursorPositionRef.current = 0;
   };
 
-  const updateCursorPosition = useCallback(() => {
+  const updateCursorPosition = useCallback((afterUpdate?: CursorUpdateCallback) => {
     const element = paragraphRef.current;
     if (!element) {
-      setCursorPosition(0);
+      cursorPositionRef.current = 0;
+      afterUpdate?.({ position: 0, totalLength: 0, isAtFirst: true, isAtLast: true });
       return;
     }
 
@@ -61,11 +70,18 @@ export function useParagraphCursor({
       
       // Get the text content length up to the cursor
       const position = preCaretRange.toString().length;
-      setCursorPosition(position);
+      cursorPositionRef.current = position;
 
       const totalLength = element.textContent?.length ?? 0;
       isCursorAtFirstPositionRef.current = position === 0;
       isCursorAtLastPositionRef.current = position === totalLength;
+
+      afterUpdate?.({
+        position,
+        totalLength,
+        isAtFirst: isCursorAtFirstPositionRef.current,
+        isAtLast: isCursorAtLastPositionRef.current,
+      });
     }, 0);
   }, []);
 
@@ -83,7 +99,7 @@ export function useParagraphCursor({
   return {
     isCursorAtFirstPositionRef,
     isCursorAtLastPositionRef,
-    cursorPosition,
+    cursorPositionRef,
     setCursorPosition: updateCursorPosition,
     setIsCursorAtFirstPosition: (value: SetStateAction<boolean>) => {
       isCursorAtFirstPositionRef.current =
