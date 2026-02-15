@@ -26,7 +26,7 @@ interface ParagraphProps {
   focusActivation?: ActiveParagraphInterface | null;
   onDelete?: () => void;
   onNavigate?: (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection, id: string) => void;
-  onCreateNewParagraph?: (paragraphIndex: number | null) => void;
+  onCreateNewParagraph?: (paragraphId: string, position: 'before' | 'after') => void;
   onReorder?: (paragraphId: string, direction: NavigationDirection) => void;
   onRemoteSync?: () => void;
   onRemoteSyncNow?: () => void;
@@ -207,7 +207,7 @@ function ParagraphComponent({
   return (
     <>
       <button
-        onClick={() => onCreateNewParagraph?.(paragraph.index)}
+        onClick={() => onCreateNewParagraph?.(paragraph.id, 'before')}
         aria-label="Add Paragraph Here"
         className={styles.createNewParagraphAboveStyle}>
         +

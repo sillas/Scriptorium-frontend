@@ -19,7 +19,7 @@ interface UseParagraphNavigationParams {
   handleFinishEditing: () => void;
   handleFastFinishEditing: () => void;
   onNavigate?: (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection, id: string) => void;
-  onCreateNewParagraph?: (paragraphIndex: number | null) => void;
+  onCreateNewParagraph?: (paragraphId: string, position: 'before' | 'after') => void;
   onReorder?: (paragraphId: string, direction: NavigationDirection) => void;
   setForceLocalDelete: React.Dispatch<React.SetStateAction<boolean>>;
   setCursorPosition: (afterUpdate?: CursorUpdateCallback) => void;
@@ -139,14 +139,14 @@ export function useParagraphNavigation({
       if (navigation.isTheLastParagraphInChapter) {
 
         handleFinishEditing();
-        onCreateNewParagraph?.(null);
+        onCreateNewParagraph?.(paragraph.id, 'after');
         return;
       }
 
       // Create new paragraph in between with Ctrl+Enter
       if (event.ctrlKey) {
         handleFinishEditing();
-        onCreateNewParagraph?.(paragraph.index + 1);
+        onCreateNewParagraph?.(paragraph.id, 'after');
         return;
       }
 

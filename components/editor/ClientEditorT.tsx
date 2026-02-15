@@ -172,7 +172,14 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
             direction
         })
 
-    }, [/* TODO */]);
+    }, []);
+
+    const createNewParagraph = useCallback((paragraphId: string, position: 'before' | 'after' = 'after') => {
+        const currentParagraph = paragraphsRef.current.get(paragraphId) as ParagraphInterface | null;
+        if (!currentParagraph) return;
+
+        // TODO: handle create new paragraph.
+    }, []);
 
     // -----------------------------
 
@@ -242,6 +249,7 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
                                 onRemoteSync={syncAll}
                                 onReorder={reorderParagraph}
                                 onNavigate={navigateToAdjacentParagraph}
+                                onCreateNewParagraph={createNewParagraph}
                             />
                             <AddButton key={`add_${chapter.id}`} type="paragraphs" onClick={() => {}} />
                         </Chapter>
