@@ -89,7 +89,6 @@ function ParagraphComponent({
   }
 
   useEffect(() => {
-    // TODO: Refatorar para evitar setar métricas no mount (já setamos no useParagraphContent)
     metricsRef.current = initialMetrics;
     indicatorsRef.current?.setMetrics(initialMetrics);
   }, [initialMetrics]);
