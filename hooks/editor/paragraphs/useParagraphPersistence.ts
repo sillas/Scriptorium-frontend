@@ -95,15 +95,30 @@ export function useParagraphPersistence({
     return currentText
   }, []);
 
+   const checkStyleChanges = useCallback((): boolean => {
+    const prev = prevStylesRef.current;
+    const hasChanged = prev.isQuote !== isQuote ||
+      prev.isHighlighted !== isHighlighted ||
+      prev.textAlignment !== textAlignment;
+      
+    if (!hasChanged) return false;
+    
+    prevStylesRef.current = { isQuote, isHighlighted, textAlignment };
+    return true;
+   }, [isQuote, isHighlighted, textAlignment]);
+
   const triggerLocalSave = useCallback( (forceUpdate = false): boolean => {
+
+    const styleChanged = checkStyleChanges();
 
     const previousText = previousTextRef.current
     const currentText = getCurrentText();
-
     const textToCompare = currentText.replaceAll('&nbsp;', '').trim();
-    if (!forceUpdate && textToCompare === previousText) {
+
+    if (!forceUpdate && !styleChanged && textToCompare === previousText) {
       return false;
     };
+
     shouldRemoteSyncRef.current = true;
     updateSyncStatus(false);
 
@@ -175,21 +190,6 @@ export function useParagraphPersistence({
     shouldForceLocalDelete,
     deleteLocalParagraph, setForceLocalDelete
   ]);
-
-  // Effect to trigger local save on style changes
-  useEffect(() => {
-    // TODO: remove this effect and integrate style changes into the main triggerLocalSave flow
-    const prev = prevStylesRef.current;
-    const hasChanged = prev.isQuote !== isQuote ||
-      prev.isHighlighted !== isHighlighted ||
-      prev.textAlignment !== textAlignment;
-      
-    if (!hasChanged) return;
-    
-    prevStylesRef.current = { isQuote, isHighlighted, textAlignment };
-    clearDebounceTimer();
-    triggerLocalSave(true);
-  }, [isQuote, isHighlighted, textAlignment, clearDebounceTimer, triggerLocalSave]);
 
   useEffect(() => {
     previousTextRef.current = paragraph.text.replaceAll('&nbsp;', '').trim();
