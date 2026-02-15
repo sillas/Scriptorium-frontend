@@ -46,6 +46,48 @@ export class DoublyLinkedList<T extends { id: string }> {
         this.tail = node;
     }
 
+    addAfter(id: string, data: listNodeType<T>): void {
+        const currentNode = this.nodes.get(id);
+        if (!currentNode) {
+            throw new Error(`Node with id ${id} not found`);
+        }
+
+        const newNode = new ListNode<T>(data);
+        this.nodes.set(data.id, newNode);
+
+        newNode.prev = currentNode;
+        newNode.next = currentNode.next;
+
+        if (currentNode.next) {
+            currentNode.next.prev = newNode;
+        } else {
+            this.tail = newNode;
+        }
+
+        currentNode.next = newNode;
+    }
+
+    addBefore(id: string, data: listNodeType<T>): void {
+        const currentNode = this.nodes.get(id);
+        if (!currentNode) {
+            throw new Error(`Node with id ${id} not found`);
+        }
+
+        const newNode = new ListNode<T>(data);
+        this.nodes.set(data.id, newNode);
+
+        newNode.next = currentNode;
+        newNode.prev = currentNode.prev;
+
+        if (currentNode.prev) {
+            currentNode.prev.next = newNode;
+        } else {
+            this.head = newNode;
+        }
+
+        currentNode.prev = newNode;
+    }
+
     remove(id: string): T | null {
         const node = this.nodes.get(id);
         if (!node) return null;

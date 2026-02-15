@@ -175,10 +175,17 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
     }, []);
 
     const createNewParagraph = useCallback((paragraphId: string, position: 'before' | 'after' = 'after') => {
-        const currentParagraph = paragraphsRef.current.get(paragraphId) as ParagraphInterface | null;
-        if (!currentParagraph) return;
 
         // TODO: handle create new paragraph.
+
+        /*
+        TODO: Replace index ordering with linked list ordering to allow O(1) insertions 
+        without needing to update indices of all subsequent paragraphs. 
+        
+        This will require changes to the data model and how paragraphs are rendered, 
+        but will significantly improve performance when creating new paragraphs in the middle 
+        of a chapter.
+        */
     }, []);
 
     // -----------------------------
