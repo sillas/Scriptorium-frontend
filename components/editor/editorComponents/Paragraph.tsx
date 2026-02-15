@@ -137,8 +137,6 @@ function ParagraphComponent({
   
   // Ctrl + S -> Fast Finish Editing
   const handleFastFinishEditing = useCallback(() => {
-    console.log('handleFastFinishEditing -> triggerLocalSave');
-    
     if (triggerLocalSave()) onRemoteSyncNow?.();
   }, [onRemoteSyncNow]);
 
@@ -270,7 +268,7 @@ function ParagraphComponent({
             suppressContentEditableWarning
             onClick={paragraphOnClick}
             onContextMenu={handleRightClick}
-            onBlur={() => { console.log('onBlur -> handleFinishEditing'); handleFinishEditing();}}
+            onBlur={handleFinishEditing}
             onInput={scheduleLocalAutoSave}
             onKeyDown={handleKeyDown}
             onFocus={handleCursorPositionUpdate}

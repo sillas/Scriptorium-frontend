@@ -84,12 +84,9 @@ export function useParagraphNavigation({
   const handleFinishEditingAndNavigate = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => {
       isNavigatingRef.current = true;
-
-      // console.log('handleFinishEditingAndNavigate -> handleFinishEditing');
-      // handleFinishEditing();
       onNavigate?.(event, direction, paragraph.id);
     },
-    [handleFinishEditing, onNavigate, paragraph.id]
+    [onNavigate, paragraph.id]
   );
 
   const goToParagraphOnArrows = useCallback(
@@ -140,8 +137,7 @@ export function useParagraphNavigation({
 
       // Create new paragraph at end of chapter
       if (navigation.isTheLastParagraphInChapter) {
-        console.log('handleEnterKeyPress[isTheLastParagraphInChapter] -> handleFinishEditing');
-        
+
         handleFinishEditing();
         onCreateNewParagraph?.(null);
         return;
@@ -149,7 +145,6 @@ export function useParagraphNavigation({
 
       // Create new paragraph in between with Ctrl+Enter
       if (event.ctrlKey) {
-        console.log('handleEnterKeyPress[Ctrl] -> handleFinishEditing');
         handleFinishEditing();
         onCreateNewParagraph?.(paragraph.index + 1);
         return;
@@ -216,8 +211,6 @@ export function useParagraphNavigation({
         if (event.ctrlKey) {
           event.preventDefault();
           
-          console.log('handleKeyDown[arrows UP DOWN] -> triggerLocalSave');
-          
           triggerLocalSave(true);
           onReorder?.(paragraph.id, direction);
 
@@ -250,7 +243,6 @@ export function useParagraphNavigation({
       // Finish editing on Escape
       if (pressedKey === 'escape' && currentText.length > 0) {
         event.preventDefault();
-        console.log('handleKeyDown[Escape] -> handleFinishEditing');
         handleFinishEditing();
         return;
       }

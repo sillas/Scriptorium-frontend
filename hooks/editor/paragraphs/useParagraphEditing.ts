@@ -63,8 +63,7 @@ export function useParagraphEditing({
       textToCompare = paragraphRef.current.innerHTML.replaceAll('&nbsp;', '').trim();
       paragraphRef.current.innerHTML = textToCompare;
     }
-
-    console.log('handleFinishEditing -> triggerLocalSave');
+    
     triggerLocalSave()
     shouldRemoteSync();
 

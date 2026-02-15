@@ -102,12 +102,9 @@ export function useParagraphPersistence({
 
     const textToCompare = currentText.replaceAll('&nbsp;', '').trim();
     if (!forceUpdate && textToCompare === previousText) {
-      console.log('triggerLocalSave -> no changes detected, skipping save');
       return false;
     };
     shouldRemoteSyncRef.current = true;
-    console.log('triggerLocalSave -> changes detected, saving paragraph');
-    
     updateSyncStatus(false);
 
     previousTextRef.current = textToCompare;
@@ -156,7 +153,6 @@ export function useParagraphPersistence({
   const scheduleLocalAutoSave = useCallback(() => {
     clearDebounceTimer();
 
-    console.log('scheduleLocalAutoSave -> triggerLocalSave');
     setDebounce(triggerLocalSave, debounceDelayMs);
     updateContentMetrics();
   }, [debounceDelayMs, clearDebounceTimer, setDebounce, triggerLocalSave, updateContentMetrics]);
@@ -167,7 +163,6 @@ export function useParagraphPersistence({
     setForceLocalSave(false);
     clearDebounceTimer();
 
-    console.log('shouldForceLocalSave useEffect -> triggerLocalSave');
     triggerLocalSave(true);
   }, [shouldForceLocalSave, clearDebounceTimer, triggerLocalSave, setForceLocalSave]);
 
@@ -193,8 +188,6 @@ export function useParagraphPersistence({
     
     prevStylesRef.current = { isQuote, isHighlighted, textAlignment };
     clearDebounceTimer();
-
-    console.log('hasChanged useEffect -> triggerLocalSave');
     triggerLocalSave(true);
   }, [isQuote, isHighlighted, textAlignment, clearDebounceTimer, triggerLocalSave]);
 
