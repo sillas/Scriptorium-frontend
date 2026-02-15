@@ -66,6 +66,16 @@ export class DoublyLinkedList<T extends { id: string }> {
         return node?.data ?? null;
     }
 
+    getNext(id: string): T | null {
+        const node = this.nodes.get(id);
+        return node?.next?.data ?? null;
+    }
+
+    getPrev(id: string): T | null {
+        const node = this.nodes.get(id);
+        return node?.prev?.data ?? null;
+    }
+
     swap(id1: string, id2: string): void {
         
         let node1 = this.nodes.get(id1);

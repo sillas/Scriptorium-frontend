@@ -1,6 +1,5 @@
 import { RefObject, useCallback, useState, MouseEvent } from 'react';
 import { handleClick } from '@/lib/editor/selection';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 interface UseParagraphEditingParams {
   paragraphRef: RefObject<HTMLDivElement | null>;
@@ -8,8 +7,8 @@ interface UseParagraphEditingParams {
   selection: Selection | null;
   setSelection: (selection: Selection | null) => void;
   resetCursorPosition: () => void;
-  onSave: () => void;
-  onRemoteSync?: () => void;
+  triggerLocalSave: () => boolean;
+  shouldRemoteSync: () => void;
 }
 
 interface UseParagraphEditingReturn {
@@ -28,10 +27,9 @@ export function useParagraphEditing({
   emptyTextPlaceholder,
   selection, setSelection,
   resetCursorPosition,
-  onSave, onRemoteSync,
+  triggerLocalSave, shouldRemoteSync,
 }: UseParagraphEditingParams): UseParagraphEditingReturn {
   const [isEditing, setIsEditing] = useState(false);
-  const { waitForPendingSaves } = useLocalStorage();
   
   const handleStartEditing = useCallback(() => {
     if (!paragraphRef.current || isEditing) return;
@@ -66,8 +64,9 @@ export function useParagraphEditing({
       paragraphRef.current.innerHTML = textToCompare;
     }
 
-    onSave();
-    waitForPendingSaves().then(onRemoteSync);
+    console.log('handleFinishEditing -> triggerLocalSave');
+    triggerLocalSave()
+    shouldRemoteSync();
 
     paragraphRef.current?.blur();
   }, [
@@ -76,8 +75,8 @@ export function useParagraphEditing({
     selection,
     setSelection,
     resetCursorPosition,
-    onSave,
-    onRemoteSync,
+    triggerLocalSave,
+    shouldRemoteSync,
   ]);
 
   const handleParagraphClick = useCallback(

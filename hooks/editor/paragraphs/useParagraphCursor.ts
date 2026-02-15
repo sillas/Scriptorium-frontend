@@ -1,16 +1,16 @@
 import { RefObject, useEffect, Dispatch, SetStateAction, useCallback, useRef, MutableRefObject } from 'react';
-import { NavigationDirection } from '@/components/editor/types';
+import { ActiveParagraphInterface } from '@/components/editor/types';
 import { setCursorAt } from '@/lib/editor/selection';
 
 interface UseParagraphCursorParams {
   paragraphRef: RefObject<HTMLDivElement | null>;
-  focusActivation?: { direction: NavigationDirection } | null;
+  focusActivation?: ActiveParagraphInterface | null;
 }
 
 interface UseParagraphCursorReturn {
-  isCursorAtFirstPositionRef: MutableRefObject<boolean>;
-  isCursorAtLastPositionRef: MutableRefObject<boolean>;
-  cursorPositionRef: MutableRefObject<number>;
+  isCursorAtFirstPositionRef: RefObject<boolean>;
+  isCursorAtLastPositionRef: RefObject<boolean>;
+  cursorPositionRef: RefObject<number>;
   setIsCursorAtFirstPosition: Dispatch<SetStateAction<boolean>>;
   setIsCursorAtLastPosition: Dispatch<SetStateAction<boolean>>;
   resetCursorPosition: () => void;

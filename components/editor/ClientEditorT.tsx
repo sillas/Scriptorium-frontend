@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useRef, useCallback, useState, useEffect } from 'react';
+import { useMemo, useRef, useCallback, useState } from 'react';
 import {
   DocumentInterface,
   ChapterInterface,
   ParagraphInterface,
   NavigationDirection,
+  ActiveParagraphInterface,
 } from '@/components/editor/types';
 import EditorHeader from '@/components/editor/Header';
 import { Title } from '@/components/editor/editorComponents/Title';
@@ -33,8 +34,10 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
     const isInitializedRef = useRef(false);
     const initialParagraphsRef = useRef<Map<string, ParagraphInterface>>(new Map());
 
+    const [activeParagraph, setActiveParagraph] = useState<ActiveParagraphInterface | null>(null);
+    const [totalParagraphs, setTotalParagraphs] = useState(paragraphs.length);
+    const [syncInProgress, setSyncInProgress] = useState(false);
     const [refresh, setRefresh] =  useState(false);
-    const [syncInProgress, setSyncInProgress] = useState(true);
 
     const [ setDebounce, clearDebounceTimer ] = useDebounceTimer();
     const { SaveItemOnIndexedDB, waitForPendingSaves } = useLocalStorage();
@@ -66,16 +69,18 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
     }, []);
 
     const syncAll = useCallback(() => {
-        console.log('syncAll syncAll');
-        
+
         clearDebounceTimer();
-        setDebounce(() => {
+        const trySync = () => {
             const activeElement = document.activeElement;
             if (activeElement?.getAttribute('contenteditable') === 'true') {
+                // Se ainda está editando, renova o delay por mais 5s
+                setDebounce(trySync, 5000);
                 return;
             }
             syncAllWithoutDebounce();
-        }, 5000); // prevent auto-sync for 5s after manual sync
+        };
+        setDebounce(trySync, 5000); // prevent auto-sync for 5s after manual sync
 
     }, [setDebounce, clearDebounceTimer, syncAllWithoutDebounce]);
 
@@ -129,24 +134,62 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
 
     }, [syncAll, SaveItemOnIndexedDB, waitForPendingSaves]);
 
+    const navigateToAdjacentParagraph = useCallback((
+        event: React.KeyboardEvent<HTMLDivElement>,
+        direction: NavigationDirection,
+        id: string
+    ) => {
 
-    useEffect(() => {
-        setSyncInProgress(false);
-    }, [refresh]);
+        if (direction === null) {
+            setActiveParagraph(null);
+            return;
+        }
+
+        let target_paragraph = null;
+        if (direction === 'Up') {
+            target_paragraph = paragraphsRef.current.getPrev(id);
+        } else {
+            target_paragraph = paragraphsRef.current.getNext(id);
+        }
+
+        if (!target_paragraph) {
+            setActiveParagraph(null);
+            return;
+        }
+
+        if (event.key === 'Tab') {
+            const current_paragraph = paragraphsRef.current.get(id) as ParagraphInterface | null;
+            if (current_paragraph?.chapterId !== target_paragraph.chapterId) {
+                // crossing chapter boundary on Tab
+                setActiveParagraph(null);
+                return;
+            }
+            direction = 'Up';
+        }
+
+        setActiveParagraph({
+            id: target_paragraph.id,
+            direction
+        })
+
+    }, [/* TODO */]);
+
     // -----------------------------
 
     const componentsDataView: (ChapterInterface & { paragraphs: ParagraphInterface[] })[] = useMemo(() => {
         // Agrupar parágrafos por chapterId em uma única passagem - O(M) ao invés de O(N × M)
         const paragraphsByChapter = new Map<string, ParagraphInterface[]>();
-        
+        let paragraphs_total = 0;
         for (const paragraph of paragraphsRef.current.values()) {
             const chapterId = paragraph.chapterId;
             if (!paragraphsByChapter.has(chapterId)) {
                 paragraphsByChapter.set(chapterId, []);
             }
             paragraphsByChapter.get(chapterId)!.push(paragraph);
+            paragraphs_total++;
         }
-        
+
+        setTotalParagraphs(paragraphs_total);
         
         return chapters.map((chapter) => {
             const ps = paragraphsByChapter.get(chapter.id) || [];
@@ -155,7 +198,7 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
                 paragraphs: ps
             }
         });
-    }, [chapters, refresh]);
+    }, [chapters, refresh, setTotalParagraphs]);
 
     return (
         <div className="flex flex-col h-screen w-screen overflow-hidden">
@@ -193,9 +236,12 @@ export function ClientEditorT({ initialDocument, chapters, paragraphs }: ClientE
                             <ParagraphList 
                                 key={`plist_${chapter.id}`}
                                 paragraphs={chapter.paragraphs}
+                                total_paragraphs={totalParagraphs}
                                 isNavigatingRef={isNavigatingRef}
+                                focusActivation={activeParagraph}
                                 onRemoteSync={syncAll}
                                 onReorder={reorderParagraph}
+                                onNavigate={navigateToAdjacentParagraph}
                             />
                             <AddButton key={`add_${chapter.id}`} type="paragraphs" onClick={() => {}} />
                         </Chapter>

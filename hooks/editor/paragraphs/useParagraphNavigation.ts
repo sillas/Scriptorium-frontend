@@ -1,4 +1,4 @@
-import { RefObject, useCallback, MutableRefObject } from 'react';
+import { RefObject, useCallback } from 'react';
 import { NavigationDirection, ParagraphInterface, textAlignmentType } from '@/components/editor/types';
 import type { CursorUpdateCallback } from '@/hooks/editor/paragraphs/useParagraphCursor';
 import { useToast } from '@/components/ToastProvider';
@@ -8,8 +8,8 @@ interface UseParagraphNavigationParams {
   isNavigatingRef: RefObject<boolean>;
   paragraph: ParagraphInterface;
   isEditing: boolean;
-  isCursorAtFirstPositionRef: MutableRefObject<boolean>;
-  isCursorAtLastPositionRef: MutableRefObject<boolean>;
+  isCursorAtFirstPositionRef: RefObject<boolean>;
+  isCursorAtLastPositionRef: RefObject<boolean>;
   navigation: {
     canNavigatePrevious: boolean;
     canNavigateNext: boolean;
@@ -18,7 +18,7 @@ interface UseParagraphNavigationParams {
   triggerLocalSave: (forceUpdate?: boolean) => void;
   handleFinishEditing: () => void;
   handleFastFinishEditing: () => void;
-  onNavigate?: (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => void;
+  onNavigate?: (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection, id: string) => void;
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
   onReorder?: (paragraphId: string, direction: NavigationDirection) => void;
   setForceLocalDelete: React.Dispatch<React.SetStateAction<boolean>>;
@@ -84,10 +84,12 @@ export function useParagraphNavigation({
   const handleFinishEditingAndNavigate = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => {
       isNavigatingRef.current = true;
-      handleFinishEditing();
-      onNavigate?.(event, direction);
+
+      // console.log('handleFinishEditingAndNavigate -> handleFinishEditing');
+      // handleFinishEditing();
+      onNavigate?.(event, direction, paragraph.id);
     },
-    [handleFinishEditing, onNavigate]
+    [handleFinishEditing, onNavigate, paragraph.id]
   );
 
   const goToParagraphOnArrows = useCallback(
@@ -99,7 +101,7 @@ export function useParagraphNavigation({
       // Navigate only if cursor is at edge
       const isAtEdge =
         direction === 'Up' ? isCursorAtFirstPositionRef.current : isCursorAtLastPositionRef.current;
-
+      
       if (isAtEdge) {
         event.preventDefault();
         handleFinishEditingAndNavigate(event, direction);
@@ -138,6 +140,8 @@ export function useParagraphNavigation({
 
       // Create new paragraph at end of chapter
       if (navigation.isTheLastParagraphInChapter) {
+        console.log('handleEnterKeyPress[isTheLastParagraphInChapter] -> handleFinishEditing');
+        
         handleFinishEditing();
         onCreateNewParagraph?.(null);
         return;
@@ -145,6 +149,7 @@ export function useParagraphNavigation({
 
       // Create new paragraph in between with Ctrl+Enter
       if (event.ctrlKey) {
+        console.log('handleEnterKeyPress[Ctrl] -> handleFinishEditing');
         handleFinishEditing();
         onCreateNewParagraph?.(paragraph.index + 1);
         return;
@@ -210,7 +215,9 @@ export function useParagraphNavigation({
         // Reorder paragraph with Ctrl+Arrow
         if (event.ctrlKey) {
           event.preventDefault();
-
+          
+          console.log('handleKeyDown[arrows UP DOWN] -> triggerLocalSave');
+          
           triggerLocalSave(true);
           onReorder?.(paragraph.id, direction);
 
@@ -243,6 +250,7 @@ export function useParagraphNavigation({
       // Finish editing on Escape
       if (pressedKey === 'escape' && currentText.length > 0) {
         event.preventDefault();
+        console.log('handleKeyDown[Escape] -> handleFinishEditing');
         handleFinishEditing();
         return;
       }

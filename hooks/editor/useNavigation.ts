@@ -53,17 +53,8 @@ export function useNavigation() {
         });
       }, []);
 
-    const getNavigationAvailability = useCallback((paragraphIndex: number, paragraphs: ParagraphInterface[]) => {
-      return {
-        canNavigatePrevious: paragraphIndex > 0,
-        canNavigateNext: paragraphIndex < paragraphs.length -1,
-        isTheLastParagraphInChapter: paragraphs[paragraphIndex]?.chapterId !== paragraphs[paragraphIndex + 1]?.chapterId
-      }
-    }, []);
-
 
     return {
-        navigateToAdjacentParagraph,
-        getNavigationAvailability,
+        navigateToAdjacentParagraph
     };
 }

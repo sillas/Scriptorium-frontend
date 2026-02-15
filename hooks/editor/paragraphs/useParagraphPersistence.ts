@@ -10,6 +10,7 @@ import { DiffFormatter, myersDiff } from '@/lib/editor/myersDiff';
 interface UseParagraphPersistenceParams {
   paragraphRef: RefObject<HTMLDivElement | null>;
   paragraph: ParagraphInterface;
+  shouldRemoteSyncRef: RefObject<boolean>;
   emptyTextPlaceholder: string;
   debounceDelayMs: number;
   isQuote: boolean;
@@ -25,7 +26,7 @@ interface UseParagraphPersistenceParams {
 }
 
 interface UseParagraphPersistenceReturn {
-  triggerLocalSave: (forceUpdate?: boolean) => void;
+  triggerLocalSave: (forceUpdate?: boolean) => boolean;
   scheduleLocalAutoSave: () => void;
 }
 
@@ -62,6 +63,7 @@ const paragraphDIff = (original: ParagraphInterface, current: ParagraphInterface
 export function useParagraphPersistence({
   paragraphRef,
   paragraph,
+  shouldRemoteSyncRef,
   emptyTextPlaceholder,
   debounceDelayMs,
   isQuote,
@@ -93,17 +95,19 @@ export function useParagraphPersistence({
     return currentText
   }, []);
 
-  const triggerLocalSave = useCallback( (forceUpdate = false) => {
-    console.log('triggerLocalSave...');
-    
+  const triggerLocalSave = useCallback( (forceUpdate = false): boolean => {
+
     const previousText = previousTextRef.current
     const currentText = getCurrentText();
 
     const textToCompare = currentText.replaceAll('&nbsp;', '').trim();
     if (!forceUpdate && textToCompare === previousText) {
-      return;
+      console.log('triggerLocalSave -> no changes detected, skipping save');
+      return false;
     };
-
+    shouldRemoteSyncRef.current = true;
+    console.log('triggerLocalSave -> changes detected, saving paragraph');
+    
     updateSyncStatus(false);
 
     previousTextRef.current = textToCompare;
@@ -125,6 +129,7 @@ export function useParagraphPersistence({
     // Continuamos na conodição de corrida.
     // salvar direto em paragraph causa rerender!!!
     SaveItemOnIndexedDB(paragraph, null, 'paragraphs'); // Parágrafo Atualizado
+    return true;
   }, [
     paragraph.sync, 
     isQuote,
@@ -150,6 +155,8 @@ export function useParagraphPersistence({
 
   const scheduleLocalAutoSave = useCallback(() => {
     clearDebounceTimer();
+
+    console.log('scheduleLocalAutoSave -> triggerLocalSave');
     setDebounce(triggerLocalSave, debounceDelayMs);
     updateContentMetrics();
   }, [debounceDelayMs, clearDebounceTimer, setDebounce, triggerLocalSave, updateContentMetrics]);
@@ -159,6 +166,8 @@ export function useParagraphPersistence({
     if (!shouldForceLocalSave) return;
     setForceLocalSave(false);
     clearDebounceTimer();
+
+    console.log('shouldForceLocalSave useEffect -> triggerLocalSave');
     triggerLocalSave(true);
   }, [shouldForceLocalSave, clearDebounceTimer, triggerLocalSave, setForceLocalSave]);
 
@@ -174,6 +183,7 @@ export function useParagraphPersistence({
 
   // Effect to trigger local save on style changes
   useEffect(() => {
+    // TODO: remove this effect and integrate style changes into the main triggerLocalSave flow
     const prev = prevStylesRef.current;
     const hasChanged = prev.isQuote !== isQuote ||
       prev.isHighlighted !== isHighlighted ||
@@ -183,6 +193,8 @@ export function useParagraphPersistence({
     
     prevStylesRef.current = { isQuote, isHighlighted, textAlignment };
     clearDebounceTimer();
+
+    console.log('hasChanged useEffect -> triggerLocalSave');
     triggerLocalSave(true);
   }, [isQuote, isHighlighted, textAlignment, clearDebounceTimer, triggerLocalSave]);
 

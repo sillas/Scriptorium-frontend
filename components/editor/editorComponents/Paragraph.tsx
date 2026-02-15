@@ -10,10 +10,11 @@ import { useParagraphCursor } from '@/hooks/editor/paragraphs/useParagraphCursor
 import { useParagraphContent, ContentMetrics } from '@/hooks/editor/paragraphs/useParagraphContent';
 import { useParagraphPersistence } from '@/hooks/editor/paragraphs/useParagraphPersistence';
 import { useParagraphContextMenu } from '@/hooks/editor/paragraphs/useParagraphContextMenu';
-import { NavigationDirection, ParagraphInterface } from '@/components/editor/types';
+import { ActiveParagraphInterface, NavigationDirection, ParagraphInterface } from '@/components/editor/types';
 import SyncIndicator, { SyncIndicatorHandle } from '@/components/editor/SyncIndicator';
 import { styles } from '@/components/editor/styles/paragraph';
 import ParagraphIndicators, { ParagraphIndicatorsHandle } from '@/components/editor/editorComponents/ParagraphIndicators';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 const {
   ICON_SIZE, ICON_COLOR,
@@ -22,9 +23,9 @@ const {
 
 interface ParagraphProps {
   isNavigatingRef: RefObject<boolean>;
-  focusActivation?: { direction: NavigationDirection } | null;
+  focusActivation?: ActiveParagraphInterface | null;
   onDelete?: () => void;
-  onNavigate?: (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection) => void;
+  onNavigate?: (event: React.KeyboardEvent<HTMLDivElement>, direction: NavigationDirection, id: string) => void;
   onCreateNewParagraph?: (paragraphIndex: number | null) => void;
   onReorder?: (paragraphId: string, direction: NavigationDirection) => void;
   onRemoteSync?: () => void;
@@ -51,14 +52,24 @@ function ParagraphComponent({
   const firstArrowRef = useRef<HTMLSpanElement>(null);
   const lastArrowRef = useRef<HTMLSpanElement>(null);
   const syncIndicatorRef = useRef<SyncIndicatorHandle>(null);
+  const shouldRemoteSyncRef = useRef(false);
   const [shouldForceLocalSave, setForceLocalSave] = useState(false);
   const [shouldForceLocalDelete, setForceLocalDelete] = useState(false);
   
+  const { waitForPendingSaves } = useLocalStorage();
+
   // Função callback para atualizar sincronização via ref (sem causar re-render)
   const updateSyncStatus = useCallback((synced: boolean) => {
     syncIndicatorRef.current?.setSynced(synced);
   }, []);
   
+  const shouldRemoteSync = useCallback(() => {
+    if( shouldRemoteSyncRef.current ) {
+      waitForPendingSaves().then(() => onRemoteSync?.());
+      shouldRemoteSyncRef.current = false;
+    }
+  }, [ onRemoteSync, waitForPendingSaves ]);
+
   // ============ Hooks Customizados ============
   
   // Content Management
@@ -78,6 +89,7 @@ function ParagraphComponent({
   }
 
   useEffect(() => {
+    // TODO: Refatorar para evitar setar métricas no mount (já setamos no useParagraphContent)
     metricsRef.current = initialMetrics;
     indicatorsRef.current?.setMetrics(initialMetrics);
   }, [initialMetrics]);
@@ -113,7 +125,7 @@ function ParagraphComponent({
   const { 
     triggerLocalSave, scheduleLocalAutoSave,
   } = useParagraphPersistence({
-    paragraphRef, paragraph,
+    paragraphRef, paragraph, shouldRemoteSyncRef,
     emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
     debounceDelayMs: DEBOUNCE_DELAY_MS,
     isQuote, isHighlighted, textAlignment,
@@ -124,9 +136,10 @@ function ParagraphComponent({
   });
   
   // Ctrl + S -> Fast Finish Editing
-  const handleFastFinishEditing = useCallback(() => { 
-    triggerLocalSave();
-    onRemoteSyncNow?.();
+  const handleFastFinishEditing = useCallback(() => {
+    console.log('handleFastFinishEditing -> triggerLocalSave');
+    
+    if (triggerLocalSave()) onRemoteSyncNow?.();
   }, [onRemoteSyncNow]);
 
   // Cursor Position Tracking
@@ -141,7 +154,7 @@ function ParagraphComponent({
     handleStartEditing, handleFinishEditing, handleParagraphClick,
   } = useParagraphEditing({
     paragraphRef, selection, emptyTextPlaceholder: EMPTY_TEXT_PLACEHOLDER,
-    setSelection, onRemoteSync, resetCursorPosition, onSave: triggerLocalSave,
+    setSelection, shouldRemoteSync, resetCursorPosition, triggerLocalSave,
   });
 
   // Context Menu (right-click)
@@ -176,15 +189,13 @@ function ParagraphComponent({
     setCursorPosition(refreshCursorUI);
   }
 
-  const onCreateNewParagraphAbove = () => onCreateNewParagraph?.(paragraph.index);
-
   // ============ Effects ============
 
   // Initialize paragraph content on mount
   useEffect(() => {
     if (!paragraphRef.current) return;
-    const content = paragraph.text.length === 0 ? EMPTY_TEXT_PLACEHOLDER : paragraph.text;
-    paragraphRef.current.innerHTML = content;
+    paragraphRef.current.innerHTML = paragraph.text.length === 0 ? 
+      EMPTY_TEXT_PLACEHOLDER : paragraph.text;
   }, [paragraph.text]);
 
   // Update sync indicator when paragraph.sync changes
@@ -199,7 +210,7 @@ function ParagraphComponent({
   return (
     <>
       <button
-        onClick={onCreateNewParagraphAbove}
+        onClick={() => onCreateNewParagraph?.(paragraph.index)}
         aria-label="Add Paragraph Here"
         className={styles.createNewParagraphAboveStyle}>
         +
@@ -259,7 +270,7 @@ function ParagraphComponent({
             suppressContentEditableWarning
             onClick={paragraphOnClick}
             onContextMenu={handleRightClick}
-            onBlur={handleFinishEditing}
+            onBlur={() => { console.log('onBlur -> handleFinishEditing'); handleFinishEditing();}}
             onInput={scheduleLocalAutoSave}
             onKeyDown={handleKeyDown}
             onFocus={handleCursorPositionUpdate}
@@ -319,19 +330,22 @@ Paragraph.displayName = 'Paragraph';
 // Renderizar parágrafos sem memoização para garantir re-render na reordenação
 export const ParagraphList = ({ 
     paragraphs,
+    total_paragraphs,
+    focusActivation,
     ...rest
-}: ParagraphProps & { paragraphs: ParagraphInterface[] }) => {
+}: ParagraphProps & { paragraphs: ParagraphInterface[], total_paragraphs: number }) => {
     return (
         <>
             {paragraphs.map(paragraph => (
                 <Paragraph
                     key={paragraph.id}
                     paragraph={paragraph}
+                    focusActivation={ focusActivation?.id === paragraph.id ? focusActivation : null }
                     {...rest}
                     navigation={{
                         canNavigatePrevious: paragraph.index > 0,
-                        canNavigateNext: paragraph.index < paragraphs.length -1,
-                        isTheLastParagraphInChapter: false
+                        canNavigateNext: paragraph.index < total_paragraphs -1,
+                        isTheLastParagraphInChapter: paragraph.index === paragraphs.length -1
                     }}
                 />
             ))}
